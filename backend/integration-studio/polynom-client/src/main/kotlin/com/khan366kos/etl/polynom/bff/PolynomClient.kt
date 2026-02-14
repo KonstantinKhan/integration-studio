@@ -1,0 +1,148 @@
+package com.khan366kos.etl.polynom.bff
+
+import com.khan366kos.common.models.auth.UserCredentials
+import com.khan366kos.integration.studio.transport.models.ReferenceTransport
+import com.khan366kos.integration.studio.transport.models.StorageDefinitionTransport
+import com.khan366kos.integration.studio.transport.models.UserTransport
+import com.khan366kos.etl.polynom.bff.auth.TokenManager
+import com.khan366kos.common.models.business.Reference
+import com.khan366kos.etl.mapper.toReference
+import com.khan366kos.common.models.business.ObjectInfo
+import com.khan366kos.common.models.simple.GroupId
+import com.khan366kos.common.responses.ElementResponse
+import com.khan366kos.common.responses.PropertyOwnerRespose
+import com.khan366kos.common.requests.CreateElementRequest
+import com.khan366kos.common.requests.PropertyAssignmentRequest
+import com.khan366kos.common.requests.PropertyOwnerRequest
+import com.khan366kos.etl.polynom.bff.auth.AuthPlugin
+import com.khan366kos.etl.polynom.bff.auth.CredentialsContext
+import com.khan366kos.etl.polynom.bff.auth.SessionIdAttrKey
+import com.khan366kos.etl.polynom.bff.auth.UserCredentialsAttrKey
+import com.khan366kos.integration.studio.transport.models.ElementCatalogTransport
+import com.khan366kos.integration.studio.transport.models.ElementGroupTransport
+import com.khan366kos.integration.studio.transport.models.IdentifiableObjectTransport
+import com.khan366kos.etl.polynom.bff.auth.LoginRequest
+import com.khan366kos.etl.polynom.bff.auth.LoginResponse
+import io.ktor.client.*
+import io.ktor.client.call.body
+import io.ktor.client.engine.cio.*
+import io.ktor.client.plugins.DefaultRequest
+import io.ktor.client.plugins.HttpTimeout
+import io.ktor.client.plugins.contentnegotiation.*
+import io.ktor.client.plugins.logging.DEFAULT
+import io.ktor.client.plugins.logging.LogLevel
+import io.ktor.client.plugins.logging.Logger
+import io.ktor.client.plugins.logging.Logging
+import io.ktor.client.request.*
+import io.ktor.client.statement.bodyAsText
+import io.ktor.http.ContentType
+import io.ktor.http.URLProtocol
+import io.ktor.http.contentType
+import io.ktor.http.path
+import io.ktor.client.request.HttpRequestPipeline
+import io.ktor.serialization.kotlinx.json.*
+import kotlinx.coroutines.currentCoroutineContext
+import kotlinx.coroutines.flow.MutableSharedFlow
+import kotlinx.coroutines.flow.asSharedFlow
+
+
+class PolynomClient {
+    companion object {
+        private const val BASE_API_PATH = "/api/v1"
+        private const val BASE_URL = "https://delusively-altruistic-pangolin.cloudpub.ru:443"
+    }
+
+    internal val _credentialsUpdates = MutableSharedFlow<Pair<String, UserCredentials>>()
+    val credentialsUpdates = _credentialsUpdates.asSharedFlow()
+    
+    private val tokenManager = TokenManager()
+
+    val client = HttpClient(CIO) {
+        install(ContentNegotiation) {
+            json()
+        }
+        install(DefaultRequest) {
+            url {
+                protocol = URLProtocol.HTTPS
+                host = "delusively-altruistic-pangolin.cloudpub.ru"
+                port = 443
+                path("$BASE_API_PATH/")
+            }
+            contentType(ContentType.Application.Json)
+        }
+        install(AuthPlugin) {
+            baseUrl = "$BASE_URL$BASE_API_PATH"
+            tokenManager = this@PolynomClient.tokenManager
+            polynomClient = this@PolynomClient
+        }
+        install(Logging) {
+            logger = Logger.DEFAULT
+            level = LogLevel.HEADERS
+        }
+        install(HttpTimeout) {
+            requestTimeoutMillis = 120_000
+        }
+    }.also { httpClient ->
+        httpClient.requestPipeline.intercept(HttpRequestPipeline.Before) {
+            currentCoroutineContext()[CredentialsContext]?.let {
+                context.attributes.put(UserCredentialsAttrKey, it.credentials)
+                context.attributes.put(SessionIdAttrKey, it.sessionId)
+            }
+        }
+    }
+
+    suspend fun storageDefinitions(): ArrayList<StorageDefinitionTransport> =
+        client.get("login/storage-definitions").body()
+
+    suspend fun signIn(loginRequest: LoginRequest): LoginResponse = client.post("login/sign-in") {
+        contentType(ContentType.Application.Json)
+        setBody(loginRequest)
+    }.body()
+
+    suspend fun currentUserInfo(): UserTransport =
+        client.get("login/current-user-info").body()
+
+    suspend fun getReference(): List<Reference> {
+        return client.post("reference/get-all")
+            .body<List<ReferenceTransport>>()
+            .map { it.toReference() }
+    }
+
+    suspend fun getByReference(request: IdentifiableObjectTransport): Array<ElementCatalogTransport> =
+        client.post("element-catalog/get-by-reference") {
+            setBody(request)
+        }.body()
+
+    suspend fun getByCatalog(request: IdentifiableObjectTransport): List<ElementGroupTransport> =
+        client.post("element-group/get-by-catalog") {
+            setBody(request)
+        }.body()
+
+    suspend fun element(request: CreateElementRequest): ElementResponse {
+        return client.post("element/create") {
+            setBody(request)
+        }.body()
+    }
+
+    suspend fun propertyOwner(request: PropertyOwnerRequest): PropertyOwnerRespose {
+        return client.post("property-owner/properties") {
+            setBody(request.identifier)
+        }.body()
+    }
+
+    suspend fun setPropertyValues(request: PropertyAssignmentRequest): String {
+        return client.put("property-owner/set-property-values") {
+            setBody(request)
+        }.bodyAsText()
+    }
+
+    suspend fun elementByGroup(groupId: GroupId): List<ObjectInfo> {
+        return client.get("element/by-element-group") {
+            parameter("elementGroupId", groupId.value)
+        }.body()
+    }
+
+    fun close() {
+        client.close()
+    }
+}
