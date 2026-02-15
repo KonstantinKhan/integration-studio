@@ -39,7 +39,7 @@ data class ElementCatalogTransport(
     val count: Int = 0,
 
     @SerialName("reference")
-    val reference: IdentifiableObjectTransport? = null,
+    val reference: IdentifiableObjectTransport,
 
     @SerialName("isEntry")
     val isEntry: Boolean? = null

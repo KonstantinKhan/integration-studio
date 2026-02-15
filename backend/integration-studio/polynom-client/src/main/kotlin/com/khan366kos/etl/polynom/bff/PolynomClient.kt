@@ -25,6 +25,7 @@ import com.khan366kos.integration.studio.transport.models.IdentifiableObjectTran
 import com.khan366kos.etl.polynom.bff.auth.LoginRequest
 import com.khan366kos.etl.polynom.bff.auth.LoginResponse
 import com.khan366kos.integration.studio.transport.models.DocumentCatalogTransport
+import com.khan366kos.integration.studio.transport.models.ElementCatalogTransport
 import io.ktor.client.*
 import io.ktor.client.call.body
 import io.ktor.client.engine.cio.*
@@ -122,6 +123,11 @@ class PolynomClient {
         }
             .body<List<DocumentCatalogTransport>>()
             .map { it.toCatalog() }
+
+    suspend fun catalog(request: IdentifiableObjectTransport): Catalog = client.post("element-catalog/get-by-id") {
+        setBody(request)
+    }.body<DocumentCatalogTransport>()
+        .toCatalog()
 
     suspend fun getByCatalog(request: IdentifiableObjectTransport): List<ElementGroupTransport> =
         client.post("element-group/get-by-catalog") {

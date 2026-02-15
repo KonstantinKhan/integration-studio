@@ -202,7 +202,6 @@ fun Application.configureRouting(config: AppConfig) {
                                 )
                             }
                             call.respond(HttpStatusCode.OK, reference)
-                            println("Должен быть передан справочник с typeId=$typeId и objectId=$objectId")
                         }
                     } catch (e: Exception) {
                         application.log.error("Error fetching references: ${e.message}", e)
@@ -216,6 +215,8 @@ fun Application.configureRouting(config: AppConfig) {
             route("catalogs") {
                 get {
                     try {
+                        println("call!")
+
                         val referenceTypeId = call.parameters["referenceTypeId"]?.toInt()
                         val referenceObjectId = call.parameters["referenceObjectId"]?.toInt()
                         val typeId = call.parameters["typeId"]?.toInt()
@@ -234,7 +235,17 @@ fun Application.configureRouting(config: AppConfig) {
                             }
                             call.respond(HttpStatusCode.OK, catalogs)
                         } else {
-                            println("Тут должен возвращаться каталог с typeId $typeId и objectId=$objectId")
+                            val catalog = withContext(
+                                CredentialsContext(call.userSession.id, call.userCredentials)
+                            ) {
+                                config.polynomClient.catalog(
+                                    IdentifiableObjectTransport(
+                                        objectId!!,
+                                        typeId!!
+                                    )
+                                )
+                            }
+                            call.respond(HttpStatusCode.OK, catalog)
                         }
 
                     } catch (e: Exception) {
