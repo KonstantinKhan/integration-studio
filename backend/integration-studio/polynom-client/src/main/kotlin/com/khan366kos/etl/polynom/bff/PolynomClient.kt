@@ -9,6 +9,7 @@ import com.khan366kos.etl.polynom.bff.auth.TokenManager
 import com.khan366kos.common.models.business.Reference
 import com.khan366kos.etl.mapper.toReference
 import com.khan366kos.common.models.business.ObjectInfo
+import com.khan366kos.common.models.business.elementGroup.ElementGroup
 import com.khan366kos.common.models.simple.GroupId
 import com.khan366kos.common.responses.ElementResponse
 import com.khan366kos.common.responses.PropertyOwnerRespose
@@ -16,6 +17,7 @@ import com.khan366kos.common.requests.CreateElementRequest
 import com.khan366kos.common.requests.PropertyAssignmentRequest
 import com.khan366kos.common.requests.PropertyOwnerRequest
 import com.khan366kos.etl.mapper.toCatalog
+import com.khan366kos.etl.mapper.toElementGroup
 import com.khan366kos.etl.polynom.bff.auth.AuthPlugin
 import com.khan366kos.etl.polynom.bff.auth.CredentialsContext
 import com.khan366kos.etl.polynom.bff.auth.SessionIdAttrKey
@@ -24,7 +26,6 @@ import com.khan366kos.integration.studio.transport.models.ElementGroupTransport
 import com.khan366kos.integration.studio.transport.models.IdentifiableObjectTransport
 import com.khan366kos.etl.polynom.bff.auth.LoginRequest
 import com.khan366kos.etl.polynom.bff.auth.LoginResponse
-import com.khan366kos.integration.studio.transport.models.DocumentCatalogTransport
 import com.khan366kos.integration.studio.transport.models.ElementCatalogTransport
 import io.ktor.client.*
 import io.ktor.client.call.body
@@ -121,18 +122,19 @@ class PolynomClient {
         client.post("element-catalog/get-by-reference") {
             setBody(request)
         }
-            .body<List<DocumentCatalogTransport>>()
+            .body<List<ElementCatalogTransport>>()
             .map { it.toCatalog() }
 
     suspend fun catalog(request: IdentifiableObjectTransport): Catalog = client.post("element-catalog/get-by-id") {
         setBody(request)
-    }.body<DocumentCatalogTransport>()
+    }.body<ElementCatalogTransport>()
         .toCatalog()
 
-    suspend fun getByCatalog(request: IdentifiableObjectTransport): List<ElementGroupTransport> =
+    suspend fun groups(request: IdentifiableObjectTransport): List<ElementGroup> =
         client.post("element-group/get-by-catalog") {
             setBody(request)
-        }.body()
+        }.body<List<ElementGroupTransport>>()
+            .map { it.toElementGroup() }
 
     suspend fun element(request: CreateElementRequest): ElementResponse {
         return client.post("element/create") {

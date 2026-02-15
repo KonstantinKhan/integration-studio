@@ -6,10 +6,15 @@ import com.khan366kos.common.excel.models.simple.EtlSheetTitle
 import com.khan366kos.common.excel.models.simple.EtlTableHeader
 import com.khan366kos.common.models.auth.AuthorizationCredentials
 import com.khan366kos.common.models.business.*
+import com.khan366kos.common.models.business.elementGroup.ElementGroup
+import com.khan366kos.common.models.business.elementGroup.simple.ElementGroupId
+import com.khan366kos.common.models.business.elementGroup.simple.ElementGroupName
+import com.khan366kos.common.models.business.elementGroup.simple.ElementGroupPath
 import com.khan366kos.common.models.definitions.StorageDefinition
 import com.khan366kos.common.models.simple.*
 import com.khan366kos.integration.studio.transport.models.AuthorizationRequestTransport
-import com.khan366kos.integration.studio.transport.models.DocumentCatalogTransport
+import com.khan366kos.integration.studio.transport.models.ElementCatalogTransport
+import com.khan366kos.integration.studio.transport.models.ElementGroupTransport
 import com.khan366kos.integration.studio.transport.models.EtlSheetTransport
 import com.khan366kos.integration.studio.transport.models.EtlWorkbookTransport
 import com.khan366kos.integration.studio.transport.models.NamedObjectTransport
@@ -49,7 +54,7 @@ fun NamedObjectTransport.toPathElement(): PathElement =
         name = ElementName(name ?: "")
     )
 
-fun DocumentCatalogTransport.toCatalog(): Catalog =
+fun ElementCatalogTransport.toCatalog(): Catalog =
     Catalog(
         id = ReferenceId(id ?: ""),
         classId = ReferenceId(classId ?: ""),
@@ -101,4 +106,32 @@ fun ReferenceTransport.toReference(): Reference =
         path = path?.map { it.toPathElement() } ?: emptyList(),
         documentCatalog = documentCatalog?.toCatalog(),
         viewpointCatalog = viewpointCatalog?.toViewpointCatalog()
+    )
+
+fun ElementGroupTransport.toElementGroup(): ElementGroup =
+    ElementGroup(
+        name = ElementGroupName(name ?: ""),
+        iconCode = IconCode(iconCode),
+        iconColor = IconColor(iconColor ?: 0),
+        writeAccess = WriteAccess(writeAccess),
+        description = Description(description ?: ""),
+        applicability = Applicability(applicability),
+        id = ElementGroupId(id ?: ""),
+        objectId = ObjectId(objectId),
+        typeId = TypeId(typeId),
+        path = path?.map { it.toPathElementGroup() } ?: emptyList(),
+        parentCatalog = Identifier(ObjectId(parentCatalog?.objectId ?: 0), TypeId(parentCatalog?.typeId ?: 0)),
+        parentGroup = Identifier(ObjectId(parentCatalog?.objectId ?: 0), TypeId(parentCatalog?.typeId ?: 0)),
+        hasObjects = hasObjects,
+        count = count,
+        isEntry = isEntry ?: false,
+        classId = classId ?: "",
+        isAllPartSizesTab = isAllPartSizesTab ?: false,
+    )
+
+fun NamedObjectTransport.toPathElementGroup(): ElementGroupPath =
+    ElementGroupPath(
+        objectId = ObjectId(objectId),
+        typeId = TypeId(typeId),
+        name = NamePath(name ?: "")
     )

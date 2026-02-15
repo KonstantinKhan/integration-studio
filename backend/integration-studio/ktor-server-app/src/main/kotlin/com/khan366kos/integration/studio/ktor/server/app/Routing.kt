@@ -256,7 +256,29 @@ fun Application.configureRouting(config: AppConfig) {
             }
             route("groups") {
                 get {
+                    try {
+                        val catalogTypeId = call.parameters["catalogTypeId"]?.toInt()
+                        val catalogObjectId = call.parameters["catalogObjectId"]?.toInt()
+                        val typeId = call.parameters["typeId"]?.toInt()
+                        val objectId = call.parameters["objectId"]?.toInt()
 
+                        if (typeId == null && objectId == null) {
+                            val groups = withContext(CredentialsContext(call.userSession.id, call.userCredentials)) {
+                                config.polynomClient.groups(
+                                    IdentifiableObjectTransport(
+                                        catalogObjectId!!,
+                                        catalogTypeId!!
+                                    )
+                                )
+                            }
+                            call.respond(HttpStatusCode.OK, groups)
+                        } else {
+                            println("Должна возвращаться группа с typeId: $typeId и objectId: $objectId")
+                        }
+
+                    } catch (e: Exception) {
+
+                    }
                 }
             }
         }
