@@ -9,6 +9,7 @@ import com.khan366kos.common.models.business.Reference
 import com.khan366kos.etl.mapper.toReference
 import com.khan366kos.common.models.business.ObjectInfo
 import com.khan366kos.common.models.simple.GroupId
+import com.khan366kos.common.models.simple.ReferenceId
 import com.khan366kos.common.responses.ElementResponse
 import com.khan366kos.common.responses.PropertyOwnerRespose
 import com.khan366kos.common.requests.CreateElementRequest
@@ -102,11 +103,16 @@ class PolynomClient {
     suspend fun currentUserInfo(): UserTransport =
         client.get("login/current-user-info").body()
 
-    suspend fun getReference(): List<Reference> {
+    suspend fun references(): List<Reference> {
         return client.post("reference/get-all")
             .body<List<ReferenceTransport>>()
             .map { it.toReference() }
     }
+
+    suspend fun reference(request: IdentifiableObjectTransport): Reference = client.post("reference/get-by-id"){
+        setBody(request)
+    }.body<ReferenceTransport>()
+        .toReference()
 
     suspend fun getByReference(request: IdentifiableObjectTransport): Array<ElementCatalogTransport> =
         client.post("element-catalog/get-by-reference") {

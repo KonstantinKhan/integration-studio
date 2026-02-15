@@ -15,6 +15,7 @@ import com.khan366kos.integration.studio.ktor.server.app.plugins.userSession
 import com.khan366kos.etl.mapper.toEtlWorkbookTransport
 import com.khan366kos.etl.polynom.bff.auth.CredentialsContext
 import com.khan366kos.etl.polynom.bff.auth.LoginRequest
+import com.khan366kos.integration.studio.transport.models.IdentifiableObjectTransport
 import io.ktor.http.*
 import io.ktor.http.content.*
 import io.ktor.server.application.*
@@ -174,21 +175,40 @@ fun Application.configureRouting(config: AppConfig) {
             install(SessionInterceptorPlugin) {
                 sessionStore = config.sessionStore
             }
+            route("references") {
+                get {
+                    try {
+                        val typeId = call.parameters["typeId"]?.toInt()
+                        val objectId = call.parameters["objectId"]?.toInt()
 
-            get("/references") {
-                try {
-                    val references = withContext(
-                        CredentialsContext(call.userSession.id, call.userCredentials)
-                    ) {
-                        config.polynomClient.getReference()
+                        println("typeId: $typeId objectId: $objectId")
+
+                        if (typeId == null && objectId == null) {
+                            val references = withContext(
+                                CredentialsContext(call.userSession.id, call.userCredentials)
+                            ) {
+                                config.polynomClient.references()
+                            }
+                            call.respond(HttpStatusCode.OK, references)
+                        } else {
+                            val reference = withContext(
+                                CredentialsContext(call.userSession.id, call.userCredentials)
+                            ) {
+                                config.polynomClient.reference(IdentifiableObjectTransport(
+                                    objectId!!,
+                                    typeId!!
+                                ))
+                            }
+                            call.respond(HttpStatusCode.OK, reference)
+                            println("Должен быть передан справочник с typeId=$typeId и objectId=$objectId")
+                        }
+                    } catch (e: Exception) {
+                        application.log.error("Error fetching references: ${e.message}", e)
+                        call.respond(
+                            HttpStatusCode.InternalServerError,
+                            mapOf("error" to "Ошибка получения справочников: ${e.message}")
+                        )
                     }
-                    call.respond(HttpStatusCode.OK, references)
-                } catch (e: Exception) {
-                    application.log.error("Error fetching references: ${e.message}", e)
-                    call.respond(
-                        HttpStatusCode.InternalServerError,
-                        mapOf("error" to "Ошибка получения справочников: ${e.message}")
-                    )
                 }
             }
         }
