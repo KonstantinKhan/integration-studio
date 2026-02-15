@@ -49,8 +49,8 @@ fun NamedObjectTransport.toPathElement(): PathElement =
         name = ElementName(name ?: "")
     )
 
-fun DocumentCatalogTransport.toDocumentCatalog(): DocumentCatalog =
-    DocumentCatalog(
+fun DocumentCatalogTransport.toCatalog(): Catalog =
+    Catalog(
         id = ReferenceId(id ?: ""),
         classId = ReferenceId(classId ?: ""),
         name = ElementName(name ?: ""),
@@ -99,6 +99,6 @@ fun ReferenceTransport.toReference(): Reference =
         iconColor = IconColor(iconColor ?: 0),
         writeAccess = WriteAccess(writeAccess),
         path = path?.map { it.toPathElement() } ?: emptyList(),
-        documentCatalog = documentCatalog?.toDocumentCatalog(),
+        documentCatalog = documentCatalog?.toCatalog(),
         viewpointCatalog = viewpointCatalog?.toViewpointCatalog()
     )

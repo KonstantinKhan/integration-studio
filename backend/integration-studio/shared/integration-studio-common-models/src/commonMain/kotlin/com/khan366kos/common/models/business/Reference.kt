@@ -14,6 +14,6 @@ data class Reference(
     val iconColor: IconColor,
     val writeAccess: WriteAccess,
     val path: List<PathElement>,
-    val documentCatalog: DocumentCatalog?,
+    val documentCatalog: Catalog?,
     val viewpointCatalog: ViewpointCatalog?
 )

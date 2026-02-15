@@ -18,7 +18,7 @@ data class DocumentCatalogTransport(
     val writeAccess: Boolean,
     
     @SerialName("classId")
-    val classId: String?,
+    val classId: String? = null,
     
     @SerialName("id")
     val id: String?,

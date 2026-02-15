@@ -4,7 +4,7 @@ import com.khan366kos.common.models.simple.*
 import kotlinx.serialization.Serializable
 
 @Serializable
-data class DocumentCatalog(
+data class Catalog(
     val id: ReferenceId,
     val classId: ReferenceId,
     val name: ElementName,

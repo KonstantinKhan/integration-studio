@@ -131,6 +131,7 @@ fun Application.configureRouting(config: AppConfig) {
                                 tempFile!!.writeBytes(input.readBytes())
                             }
                         }
+
                         else -> {}
                     }
                     part.dispose()
@@ -149,6 +150,7 @@ fun Application.configureRouting(config: AppConfig) {
                     is ManagedWorkbookResult.Success -> {
                         call.respond(result.etlWorkbook.toEtlWorkbookTransport())
                     }
+
                     is ManagedWorkbookResult.Failure -> {
                         call.respond(
                             HttpStatusCode.UnprocessableEntity,
@@ -181,8 +183,6 @@ fun Application.configureRouting(config: AppConfig) {
                         val typeId = call.parameters["typeId"]?.toInt()
                         val objectId = call.parameters["objectId"]?.toInt()
 
-                        println("typeId: $typeId objectId: $objectId")
-
                         if (typeId == null && objectId == null) {
                             val references = withContext(
                                 CredentialsContext(call.userSession.id, call.userCredentials)
@@ -194,10 +194,12 @@ fun Application.configureRouting(config: AppConfig) {
                             val reference = withContext(
                                 CredentialsContext(call.userSession.id, call.userCredentials)
                             ) {
-                                config.polynomClient.reference(IdentifiableObjectTransport(
-                                    objectId!!,
-                                    typeId!!
-                                ))
+                                config.polynomClient.reference(
+                                    IdentifiableObjectTransport(
+                                        objectId!!,
+                                        typeId!!
+                                    )
+                                )
                             }
                             call.respond(HttpStatusCode.OK, reference)
                             println("Должен быть передан справочник с typeId=$typeId и objectId=$objectId")
@@ -207,6 +209,38 @@ fun Application.configureRouting(config: AppConfig) {
                         call.respond(
                             HttpStatusCode.InternalServerError,
                             mapOf("error" to "Ошибка получения справочников: ${e.message}")
+                        )
+                    }
+                }
+            }
+            route("catalogs") {
+                get {
+                    try {
+                        val referenceTypeId = call.parameters["referenceTypeId"]?.toInt()
+                        val referenceObjectId = call.parameters["referenceObjectId"]?.toInt()
+                        val typeId = call.parameters["typeId"]?.toInt()
+                        val objectId = call.parameters["objectId"]?.toInt()
+
+                        if (typeId == null && objectId == null) {
+                            val catalogs = withContext(
+                                CredentialsContext(call.userSession.id, call.userCredentials)
+                            ) {
+                                config.polynomClient.catalogs(
+                                    IdentifiableObjectTransport(
+                                        referenceObjectId!!,
+                                        referenceTypeId!!
+                                    )
+                                )
+                            }
+                            call.respond(HttpStatusCode.OK, catalogs)
+                        } else {
+                            println("Тут должен возвращаться каталог с typeId $typeId и objectId=$objectId")
+                        }
+
+                    } catch (e: Exception) {
+                        call.respond(
+                            HttpStatusCode.InternalServerError,
+                            mapOf("error" to "Ошибка получения каталогов: ${e.message}")
                         )
                     }
                 }

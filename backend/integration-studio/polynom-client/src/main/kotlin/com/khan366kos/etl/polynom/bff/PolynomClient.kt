@@ -1,6 +1,7 @@
 package com.khan366kos.etl.polynom.bff
 
 import com.khan366kos.common.models.auth.UserCredentials
+import com.khan366kos.common.models.business.Catalog
 import com.khan366kos.integration.studio.transport.models.ReferenceTransport
 import com.khan366kos.integration.studio.transport.models.StorageDefinitionTransport
 import com.khan366kos.integration.studio.transport.models.UserTransport
@@ -9,21 +10,21 @@ import com.khan366kos.common.models.business.Reference
 import com.khan366kos.etl.mapper.toReference
 import com.khan366kos.common.models.business.ObjectInfo
 import com.khan366kos.common.models.simple.GroupId
-import com.khan366kos.common.models.simple.ReferenceId
 import com.khan366kos.common.responses.ElementResponse
 import com.khan366kos.common.responses.PropertyOwnerRespose
 import com.khan366kos.common.requests.CreateElementRequest
 import com.khan366kos.common.requests.PropertyAssignmentRequest
 import com.khan366kos.common.requests.PropertyOwnerRequest
+import com.khan366kos.etl.mapper.toCatalog
 import com.khan366kos.etl.polynom.bff.auth.AuthPlugin
 import com.khan366kos.etl.polynom.bff.auth.CredentialsContext
 import com.khan366kos.etl.polynom.bff.auth.SessionIdAttrKey
 import com.khan366kos.etl.polynom.bff.auth.UserCredentialsAttrKey
-import com.khan366kos.integration.studio.transport.models.ElementCatalogTransport
 import com.khan366kos.integration.studio.transport.models.ElementGroupTransport
 import com.khan366kos.integration.studio.transport.models.IdentifiableObjectTransport
 import com.khan366kos.etl.polynom.bff.auth.LoginRequest
 import com.khan366kos.etl.polynom.bff.auth.LoginResponse
+import com.khan366kos.integration.studio.transport.models.DocumentCatalogTransport
 import io.ktor.client.*
 import io.ktor.client.call.body
 import io.ktor.client.engine.cio.*
@@ -53,9 +54,10 @@ class PolynomClient {
         private const val BASE_URL = "https://delusively-altruistic-pangolin.cloudpub.ru:443"
     }
 
-    internal val _credentialsUpdates = MutableSharedFlow<Pair<String, UserCredentials>>(replay = 0, extraBufferCapacity = 64)
+    internal val _credentialsUpdates =
+        MutableSharedFlow<Pair<String, UserCredentials>>(replay = 0, extraBufferCapacity = 64)
     val credentialsUpdates = _credentialsUpdates.asSharedFlow()
-    
+
     private val tokenManager = TokenManager()
 
     val client = HttpClient(CIO) {
@@ -92,7 +94,7 @@ class PolynomClient {
         }
     }
 
-    suspend fun storageDefinitions(): ArrayList<StorageDefinitionTransport> =
+    suspend fun storageDefinitions(): List<StorageDefinitionTransport> =
         client.get("login/storage-definitions").body()
 
     suspend fun signIn(loginRequest: LoginRequest): LoginResponse = client.post("login/sign-in") {
@@ -109,15 +111,17 @@ class PolynomClient {
             .map { it.toReference() }
     }
 
-    suspend fun reference(request: IdentifiableObjectTransport): Reference = client.post("reference/get-by-id"){
+    suspend fun reference(request: IdentifiableObjectTransport): Reference = client.post("reference/get-by-id") {
         setBody(request)
     }.body<ReferenceTransport>()
         .toReference()
 
-    suspend fun getByReference(request: IdentifiableObjectTransport): Array<ElementCatalogTransport> =
+    suspend fun catalogs(request: IdentifiableObjectTransport): List<Catalog> =
         client.post("element-catalog/get-by-reference") {
             setBody(request)
-        }.body()
+        }
+            .body<List<DocumentCatalogTransport>>()
+            .map { it.toCatalog() }
 
     suspend fun getByCatalog(request: IdentifiableObjectTransport): List<ElementGroupTransport> =
         client.post("element-group/get-by-catalog") {
