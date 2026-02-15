@@ -32,7 +32,7 @@ val AuthPlugin = createClientPlugin("AuthPlugin", ::AuthPluginConfig) {
 
         val validCredentials = tokenManager.getValidCredentials(sessionId, credentials, client, baseUrl)
 
-        if (validCredentials !== credentials) {
+        if (validCredentials != credentials) {
             polynomClient._credentialsUpdates.tryEmit(Pair(sessionId, validCredentials))
         }
 
@@ -43,7 +43,6 @@ val AuthPlugin = createClientPlugin("AuthPlugin", ::AuthPluginConfig) {
 
         if (originalCall.response.status == HttpStatusCode.Unauthorized) {
             val refreshedCredentials = tokenManager.authenticate(sessionId, validCredentials, client, baseUrl)
-            polynomClient._credentialsUpdates.tryEmit(Pair(sessionId, refreshedCredentials))
 
             request.headers.remove(HttpHeaders.Authorization)
             request.headers.append(HttpHeaders.Authorization, "Bearer ${refreshedCredentials.accessToken.value}")

@@ -1,12 +1,11 @@
 package com.khan366kos.etl.ktor.server.app
 
-import com.khan366kos.etl.ktor.server.app.com.khan366kos.etl.ktor.server.app.config.AppConfig
+import com.khan366kos.etl.ktor.server.app.config.AppConfig
 import io.ktor.server.application.*
 import io.ktor.server.sessions.*
 import com.khan366kos.etl.ktor.server.app.session.InMemorySessionStore
 import com.khan366kos.etl.polynom.bff.PolynomClient
 import io.ktor.server.netty.EngineMain
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
@@ -23,9 +22,14 @@ fun Application.module() {
         polynomClient = polynomClient
     )
 
-    launch(Dispatchers.Default) {
-        polynomClient.credentialsUpdates.collect { (sessionId, credentials) ->
-            sessionStore.updateCredentials(sessionId, credentials)
+    launch {
+        try {
+            polynomClient.credentialsUpdates.collect { (sessionId, credentials) ->
+                sessionStore.updateCredentials(sessionId, credentials)
+            }
+        } catch (e: Exception) {
+            println("Error collecting credentials updates: ${e.message}")
+            e.printStackTrace()
         }
     }
 

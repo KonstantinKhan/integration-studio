@@ -52,7 +52,7 @@ class PolynomClient {
         private const val BASE_URL = "https://delusively-altruistic-pangolin.cloudpub.ru:443"
     }
 
-    internal val _credentialsUpdates = MutableSharedFlow<Pair<String, UserCredentials>>()
+    internal val _credentialsUpdates = MutableSharedFlow<Pair<String, UserCredentials>>(replay = 0, extraBufferCapacity = 64)
     val credentialsUpdates = _credentialsUpdates.asSharedFlow()
     
     private val tokenManager = TokenManager()
