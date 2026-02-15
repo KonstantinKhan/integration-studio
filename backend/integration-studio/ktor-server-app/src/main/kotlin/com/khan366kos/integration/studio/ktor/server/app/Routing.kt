@@ -215,8 +215,6 @@ fun Application.configureRouting(config: AppConfig) {
             route("catalogs") {
                 get {
                     try {
-                        println("call!")
-
                         val referenceTypeId = call.parameters["referenceTypeId"]?.toInt()
                         val referenceObjectId = call.parameters["referenceObjectId"]?.toInt()
                         val typeId = call.parameters["typeId"]?.toInt()
@@ -254,6 +252,11 @@ fun Application.configureRouting(config: AppConfig) {
                             mapOf("error" to "Ошибка получения каталогов: ${e.message}")
                         )
                     }
+                }
+            }
+            route("groups") {
+                get {
+
                 }
             }
         }
