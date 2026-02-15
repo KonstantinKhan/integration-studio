@@ -1,9 +1,9 @@
-package com.khan366kos.etl.ktor.server.app
+package com.khan366kos.integration.studio.ktor.server.app
 
-import com.khan366kos.etl.ktor.server.app.config.AppConfig
+import com.khan366kos.integration.studio.ktor.server.app.config.AppConfig
 import io.ktor.server.application.*
 import io.ktor.server.sessions.*
-import com.khan366kos.etl.ktor.server.app.session.InMemorySessionStore
+import com.khan366kos.integration.studio.ktor.server.app.session.InMemorySessionStore
 import com.khan366kos.etl.polynom.bff.PolynomClient
 import io.ktor.server.netty.EngineMain
 import kotlinx.coroutines.delay

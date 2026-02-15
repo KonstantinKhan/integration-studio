@@ -1,6 +1,6 @@
-package com.khan366kos.etl.ktor.server.app.config
+package com.khan366kos.integration.studio.ktor.server.app.config
 
-import com.khan366kos.etl.ktor.server.app.session.SessionStore
+import com.khan366kos.integration.studio.ktor.server.app.session.SessionStore
 import com.khan366kos.etl.polynom.bff.PolynomClient
 
 class AppConfig(

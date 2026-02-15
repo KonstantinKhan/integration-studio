@@ -1,12 +1,11 @@
-package com.khan366kos.etl.ktor.server.app.plugins
+package com.khan366kos.integration.studio.ktor.server.app.plugins
 
 import com.khan366kos.common.models.auth.UserCredentials
-import com.khan366kos.etl.ktor.server.app.UserSession
-import com.khan366kos.etl.ktor.server.app.session.SessionStore
+import com.khan366kos.integration.studio.ktor.server.app.UserSession
+import com.khan366kos.integration.studio.ktor.server.app.session.SessionStore
 import io.ktor.http.HttpStatusCode
 import io.ktor.server.application.*
 import io.ktor.server.response.*
-import io.ktor.server.routing.*
 import io.ktor.server.sessions.*
 import io.ktor.util.AttributeKey
 

@@ -1,4 +1,4 @@
-package com.khan366kos.etl.ktor.server.app
+package com.khan366kos.integration.studio.ktor.server.app
 
 import io.ktor.http.*
 import io.ktor.server.application.*

@@ -1,4 +1,4 @@
-package com.khan366kos.etl.ktor.server.app
+package com.khan366kos.integration.studio.ktor.server.app
 
 import com.khan366kos.common.models.auth.UserCredentials
 import com.khan366kos.common.models.auth.simple.AccessToken
@@ -8,10 +8,10 @@ import com.khan366kos.common.models.auth.simple.StorageId
 import com.khan366kos.integration.studio.transport.models.AuthorizationRequestTransport
 import com.khan366kos.etl.excel.service.ManagedWorkbookResult
 import com.khan366kos.etl.excel.service.dsl.function.useManagedWorkbook
-import com.khan366kos.etl.ktor.server.app.config.AppConfig
-import com.khan366kos.etl.ktor.server.app.plugins.SessionInterceptorPlugin
-import com.khan366kos.etl.ktor.server.app.plugins.userCredentials
-import com.khan366kos.etl.ktor.server.app.plugins.userSession
+import com.khan366kos.integration.studio.ktor.server.app.config.AppConfig
+import com.khan366kos.integration.studio.ktor.server.app.plugins.SessionInterceptorPlugin
+import com.khan366kos.integration.studio.ktor.server.app.plugins.userCredentials
+import com.khan366kos.integration.studio.ktor.server.app.plugins.userSession
 import com.khan366kos.etl.mapper.toEtlWorkbookTransport
 import com.khan366kos.etl.polynom.bff.auth.CredentialsContext
 import com.khan366kos.etl.polynom.bff.auth.LoginRequest
