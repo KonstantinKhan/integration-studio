@@ -7,7 +7,7 @@ import kotlin.jvm.JvmInline
 @Serializable
 value class TypeId(private val value: Int) {
     companion object {
-        val NONE = TypeId(0)
+        val NONE = TypeId(-1)
     }
 
     fun asString() = value.toString()

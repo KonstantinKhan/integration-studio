@@ -2,21 +2,21 @@ package com.khan366kos.etl.polynom.bff
 
 import com.khan366kos.common.models.auth.UserCredentials
 import com.khan366kos.common.models.business.Catalog
+import com.khan366kos.common.models.business.Element
 import com.khan366kos.integration.studio.transport.models.ReferenceTransport
 import com.khan366kos.integration.studio.transport.models.StorageDefinitionTransport
 import com.khan366kos.integration.studio.transport.models.UserTransport
 import com.khan366kos.etl.polynom.bff.auth.TokenManager
 import com.khan366kos.common.models.business.Reference
 import com.khan366kos.etl.mapper.toReference
-import com.khan366kos.common.models.business.ObjectInfo
 import com.khan366kos.common.models.business.elementGroup.ElementGroup
-import com.khan366kos.common.models.simple.GroupId
 import com.khan366kos.common.responses.ElementResponse
 import com.khan366kos.common.responses.PropertyOwnerRespose
 import com.khan366kos.common.requests.CreateElementRequest
 import com.khan366kos.common.requests.PropertyAssignmentRequest
 import com.khan366kos.common.requests.PropertyOwnerRequest
 import com.khan366kos.etl.mapper.toCatalog
+import com.khan366kos.etl.mapper.toElement
 import com.khan366kos.etl.mapper.toElementGroup
 import com.khan366kos.etl.polynom.bff.auth.AuthPlugin
 import com.khan366kos.etl.polynom.bff.auth.CredentialsContext
@@ -27,6 +27,7 @@ import com.khan366kos.integration.studio.transport.models.IdentifiableObjectTran
 import com.khan366kos.etl.polynom.bff.auth.LoginRequest
 import com.khan366kos.etl.polynom.bff.auth.LoginResponse
 import com.khan366kos.integration.studio.transport.models.ElementCatalogTransport
+import com.khan366kos.integration.studio.transport.models.ElementTransport
 import io.ktor.client.*
 import io.ktor.client.call.body
 import io.ktor.client.engine.cio.*
@@ -82,7 +83,7 @@ class PolynomClient {
         }
         install(Logging) {
             logger = Logger.DEFAULT
-            level = LogLevel.HEADERS
+            level = LogLevel.BODY
         }
         install(HttpTimeout) {
             requestTimeoutMillis = 120_000
@@ -130,8 +131,14 @@ class PolynomClient {
     }.body<ElementCatalogTransport>()
         .toCatalog()
 
-    suspend fun groups(request: IdentifiableObjectTransport): List<ElementGroup> =
+    suspend fun groupsByCatalog(request: IdentifiableObjectTransport): List<ElementGroup> =
         client.post("element-group/get-by-catalog") {
+            setBody(request)
+        }.body<List<ElementGroupTransport>>()
+            .map { it.toElementGroup() }
+
+    suspend fun groupsByGroup(request: IdentifiableObjectTransport): List<ElementGroup> =
+        client.post("element-group/get-by-group") {
             setBody(request)
         }.body<List<ElementGroupTransport>>()
             .map { it.toElementGroup() }
@@ -154,10 +161,11 @@ class PolynomClient {
         }.bodyAsText()
     }
 
-    suspend fun elementByGroup(groupId: GroupId): List<ObjectInfo> {
-        return client.get("element/by-element-group") {
-            parameter("elementGroupId", groupId.value)
-        }.body()
+    suspend fun elements(request: IdentifiableObjectTransport): List<Element> {
+        return client.post("element/get-by-group") {
+            setBody(request)
+        }.body<List<ElementTransport>>()
+            .map { it.toElement() }
     }
 
     fun close() {

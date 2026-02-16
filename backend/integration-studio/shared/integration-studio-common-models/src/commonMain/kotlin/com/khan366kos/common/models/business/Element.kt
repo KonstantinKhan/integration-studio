@@ -4,7 +4,7 @@ import com.khan366kos.common.models.simple.*
 import kotlinx.serialization.Serializable
 
 @Serializable
-data class ObjectInfo(
+data class Element(
     val objectId: ObjectId,
     val typeId: TypeId,
     val name: ElementName,

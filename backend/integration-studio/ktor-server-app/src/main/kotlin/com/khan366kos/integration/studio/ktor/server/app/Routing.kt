@@ -5,6 +5,7 @@ import com.khan366kos.common.models.auth.simple.AccessToken
 import com.khan366kos.common.models.auth.simple.Login
 import com.khan366kos.common.models.auth.simple.RefreshToken
 import com.khan366kos.common.models.auth.simple.StorageId
+import com.khan366kos.common.models.business.GroupContent
 import com.khan366kos.integration.studio.transport.models.AuthorizationRequestTransport
 import com.khan366kos.etl.excel.service.ManagedWorkbookResult
 import com.khan366kos.etl.excel.service.dsl.function.useManagedWorkbook
@@ -259,12 +260,12 @@ fun Application.configureRouting(config: AppConfig) {
                     try {
                         val catalogTypeId = call.parameters["catalogTypeId"]?.toInt()
                         val catalogObjectId = call.parameters["catalogObjectId"]?.toInt()
-                        val typeId = call.parameters["typeId"]?.toInt()
-                        val objectId = call.parameters["objectId"]?.toInt()
+                        val groupTypeId = call.parameters["groupTypeId"]?.toInt()
+                        val groupObjectId = call.parameters["groupObjectId"]?.toInt()
 
-                        if (typeId == null && objectId == null) {
+                        if (groupTypeId == null && groupObjectId == null) {
                             val groups = withContext(CredentialsContext(call.userSession.id, call.userCredentials)) {
-                                config.polynomClient.groups(
+                                config.polynomClient.groupsByCatalog(
                                     IdentifiableObjectTransport(
                                         catalogObjectId!!,
                                         catalogTypeId!!
@@ -273,7 +274,39 @@ fun Application.configureRouting(config: AppConfig) {
                             }
                             call.respond(HttpStatusCode.OK, groups)
                         } else {
-                            println("Должна возвращаться группа с typeId: $typeId и objectId: $objectId")
+                            val groupContent =
+                                withContext(CredentialsContext(call.userSession.id, call.userCredentials)) {
+                                    val elementGroups = config.polynomClient.groupsByGroup(
+                                        IdentifiableObjectTransport(
+                                            groupObjectId!!,
+                                            groupTypeId!!
+                                        )
+                                    )
+                                    val elements = config.polynomClient.elements(IdentifiableObjectTransport(
+                                        groupObjectId,
+                                        groupTypeId
+                                    ))
+                                    return@withContext GroupContent(elementGroups, elements)
+                                }
+                            call.respond(HttpStatusCode.OK, groupContent)
+                        }
+
+                    } catch (e: Exception) {
+
+                    }
+                }
+            }
+            route("elements") {
+                get {
+                    try {
+                        val groupTypeId = call.parameters["groupTypeId"]?.toInt()
+                        val groupObjectId = call.parameters["groupObjectId"]?.toInt()
+
+                        val elements = withContext(CredentialsContext(call.userSession.id, call.userCredentials)) {
+                            config.polynomClient.elements(IdentifiableObjectTransport(
+                                groupObjectId!!,
+                                groupTypeId!!
+                            ))
                         }
 
                     } catch (e: Exception) {

@@ -8,4 +8,9 @@ import kotlinx.serialization.Serializable
 data class OwnerGroup(
     val objectId: ObjectId,
     val typeId: TypeId
-)
+) {
+    companion object {
+
+        val NONE = OwnerGroup(ObjectId.NONE, TypeId.NONE)
+    }
+}

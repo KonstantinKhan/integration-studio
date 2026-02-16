@@ -15,6 +15,7 @@ import com.khan366kos.common.models.simple.*
 import com.khan366kos.integration.studio.transport.models.AuthorizationRequestTransport
 import com.khan366kos.integration.studio.transport.models.ElementCatalogTransport
 import com.khan366kos.integration.studio.transport.models.ElementGroupTransport
+import com.khan366kos.integration.studio.transport.models.ElementTransport
 import com.khan366kos.integration.studio.transport.models.EtlSheetTransport
 import com.khan366kos.integration.studio.transport.models.EtlWorkbookTransport
 import com.khan366kos.integration.studio.transport.models.NamedObjectTransport
@@ -135,3 +136,17 @@ fun NamedObjectTransport.toPathElementGroup(): ElementGroupPath =
         typeId = TypeId(typeId),
         name = NamePath(name ?: "")
     )
+
+fun ElementTransport.toElement(): Element = Element(
+    objectId = ObjectId(objectId),
+    typeId = TypeId(typeId),
+    name = ElementName(name),
+    iconCode = IconCode(iconCode),
+    iconColor = IconColor(iconColor ?: 0),
+    path = path?.map { it.toPathElement() } ?: emptyList(),
+    id = PathId(id ?: ""),
+    ownerGroup = ownerGroup?.let { OwnerGroup(ObjectId(it.objectId), TypeId(it.typeId)) } ?: OwnerGroup.NONE,
+    applicability = Applicability(applicability),
+    isMaterial = isMaterial,
+    isAssortmentInstancesOwner = isAssortmentInstancesOwner
+)
