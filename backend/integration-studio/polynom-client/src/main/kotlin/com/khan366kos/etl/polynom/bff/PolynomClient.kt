@@ -3,6 +3,8 @@ package com.khan366kos.etl.polynom.bff
 import com.khan366kos.common.models.auth.UserCredentials
 import com.khan366kos.common.models.business.Catalog
 import com.khan366kos.common.models.business.Element
+import com.khan366kos.common.models.business.Identifier
+import com.khan366kos.common.models.business.Owner
 import com.khan366kos.integration.studio.transport.models.ReferenceTransport
 import com.khan366kos.integration.studio.transport.models.StorageDefinitionTransport
 import com.khan366kos.integration.studio.transport.models.UserTransport
@@ -11,10 +13,9 @@ import com.khan366kos.common.models.business.Reference
 import com.khan366kos.etl.mapper.toReference
 import com.khan366kos.common.models.business.elementGroup.ElementGroup
 import com.khan366kos.common.responses.ElementResponse
-import com.khan366kos.common.responses.PropertyOwnerRespose
 import com.khan366kos.common.requests.CreateElementRequest
 import com.khan366kos.common.requests.PropertyAssignmentRequest
-import com.khan366kos.common.requests.PropertyOwnerRequest
+import com.khan366kos.common.responses.PropertyOwnerResponse
 import com.khan366kos.etl.mapper.toCatalog
 import com.khan366kos.etl.mapper.toElement
 import com.khan366kos.etl.mapper.toElementGroup
@@ -149,9 +150,10 @@ class PolynomClient {
         }.body()
     }
 
-    suspend fun propertyOwner(request: PropertyOwnerRequest): PropertyOwnerRespose {
-        return client.post("property-owner/properties") {
-            setBody(request.identifier)
+    suspend fun getProperties(request: Owner): PropertyOwnerResponse {
+        return client.post("property-owner/get-properties") {
+            contentType(ContentType.Application.Json)
+            setBody(request)
         }.body()
     }
 

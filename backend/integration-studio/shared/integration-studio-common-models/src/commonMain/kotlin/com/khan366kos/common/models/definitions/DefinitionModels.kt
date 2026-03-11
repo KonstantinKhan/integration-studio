@@ -8,22 +8,22 @@ import kotlinx.serialization.Serializable
 data class Definitions(
     val doubleProperties: List<DoubleProperty>,
     val stringProperties: List<StringProperty>,
-    val booleanProperties: List<BooleanProperty>?,
-    val colorProperties: List<ColorProperty>?,
-    val opticProperties: List<OpticProperty>?,
+    val booleanProperties: List<BooleanProperty>? = null,
+    val colorProperties: List<ColorProperty>? = null,
+    val opticProperties: List<OpticProperty>? = null,
     val dateTimeProperties: List<DateTimeProperty>,
     val imageProperties: List<ImageProperty>,
     val rtfProperties: List<RtfProperty>,
     val enumProperties: List<EnumProperty>,
-    val setProperties: List<SetProperty>?,
-    val integerProperties: List<IntegerProperty>?,
-    val binaryProperties: List<BinaryProperty>?,
-    val guidProperties: List<GuidProperty>?,
-    val enumBoolProperties: List<EnumBoolProperty>?,
-    val enumDoubleProperties: List<EnumDoubleProperty>?,
-    val enumIntProperties: List<EnumIntProperty>?,
-    val enumStringProperties: List<EnumStringProperty>?,
-    val tableProperties: List<TableProperty>?
+    val setProperties: List<SetProperty>? = null,
+    val integerProperties: List<IntegerProperty>? = null,
+    val binaryProperties: List<BinaryProperty>? = null,
+    val guidProperties: List<GuidProperty>? = null,
+    val enumBoolProperties: List<EnumBoolProperty>? = null,
+    val enumDoubleProperties: List<EnumDoubleProperty>? = null,
+    val enumIntProperties: List<EnumIntProperty>? = null,
+    val enumStringProperties: List<EnumStringProperty>? = null,
+    val tableProperties: List<TableProperty>? = null,
 )
 
 @Serializable
@@ -32,12 +32,16 @@ data class DoubleProperty(
     val typeId: TypeId,
     val id: String,
     val name: String,
-    val dataType: Int,
-    val description: String?,
+    val dataType: Int? = null,
+    val description: String? = null,
     val code: String,
     val isSystemObject: Boolean,
     val absoluteCode: String,
-    val measureEntity: Identifier
+    val measureEntity: Identifier,
+    val ownerGroup: Identifier,
+    val ownerBaseGroup: Identifier,
+    val type: Int,
+    val writeAccess: WriteAccess,
 )
 
 @Serializable
@@ -46,11 +50,15 @@ data class StringProperty(
     val typeId: TypeId,
     val id: String,
     val name: String,
-    val dataType: Int,
-    val description: String?,
+    val dataType: Int? = null,
+    val description: String? = null,
     val code: String,
     val isSystemObject: Boolean,
-    val absoluteCode: String
+    val absoluteCode: String,
+    val ownerGroup: Identifier,
+    val ownerBaseGroup: Identifier,
+    val writeAccess: WriteAccess,
+    val type: Int,
 )
 
 @Serializable
@@ -59,11 +67,15 @@ data class BooleanProperty(
     val typeId: TypeId,
     val id: String,
     val name: String,
-    val dataType: Int,
+    val dataType: Int? = null,
     val description: String,
     val code: String,
     val isSystemObject: Boolean,
-    val absoluteCode: String
+    val absoluteCode: String,
+    val ownerGroup: Identifier,
+    val ownerBaseGroup: Identifier,
+    val writeAccess: WriteAccess,
+    val type: Int,
 )
 
 @Serializable
@@ -98,11 +110,15 @@ data class DateTimeProperty(
     val typeId: TypeId,
     val id: String,
     val name: String,
-    val dataType: Int,
-    val description: String?,
+    val dataType: Int? = null,
+    val description: String? = null,
     val code: String,
     val isSystemObject: Boolean,
-    val absoluteCode: String
+    val absoluteCode: String,
+    val ownerGroup: Identifier,
+    val ownerBaseGroup: Identifier,
+    val writeAccess: WriteAccess,
+    val type: Int,
 )
 
 @Serializable
@@ -111,11 +127,15 @@ data class ImageProperty(
     val typeId: TypeId,
     val id: String,
     val name: String,
-    val dataType: Int,
-    val description: String?,
+    val dataType: Int? = null,
+    val description: String? = null,
     val code: String,
     val isSystemObject: Boolean,
-    val absoluteCode: String
+    val absoluteCode: String,
+    val ownerGroup: Identifier,
+    val ownerBaseGroup: Identifier,
+    val writeAccess: WriteAccess,
+    val type: Int,
 )
 
 @Serializable
@@ -124,11 +144,15 @@ data class RtfProperty(
     val typeId: TypeId,
     val id: String,
     val name: String,
-    val dataType: Int,
-    val description: String?,
+    val dataType: Int? = null,
+    val description: String? = null,
     val code: String,
     val isSystemObject: Boolean,
-    val absoluteCode: String
+    val absoluteCode: String,
+    val ownerGroup: Identifier,
+    val ownerBaseGroup: Identifier,
+    val writeAccess: WriteAccess,
+    val type: Int,
 )
 
 @Serializable
@@ -137,12 +161,16 @@ data class EnumProperty(
     val typeId: TypeId,
     val id: String,
     val name: String,
-    val dataType: Int,
-    val description: String?,
+    val dataType: Int? = null,
+    val description: String? = null,
     val code: String,
     val isSystemObject: Boolean,
     val absoluteCode: String,
-    val items: List<EnumItem>
+    val items: List<EnumItem>,
+    val ownerGroup: Identifier,
+    val ownerBaseGroup: Identifier,
+    val writeAccess: WriteAccess,
+    val type: Int,
 )
 
 @Serializable
@@ -270,9 +298,12 @@ data class TableProperty(
 
 @Serializable
 data class EnumItem(
-    val description: String,
     val value: String,
-    val position: Int
+    val position: Int,
+    val id: String,
+    val writeAccess: WriteAccess,
+    val typeId: Int,
+    val objectId: ObjectId,
 )
 
 @Serializable

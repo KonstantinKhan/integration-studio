@@ -14,7 +14,8 @@ data class MeasureEntity(
     val objectId: ObjectId,
     val typeId: TypeId,
     val name: String,
-    val uid: String, // Using string representation of UUID
+    val uid: String,
     val code: String,
-    val basicUnit: Identifier
+    val basicUnit: Identifier,
+    val writeAccess: WriteAccess
 )

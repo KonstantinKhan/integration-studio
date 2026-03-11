@@ -24,5 +24,6 @@ data class MeasureUnit(
     val codeOkei: String,
     val internationalDesignationOkei: String,
     val internationalLiteralDesignation: String,
-    val literalDesignation: String
+    val literalDesignation: String,
+    val writeAccess: WriteAccess
 )

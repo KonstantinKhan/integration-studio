@@ -6,6 +6,9 @@ import com.khan366kos.common.models.auth.simple.Login
 import com.khan366kos.common.models.auth.simple.RefreshToken
 import com.khan366kos.common.models.auth.simple.StorageId
 import com.khan366kos.common.models.business.GroupContent
+import com.khan366kos.common.models.business.Identifier
+import com.khan366kos.common.models.business.Owner
+import com.khan366kos.common.requests.PropertyOwnerRequest
 import com.khan366kos.integration.studio.transport.models.AuthorizationRequestTransport
 import com.khan366kos.etl.excel.service.ManagedWorkbookResult
 import com.khan366kos.etl.excel.service.dsl.function.useManagedWorkbook
@@ -312,6 +315,20 @@ fun Application.configureRouting(config: AppConfig) {
                     } catch (e: Exception) {
 
                     }
+                }
+            }
+            route("properties") {
+                post {
+                    try {
+                        val identifier: Identifier = call.receive<Identifier>()
+                        val response = withContext(CredentialsContext(call.userSession.id, call.userCredentials)) {
+                            config.polynomClient.getProperties(Owner(identifier))
+                        }
+                        call.respond(HttpStatusCode.OK, response)
+                    } catch (e: Exception) {
+                        println("Error fetching properties: ${e.message}")
+                    }
+
                 }
             }
         }
