@@ -6,9 +6,9 @@ plugins {
 dependencies {
     implementation(libs.kotlinx.coroutines.core)
 
-    implementation(projects.shared.integrationStudioTransportKmp)
-    implementation(projects.shared.integrationStudioCommonModels)
-    implementation(projects.shared.etlMapper)
+    implementation(projects.integrationStudioTransportKmp)
+    implementation(projects.integrationStudioCommonModels)
+    implementation(projects.etlMapper)
 
     implementation(libs.ktor.client.core)
     implementation(libs.ktor.client.cio)

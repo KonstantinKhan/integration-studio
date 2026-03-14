@@ -4,7 +4,14 @@ import com.khan366kos.integration.studio.ktor.server.app.config.AppConfig
 import io.ktor.server.application.*
 import io.ktor.server.sessions.*
 import com.khan366kos.integration.studio.ktor.server.app.session.InMemorySessionStore
-import com.khan366kos.etl.polynom.bff.PolynomClient
+import io.ktor.client.HttpClient
+import io.ktor.client.engine.cio.CIO
+import io.ktor.client.plugins.contentnegotiation.ContentNegotiation
+import io.ktor.client.plugins.defaultRequest
+import io.ktor.client.request.url
+import io.ktor.http.URLProtocol
+import io.ktor.http.path
+import io.ktor.serialization.kotlinx.json.json
 import io.ktor.server.netty.EngineMain
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.isActive
@@ -16,22 +23,25 @@ fun main(args: Array<String>) {
 
 fun Application.module() {
     val sessionStore = InMemorySessionStore()
-    val polynomClient = PolynomClient()
-    val config = AppConfig(
-        sessionStore = sessionStore,
-        polynomClient = polynomClient
-    )
-
-    launch {
-        try {
-            polynomClient.credentialsUpdates.collect { (sessionId, credentials) ->
-                sessionStore.updateCredentials(sessionId, credentials)
+    val httpClient = HttpClient(CIO) {
+        install(ContentNegotiation) {
+            json()
+        }
+        defaultRequest {
+            url {
+                protocol = URLProtocol.HTTPS
+                host = "delusively-altruistic-pangolin.cloudpub.ru"
+                port = 443
+                path("/api/v1/")
             }
-        } catch (e: Exception) {
-            println("Error collecting credentials updates: ${e.message}")
-            e.printStackTrace()
         }
     }
+
+    val config = AppConfig.create(
+        sessionStore = sessionStore,
+        httpClient = httpClient,
+        baseUrl = "https://delusively-altruistic-pangolin.cloudpub.ru:443/api/v1"
+    )
 
     launch {
         while (isActive) {

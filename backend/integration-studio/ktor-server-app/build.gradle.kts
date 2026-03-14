@@ -23,18 +23,18 @@ dependencies {
     implementation(libs.ktor.server.sessions)
 
     implementation(libs.ktor.client.cio)
+    implementation(libs.ktor.client.content.negotiation)
 
     implementation(libs.ktor.serialization.kotlinx.json)
 
     implementation(libs.logback.classic)
 
-    implementation(projects.shared.integrationStudioTransportKmp)
-    implementation(projects.shared.integrationStudioCommonModels)
-    implementation(projects.shared.etlMapper)
+    implementation(projects.integrationStudioTransportKmp)
+    implementation(projects.integrationStudioCommonModels)
+    implementation(projects.etlMapper)
     implementation(projects.polynomClient)
 
     implementation(projects.excelService)
-    implementation(project(":shared:etl-mapper"))
 
     testImplementation("io.ktor:ktor-server-test-host")
 }

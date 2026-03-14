@@ -1,6 +1,5 @@
 package com.khan366kos.integration.studio.ktor.server.app
 
-import com.khan366kos.common.models.auth.UserCredentials
 import com.khan366kos.common.models.auth.simple.AccessToken
 import com.khan366kos.common.models.auth.simple.Login
 import com.khan366kos.common.models.auth.simple.RefreshToken
@@ -8,7 +7,6 @@ import com.khan366kos.common.models.auth.simple.StorageId
 import com.khan366kos.common.models.business.GroupContent
 import com.khan366kos.common.models.business.Identifier
 import com.khan366kos.common.models.business.Owner
-import com.khan366kos.common.requests.PropertyOwnerRequest
 import com.khan366kos.integration.studio.transport.models.AuthorizationRequestTransport
 import com.khan366kos.etl.excel.service.ManagedWorkbookResult
 import com.khan366kos.etl.excel.service.dsl.function.useManagedWorkbook
@@ -17,9 +15,9 @@ import com.khan366kos.integration.studio.ktor.server.app.plugins.SessionIntercep
 import com.khan366kos.integration.studio.ktor.server.app.plugins.userCredentials
 import com.khan366kos.integration.studio.ktor.server.app.plugins.userSession
 import com.khan366kos.etl.mapper.toEtlWorkbookTransport
-import com.khan366kos.etl.polynom.bff.auth.CredentialsContext
 import com.khan366kos.etl.polynom.bff.auth.LoginRequest
 import com.khan366kos.integration.studio.transport.models.IdentifiableObjectTransport
+import com.khan366kos.integration.studio.transport.polynom.command.CreateReferenceCommand
 import io.ktor.http.*
 import io.ktor.http.content.*
 import io.ktor.server.application.*
@@ -29,7 +27,6 @@ import io.ktor.server.routing.*
 import io.ktor.server.sessions.get
 import io.ktor.server.sessions.sessions
 import io.ktor.server.sessions.set
-import kotlinx.coroutines.withContext
 import kotlinx.serialization.Serializable
 import java.io.File
 import java.nio.file.Files
@@ -44,11 +41,9 @@ data class SessionCheckResponse(
 
 fun Application.configureRouting(config: AppConfig) {
     routing {
-        // Public endpoints
-
         get("/storage-definitions") {
             try {
-                val storageDefinitions = config.polynomClient.storageDefinitions()
+                val storageDefinitions = config.polynomApplicationService.storageDefinitions()
                 call.respond(HttpStatusCode.OK, storageDefinitions)
             } catch (e: Exception) {
                 application.log.error("Error fetching storage definitions: ${e.message}", e)
@@ -69,7 +64,7 @@ fun Application.configureRouting(config: AppConfig) {
                     username = authRequest.username
                 )
 
-                val response = config.polynomClient.signIn(
+                val response = config.polynomApplicationService.signIn(
                     LoginRequest(
                         storageId = authRequest.storageId,
                         password = authRequest.password,
@@ -78,7 +73,7 @@ fun Application.configureRouting(config: AppConfig) {
                 )
 
                 val now = System.currentTimeMillis()
-                val credentials = UserCredentials(
+                val credentials = com.khan366kos.common.models.auth.UserCredentials(
                     login = Login(authRequest.username),
                     storageId = StorageId(authRequest.storageId),
                     accessToken = AccessToken(response.accessToken),
@@ -176,35 +171,36 @@ fun Application.configureRouting(config: AppConfig) {
             call.respondText("Hello World!")
         }
 
-        // Protected endpoints
         route("/") {
             install(SessionInterceptorPlugin) {
                 sessionStore = config.sessionStore
             }
             route("references") {
+                post("/create") {
+                    try {
+                        val request = call.receive<CreateReferenceCommand>()
+                        val reference = config.polynomApplicationService.referenceCreate(call.userSession.id, request)
+                        call.respond(HttpStatusCode.Created, reference)
+                    } catch (e: Error) {
+                        println("Error: ${e.message}")
+                    }
+                }
                 get {
                     try {
                         val typeId = call.parameters["typeId"]?.toInt()
                         val objectId = call.parameters["objectId"]?.toInt()
 
                         if (typeId == null && objectId == null) {
-                            val references = withContext(
-                                CredentialsContext(call.userSession.id, call.userCredentials)
-                            ) {
-                                config.polynomClient.references()
-                            }
+                            val references = config.polynomApplicationService.references(call.userSession.id)
                             call.respond(HttpStatusCode.OK, references)
                         } else {
-                            val reference = withContext(
-                                CredentialsContext(call.userSession.id, call.userCredentials)
-                            ) {
-                                config.polynomClient.reference(
-                                    IdentifiableObjectTransport(
-                                        objectId!!,
-                                        typeId!!
-                                    )
+                            val reference = config.polynomApplicationService.reference(
+                                call.userSession.id,
+                                IdentifiableObjectTransport(
+                                    objectId!!,
+                                    typeId!!
                                 )
-                            }
+                            )
                             call.respond(HttpStatusCode.OK, reference)
                         }
                     } catch (e: Exception) {
@@ -225,28 +221,22 @@ fun Application.configureRouting(config: AppConfig) {
                         val objectId = call.parameters["objectId"]?.toInt()
 
                         if (typeId == null && objectId == null) {
-                            val catalogs = withContext(
-                                CredentialsContext(call.userSession.id, call.userCredentials)
-                            ) {
-                                config.polynomClient.catalogs(
-                                    IdentifiableObjectTransport(
-                                        referenceObjectId!!,
-                                        referenceTypeId!!
-                                    )
+                            val catalogs = config.polynomApplicationService.catalogs(
+                                call.userSession.id,
+                                IdentifiableObjectTransport(
+                                    referenceObjectId!!,
+                                    referenceTypeId!!
                                 )
-                            }
+                            )
                             call.respond(HttpStatusCode.OK, catalogs)
                         } else {
-                            val catalog = withContext(
-                                CredentialsContext(call.userSession.id, call.userCredentials)
-                            ) {
-                                config.polynomClient.catalog(
-                                    IdentifiableObjectTransport(
-                                        objectId!!,
-                                        typeId!!
-                                    )
+                            val catalog = config.polynomApplicationService.catalog(
+                                call.userSession.id,
+                                IdentifiableObjectTransport(
+                                    objectId!!,
+                                    typeId!!
                                 )
-                            }
+                            )
                             call.respond(HttpStatusCode.OK, catalog)
                         }
 
@@ -267,30 +257,32 @@ fun Application.configureRouting(config: AppConfig) {
                         val groupObjectId = call.parameters["groupObjectId"]?.toInt()
 
                         if (groupTypeId == null && groupObjectId == null) {
-                            val groups = withContext(CredentialsContext(call.userSession.id, call.userCredentials)) {
-                                config.polynomClient.groupsByCatalog(
-                                    IdentifiableObjectTransport(
-                                        catalogObjectId!!,
-                                        catalogTypeId!!
-                                    )
+                            val groups = config.polynomApplicationService.groupsByCatalog(
+                                call.userSession.id,
+                                IdentifiableObjectTransport(
+                                    catalogObjectId!!,
+                                    catalogTypeId!!
                                 )
-                            }
+                            )
                             call.respond(HttpStatusCode.OK, groups)
                         } else {
-                            val groupContent =
-                                withContext(CredentialsContext(call.userSession.id, call.userCredentials)) {
-                                    val elementGroups = config.polynomClient.groupsByGroup(
-                                        IdentifiableObjectTransport(
-                                            groupObjectId!!,
-                                            groupTypeId!!
-                                        )
+                            val groupContent = run {
+                                val elementGroups = config.polynomApplicationService.groupsByGroup(
+                                    call.userSession.id,
+                                    IdentifiableObjectTransport(
+                                        groupObjectId!!,
+                                        groupTypeId!!
                                     )
-                                    val elements = config.polynomClient.elements(IdentifiableObjectTransport(
+                                )
+                                val elements = config.polynomApplicationService.elements(
+                                    call.userSession.id,
+                                    IdentifiableObjectTransport(
                                         groupObjectId,
                                         groupTypeId
-                                    ))
-                                    return@withContext GroupContent(elementGroups, elements)
-                                }
+                                    )
+                                )
+                                return@run GroupContent(elementGroups, elements)
+                            }
                             call.respond(HttpStatusCode.OK, groupContent)
                         }
 
@@ -305,12 +297,13 @@ fun Application.configureRouting(config: AppConfig) {
                         val groupTypeId = call.parameters["groupTypeId"]?.toInt()
                         val groupObjectId = call.parameters["groupObjectId"]?.toInt()
 
-                        val elements = withContext(CredentialsContext(call.userSession.id, call.userCredentials)) {
-                            config.polynomClient.elements(IdentifiableObjectTransport(
+                        val elements = config.polynomApplicationService.elements(
+                            call.userSession.id,
+                            IdentifiableObjectTransport(
                                 groupObjectId!!,
                                 groupTypeId!!
-                            ))
-                        }
+                            )
+                        )
 
                     } catch (e: Exception) {
 
@@ -321,9 +314,7 @@ fun Application.configureRouting(config: AppConfig) {
                 post {
                     try {
                         val identifier: Identifier = call.receive<Identifier>()
-                        val response = withContext(CredentialsContext(call.userSession.id, call.userCredentials)) {
-                            config.polynomClient.getProperties(Owner(identifier))
-                        }
+                        val response = config.polynomApplicationService.getProperties(call.userSession.id, Owner(identifier))
                         call.respond(HttpStatusCode.OK, response)
                     } catch (e: Exception) {
                         println("Error fetching properties: ${e.message}")
