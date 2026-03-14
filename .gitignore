@@ -37,3 +37,23 @@ out/
 .vscode/
 
 /.kotlin
+
+### Frontend ###
+frontend/integration-studio/node_modules/
+frontend/integration-studio/.next/
+frontend/integration-studio/.pnp/
+frontend/integration-studio/.pnp.*
+frontend/integration-studio/coverage/
+frontend/integration-studio/build/
+frontend/integration-studio/out/
+frontend/integration-studio/.env*
+frontend/integration-studio/.vercel/
+frontend/integration-studio/npm-debug.log*
+frontend/integration-studio/yarn-debug.log*
+frontend/integration-studio/yarn-error.log*
+frontend/integration-studio/.pnpm-debug.log*
+frontend/integration-studio/.yarn/*
+!frontend/integration-studio/.yarn/patches
+!frontend/integration-studio/.yarn/plugins
+!frontend/integration-studio/.yarn/releases
+!frontend/integration-studio/.yarn/versions
