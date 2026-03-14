@@ -9,6 +9,8 @@ import io.ktor.client.engine.cio.CIO
 import io.ktor.client.plugins.contentnegotiation.ContentNegotiation
 import io.ktor.client.plugins.defaultRequest
 import io.ktor.client.request.url
+import io.ktor.http.ContentType
+import io.ktor.http.contentType
 import io.ktor.http.URLProtocol
 import io.ktor.http.path
 import io.ktor.serialization.kotlinx.json.json
@@ -28,6 +30,7 @@ fun Application.module() {
             json()
         }
         defaultRequest {
+            contentType(ContentType.Application.Json)
             url {
                 protocol = URLProtocol.HTTPS
                 host = "delusively-altruistic-pangolin.cloudpub.ru"

@@ -1,5 +1,5 @@
 import type { CreateReferenceResponse } from '@/shared/schemas/create-reference-command'
-import { apiClient } from './api-client'
+import { apiClient, ApiError } from './api-client'
 import type { IReference } from '@/shared/types/reference.interface'
 
 export function fetchReferences(): Promise<IReference[]> {
@@ -17,5 +17,12 @@ export function createReference(name: string): Promise<CreateReferenceResponse> 
   return apiClient<CreateReferenceResponse>('/references/create', {
     method: 'POST',
     body: JSON.stringify({ name }),
+  })
+}
+
+export function deleteReference(typeId: number, objectId: number): Promise<void> {
+  return apiClient<void>('/references/delete', {
+    method: 'POST',
+    body: JSON.stringify({ typeId, objectId }),
   })
 }

@@ -18,6 +18,7 @@ import com.khan366kos.etl.mapper.toEtlWorkbookTransport
 import com.khan366kos.etl.polynom.bff.auth.LoginRequest
 import com.khan366kos.integration.studio.transport.models.IdentifiableObjectTransport
 import com.khan366kos.integration.studio.transport.polynom.command.CreateReferenceCommand
+import com.khan366kos.integration.studio.transport.polynom.command.DeleteReferenceCommand
 import io.ktor.http.*
 import io.ktor.http.content.*
 import io.ktor.server.application.*
@@ -183,6 +184,16 @@ fun Application.configureRouting(config: AppConfig) {
                         call.respond(HttpStatusCode.Created, reference)
                     } catch (e: Error) {
                         println("Error: ${e.message}")
+                    }
+                }
+                post("/delete") {
+                    try {
+                        val request = call.receive<DeleteReferenceCommand>()
+                        val response = config.polynomApplicationService.referenceDelete(call.userSession.id, request)
+                        call.respond(response.status)
+                    } catch (e: Error) {
+                        println("Error: ${e.message}")
+                        call.respond(HttpStatusCode.InternalServerError, e.message ?: "Unknown error")
                     }
                 }
                 get {

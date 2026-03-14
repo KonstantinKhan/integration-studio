@@ -21,6 +21,8 @@ import com.khan366kos.integration.studio.transport.models.StorageDefinitionTrans
 import com.khan366kos.integration.studio.transport.models.UserTransport
 import com.khan366kos.integration.studio.transport.polynom.command.CreateReferenceCommand
 import com.khan366kos.integration.studio.transport.polynom.command.CreateReferenceResponse
+import com.khan366kos.integration.studio.transport.polynom.command.DeleteReferenceCommand
+import io.ktor.client.statement.HttpResponse
 
 /**
  * Application-сервис для работы с Polynom API.
@@ -87,54 +89,27 @@ class PolynomApplicationService(
         val authContext = authProvider.getAuthContext(SessionId(sessionId))
         return polynomApi.reference(authContext, request)
     }
-    
-    /**
-     * Создаёт новый справочник.
-     * 
-     * @param sessionId идентификатор сессии
-     * @param request команда на создание справочника
-     * @return результат создания
-     */
+
     suspend fun referenceCreate(sessionId: String, request: CreateReferenceCommand): CreateReferenceResponse {
         val authContext = authProvider.getAuthContext(SessionId(sessionId))
         return polynomApi.referenceCreate(authContext, request)
     }
-    
-    // ==================== Catalogs ====================
-    
-    /**
-     * Получает каталоги по справочнику.
-     * 
-     * @param sessionId идентификатор сессии
-     * @param request идентификатор справочника
-     * @return список каталогов
-     */
+
+    suspend fun referenceDelete(sessionId: String, request: DeleteReferenceCommand): HttpResponse {
+        val authContext = authProvider.getAuthContext(SessionId(sessionId))
+        return polynomApi.referenceDelete(authContext, request)
+    }
+
     suspend fun catalogs(sessionId: String, request: IdentifiableObjectTransport): List<Catalog> {
         val authContext = authProvider.getAuthContext(SessionId(sessionId))
         return polynomApi.catalogs(authContext, request)
     }
-    
-    /**
-     * Получает каталог по идентификатору.
-     * 
-     * @param sessionId идентификатор сессии
-     * @param request идентификатор каталога
-     * @return каталог
-     */
+
     suspend fun catalog(sessionId: String, request: IdentifiableObjectTransport): Catalog {
         val authContext = authProvider.getAuthContext(SessionId(sessionId))
         return polynomApi.catalog(authContext, request)
     }
-    
-    // ==================== Groups ====================
-    
-    /**
-     * Получает группы элементов по каталогу.
-     * 
-     * @param sessionId идентификатор сессии
-     * @param request идентификатор каталога
-     * @return список групп
-     */
+
     suspend fun groupsByCatalog(sessionId: String, request: IdentifiableObjectTransport): List<ElementGroup> {
         val authContext = authProvider.getAuthContext(SessionId(sessionId))
         return polynomApi.groupsByCatalog(authContext, request)
