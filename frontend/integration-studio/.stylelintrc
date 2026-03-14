@@ -1,0 +1,26 @@
+{
+	"extends": [
+		"stylelint-config-standard-scss",
+		"stylelint-config-clean-order"
+	],
+	"plugins": [
+		"stylelint-scss"
+	],
+	"rules": {
+		"order/order": [
+			"custom-properties",
+			"declarations"
+		]
+	},
+	"overrides": [
+		{
+			"files": [
+				"**/*.scss"
+			],
+			"customSyntax": "postcss-scss"
+		}
+	],
+	"stylelint.validate": [
+		"scss"
+	]
+}
