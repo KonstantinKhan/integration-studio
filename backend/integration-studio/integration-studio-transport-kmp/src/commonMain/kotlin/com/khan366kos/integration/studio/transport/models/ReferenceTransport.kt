@@ -36,5 +36,9 @@ data class ReferenceTransport(
     val documentCatalog: ElementCatalogTransport? = null,
 
     @SerialName("viewpointCatalog")
-    val viewpointCatalog: ViewpointCatalogTransport? = null
+    val viewpointCatalog: ViewpointCatalogTransport? = null,
+
+    @SerialName("currentUserIsAdmin")
+    val currentUserIsAdmin: Boolean
+
 )

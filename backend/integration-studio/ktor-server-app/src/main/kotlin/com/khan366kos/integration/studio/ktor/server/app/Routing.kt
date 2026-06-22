@@ -17,6 +17,7 @@ import com.khan366kos.integration.studio.ktor.server.app.plugins.userSession
 import com.khan366kos.etl.mapper.toEtlWorkbookTransport
 import com.khan366kos.etl.polynom.bff.auth.LoginRequest
 import com.khan366kos.integration.studio.transport.models.IdentifiableObjectTransport
+import com.khan366kos.integration.studio.transport.models.ParentGroup
 import com.khan366kos.integration.studio.transport.polynom.command.CreateReferenceCommand
 import com.khan366kos.integration.studio.transport.polynom.command.DeleteReferenceCommand
 import io.ktor.http.*
@@ -28,7 +29,13 @@ import io.ktor.server.routing.*
 import io.ktor.server.sessions.get
 import io.ktor.server.sessions.sessions
 import io.ktor.server.sessions.set
+import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.flow.asFlow
+import kotlinx.coroutines.flow.flatMapMerge
+import kotlinx.coroutines.flow.flow
+import kotlinx.coroutines.flow.toList
 import kotlinx.serialization.Serializable
+import kotlin.system.measureTimeMillis
 import java.io.File
 import java.nio.file.Files
 import java.util.UUID
@@ -40,6 +47,17 @@ data class SessionCheckResponse(
     val username: String? = null
 )
 
+@Serializable
+data class TestConcurrentResponse(
+    val count: Int,
+    val concurrency: Int,
+    val elapsedMs: Long,
+    val requestsPerSec: Double,
+    val avgMsPerRequest: Double,
+    val results: List<String>
+)
+
+@OptIn(ExperimentalCoroutinesApi::class)
 fun Application.configureRouting(config: AppConfig) {
     routing {
         get("/storage-definitions") {
@@ -268,6 +286,7 @@ fun Application.configureRouting(config: AppConfig) {
                         val groupObjectId = call.parameters["groupObjectId"]?.toInt()
 
                         if (groupTypeId == null && groupObjectId == null) {
+                            println("yes")
                             val groups = config.polynomApplicationService.groupsByCatalog(
                                 call.userSession.id,
                                 IdentifiableObjectTransport(
@@ -275,6 +294,7 @@ fun Application.configureRouting(config: AppConfig) {
                                     catalogTypeId!!
                                 )
                             )
+                            println("groups: $groups")
                             call.respond(HttpStatusCode.OK, groups)
                         } else {
                             val groupContent = run {
@@ -331,6 +351,45 @@ fun Application.configureRouting(config: AppConfig) {
                         println("Error fetching properties: ${e.message}")
                     }
 
+                }
+            }
+            route("test") {
+                get {
+                    try {
+                        val groupTypeId = call.parameters["groupTypeId"]?.toInt()
+                        val groupObjectId = call.parameters["groupObjectId"]?.toInt()
+                        val count = call.parameters["count"]?.toInt() ?: 100
+                        val concurrency = call.parameters["concurrency"]?.toInt() ?: 10
+
+                        if (groupTypeId == null || groupObjectId == null) {
+                            call.respond(HttpStatusCode.BadRequest, mapOf("error" to "Missing groupTypeId or groupObjectId"))
+                            return@get
+                        }
+
+                        val sessionId = call.userSession.id
+                        val parentGroup = ParentGroup(IdentifiableObjectTransport(groupObjectId, groupTypeId))
+
+                        val results: List<String>
+                        val elapsed = measureTimeMillis {
+                            results = (1..count).asFlow()
+                                .flatMapMerge(concurrency) {
+                                    flow { emit(config.polynomApplicationService.create(sessionId, parentGroup)) }
+                                }
+                                .toList()
+                        }
+
+                        val rps = Math.round(count / (elapsed / 1000.0) * 100.0) / 100.0
+                        val avg = Math.round(elapsed.toDouble() / count * 10.0) / 10.0
+
+                        println("$count calls with concurrency=$concurrency completed in ${elapsed}ms ($rps req/s, avg ${avg}ms/req)")
+                        call.respond(HttpStatusCode.OK, TestConcurrentResponse(count, concurrency, elapsed, rps, avg, results))
+                    } catch (e: Exception) {
+                        application.log.error("Error in /test: ${e.message}", e)
+                        call.respond(
+                            HttpStatusCode.InternalServerError,
+                            mapOf("error" to "Ошибка: ${e.message}")
+                        )
+                    }
                 }
             }
         }

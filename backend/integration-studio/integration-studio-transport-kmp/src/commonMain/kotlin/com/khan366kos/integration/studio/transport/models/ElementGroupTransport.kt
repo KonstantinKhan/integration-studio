@@ -47,6 +47,9 @@ data class ElementGroupTransport(
     @SerialName("count")
     val count: Int = 0,
 
+    @SerialName("createDeleteAccess")
+    val createDeleteAccess: Boolean,
+
     @SerialName("isEntry")
     val isEntry: Boolean? = null,
 

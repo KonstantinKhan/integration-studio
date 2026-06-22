@@ -106,6 +106,7 @@ export default function CatalogPage({
         {groupsError && (
           <div className="p-4 bg-red-100 border-2 border-red-400 text-red-700 rounded-xl text-center">
             <p>Не удалось загрузить группы</p>
+            <p>{groupsError.message}</p>
           </div>
         )}
 

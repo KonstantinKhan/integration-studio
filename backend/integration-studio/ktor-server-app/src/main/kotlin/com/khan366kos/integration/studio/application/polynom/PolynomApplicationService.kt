@@ -17,6 +17,7 @@ import com.khan366kos.etl.polynom.bff.auth.AuthProvider
 import com.khan366kos.etl.polynom.bff.auth.LoginRequest
 import com.khan366kos.etl.polynom.bff.auth.LoginResponse
 import com.khan366kos.integration.studio.transport.models.IdentifiableObjectTransport
+import com.khan366kos.integration.studio.transport.models.ParentGroup
 import com.khan366kos.integration.studio.transport.models.StorageDefinitionTransport
 import com.khan366kos.integration.studio.transport.models.UserTransport
 import com.khan366kos.integration.studio.transport.polynom.command.CreateReferenceCommand
@@ -112,7 +113,10 @@ class PolynomApplicationService(
 
     suspend fun groupsByCatalog(sessionId: String, request: IdentifiableObjectTransport): List<ElementGroup> {
         val authContext = authProvider.getAuthContext(SessionId(sessionId))
-        return polynomApi.groupsByCatalog(authContext, request)
+        return try {
+            println("try")
+            polynomApi.groupsByCatalog(authContext, request) }
+        catch (e: Exception) { throw e }
     }
     
     /**
@@ -177,5 +181,10 @@ class PolynomApplicationService(
     suspend fun setPropertyValues(sessionId: String, request: PropertyAssignmentRequest): String {
         val authContext = authProvider.getAuthContext(SessionId(sessionId))
         return polynomApi.setPropertyValues(authContext, request)
+    }
+
+    suspend fun create(sessionId: String, request: ParentGroup): String {
+        val authContext = authProvider.getAuthContext(SessionId(sessionId))
+        return polynomApi.createElement(authContext, request)
     }
 }

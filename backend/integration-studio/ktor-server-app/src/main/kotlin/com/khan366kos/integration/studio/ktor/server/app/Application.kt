@@ -8,7 +8,6 @@ import io.ktor.client.HttpClient
 import io.ktor.client.engine.cio.CIO
 import io.ktor.client.plugins.contentnegotiation.ContentNegotiation
 import io.ktor.client.plugins.defaultRequest
-import io.ktor.client.request.url
 import io.ktor.http.ContentType
 import io.ktor.http.contentType
 import io.ktor.http.URLProtocol
@@ -26,15 +25,18 @@ fun main(args: Array<String>) {
 fun Application.module() {
     val sessionStore = InMemorySessionStore()
     val httpClient = HttpClient(CIO) {
+        engine {
+            maxConnectionsCount = 20
+        }
         install(ContentNegotiation) {
             json()
         }
         defaultRequest {
             contentType(ContentType.Application.Json)
             url {
-                protocol = URLProtocol.HTTPS
-                host = "delusively-altruistic-pangolin.cloudpub.ru"
-                port = 443
+                protocol = URLProtocol.HTTP
+                host = "172.23.14.181"
+                port = 5100
                 path("/api/v1/")
             }
         }
@@ -43,7 +45,7 @@ fun Application.module() {
     val config = AppConfig.create(
         sessionStore = sessionStore,
         httpClient = httpClient,
-        baseUrl = "https://delusively-altruistic-pangolin.cloudpub.ru:443/api/v1"
+        baseUrl = "http://172.23.14.181:5100/api/v1"
     )
 
     launch {

@@ -4,10 +4,7 @@ import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 
 @Serializable
-data class IdentifiableObjectTransport(
-    @SerialName("objectId")
-    val objectId: Int,
-
-    @SerialName("typeId")
-    val typeId: Int
+data class ParentGroup(
+    @SerialName("parentGroup")
+    val parentGroup: IdentifiableObjectTransport
 )

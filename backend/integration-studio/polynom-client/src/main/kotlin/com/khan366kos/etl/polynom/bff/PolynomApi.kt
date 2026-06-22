@@ -26,6 +26,7 @@ import com.khan366kos.integration.studio.transport.models.ElementTransport
 import com.khan366kos.integration.studio.transport.models.ReferenceTransport
 import com.khan366kos.integration.studio.transport.models.StorageDefinitionTransport
 import com.khan366kos.integration.studio.transport.models.IdentifiableObjectTransport
+import com.khan366kos.integration.studio.transport.models.ParentGroup
 import com.khan366kos.integration.studio.transport.models.UserTransport
 import com.khan366kos.integration.studio.transport.polynom.command.CreateReferenceCommand
 import com.khan366kos.integration.studio.transport.polynom.command.CreateReferenceResponse
@@ -107,11 +108,20 @@ class PolynomApi(
             .toCatalog()
 
     suspend fun groupsByCatalog(authContext: AuthContext, request: IdentifiableObjectTransport): List<ElementGroup> =
-        httpClient.post("element-group/get-by-catalog") {
-            authenticate(authContext)
-            setBody(request)
-        }.body<List<ElementGroupTransport>>()
-            .map { it.toElementGroup() }
+        try {
+            httpClient.post("element-group/get-by-catalog") {
+                authenticate(authContext)
+                setBody(request)
+            }.body<List<ElementGroupTransport>>()
+                .map {
+                    println("element: $it")
+                    it.toElementGroup()
+                }
+        } catch (e: Exception) {
+            println(e.message)
+            throw e
+        }
+
 
     suspend fun groupsByGroup(authContext: AuthContext, request: IdentifiableObjectTransport): List<ElementGroup> =
         httpClient.post("element-group/get-by-group") {
@@ -145,7 +155,13 @@ class PolynomApi(
             authenticate(authContext)
             setBody(request)
         }.bodyAsText()
-    
+
+    suspend fun createElement(authContext: AuthContext, request: ParentGroup): String =
+        httpClient.post("element/create") {
+            authenticate(authContext)
+            setBody(request)
+        }.bodyAsText()
+
     private suspend fun HttpRequestBuilder.authenticate(authContext: AuthContext) {
         val validCredentials = tokenManager.getValidCredentials(
             sessionId = authContext.sessionId.value,

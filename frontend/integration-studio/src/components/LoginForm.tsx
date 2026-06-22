@@ -43,13 +43,13 @@ const LoginForm = () => {
           error = 'Username must be at least 3 characters'
         }
         break
-      case 'password':
-        if (!value) {
-          error = 'Password is required'
-        } else if (value.length < 6) {
-          error = 'Password must be at least 6 characters'
-        }
-        break
+      // case 'password':
+      //   if (!value) {
+      //     error = 'Password is required'
+      //   } else if (value.length < 6) {
+      //     error = 'Password must be at least 6 characters'
+      //   }
+      //   break
       default:
         break
     }
