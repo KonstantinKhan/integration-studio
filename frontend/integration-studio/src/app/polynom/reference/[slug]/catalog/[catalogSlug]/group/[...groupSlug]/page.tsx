@@ -7,6 +7,7 @@ import { Card } from 'primereact/card'
 import { useGroupContent } from '@/hooks/useGroupContent'
 import { useElementGroups } from '@/hooks/useElementGroups'
 import { useElementProperties } from '@/hooks/useElementProperties'
+import { useGroupConcepts } from '@/hooks/useGroupConcepts'
 import { flattenProperties } from '@/utils/flattenProperties'
 
 // ─── Element view ──────────────────────────────────────────────────────────────
@@ -169,6 +170,7 @@ function GroupView({
   const [typeId, objectId] = currentSegment.split('-').map(Number)
 
   const { data, isLoading, error } = useGroupContent(typeId, objectId)
+  const { data: conceptsData, isLoading: conceptsLoading } = useGroupConcepts(typeId, objectId)
 
   const [catalogTypeId, catalogObjectId] = catalogSlug.split('-').map(Number)
   const { data: catalogGroups = [] } = useElementGroups(catalogTypeId, catalogObjectId)
@@ -240,6 +242,7 @@ function GroupView({
 
   const groups = data?.groups ?? []
   const elements = data?.elements ?? []
+  const concepts = conceptsData ?? []
 
   return (
     <div className="min-h-screen bg-linear-to-br from-stone-100 via-amber-50 to-yellow-50 p-8">
@@ -325,6 +328,43 @@ function GroupView({
                 <div className="mt-2 text-sm text-stone-600 flex gap-4">
                   <span>Type ID: {element.typeId}</span>
                   <span>Object ID: {element.objectId}</span>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+
+        <h2 className="text-2xl font-bold text-stone-800 mt-8 mb-4">Понятия</h2>
+
+        {conceptsLoading && (
+          <div
+            className="p-6 rounded-xl border-2 text-center animate-pulse"
+            style={{ backgroundColor: '#f4f1ea', borderColor: '#d2b48c' }}
+          >
+            <p className="text-stone-600">Загрузка понятий…</p>
+          </div>
+        )}
+
+        {!conceptsLoading && concepts.length === 0 && (
+          <div
+            className="p-6 rounded-xl border-2 text-center"
+            style={{ backgroundColor: '#f4f1ea', borderColor: '#d2b48c' }}
+          >
+            <p className="text-stone-600">Нет понятий</p>
+          </div>
+        )}
+
+        {concepts.length > 0 && (
+          <div className="space-y-3">
+            {concepts.map((concept) => (
+              <div
+                key={concept.name}
+                className="p-4 rounded-xl border-2 shadow-sm"
+                style={{ backgroundColor: '#f4f1ea', borderColor: '#d2b48c' }}
+              >
+                <div className="flex items-center gap-3">
+                  <i className="pi pi-tags text-xl" style={{ color: '#8b4513' }}></i>
+                  <span className="font-semibold text-stone-800">{concept.name}</span>
                 </div>
               </div>
             ))}

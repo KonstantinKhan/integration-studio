@@ -1,5 +1,6 @@
 package com.khan366kos.integration.studio.transport.models
 
+import com.khan366kos.integration.studio.transport.polynom.models.IIdentifiableObject
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 
@@ -30,11 +31,11 @@ data class ViewpointCatalogTransport(
     val typeId: Int,
 
     @SerialName("path")
-    val path: List<NamedObjectTransport>? = null,
+    val path: List<NamedObjectDto>? = null,
 
     @SerialName("count")
     val count: Int,
 
     @SerialName("reference")
-    val reference: IdentifiableObjectTransport? = null,
+    val reference: IIdentifiableObject? = null,
 )

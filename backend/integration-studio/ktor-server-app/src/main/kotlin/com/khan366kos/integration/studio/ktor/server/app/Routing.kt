@@ -12,14 +12,14 @@ import com.khan366kos.etl.excel.service.ManagedWorkbookResult
 import com.khan366kos.etl.excel.service.dsl.function.useManagedWorkbook
 import com.khan366kos.integration.studio.ktor.server.app.config.AppConfig
 import com.khan366kos.integration.studio.ktor.server.app.plugins.SessionInterceptorPlugin
-import com.khan366kos.integration.studio.ktor.server.app.plugins.userCredentials
 import com.khan366kos.integration.studio.ktor.server.app.plugins.userSession
 import com.khan366kos.etl.mapper.toEtlWorkbookTransport
 import com.khan366kos.etl.polynom.bff.auth.LoginRequest
-import com.khan366kos.integration.studio.transport.models.IdentifiableObjectTransport
+import com.khan366kos.integration.studio.ktor.server.app.routes.concept
 import com.khan366kos.integration.studio.transport.models.ParentGroup
 import com.khan366kos.integration.studio.transport.polynom.command.CreateReferenceCommand
 import com.khan366kos.integration.studio.transport.polynom.command.DeleteReferenceCommand
+import com.khan366kos.integration.studio.transport.polynom.models.IIdentifiableObject
 import io.ktor.http.*
 import io.ktor.http.content.*
 import io.ktor.server.application.*
@@ -225,7 +225,7 @@ fun Application.configureRouting(config: AppConfig) {
                         } else {
                             val reference = config.polynomApplicationService.reference(
                                 call.userSession.id,
-                                IdentifiableObjectTransport(
+                                IIdentifiableObject(
                                     objectId!!,
                                     typeId!!
                                 )
@@ -252,7 +252,7 @@ fun Application.configureRouting(config: AppConfig) {
                         if (typeId == null && objectId == null) {
                             val catalogs = config.polynomApplicationService.catalogs(
                                 call.userSession.id,
-                                IdentifiableObjectTransport(
+                                IIdentifiableObject(
                                     referenceObjectId!!,
                                     referenceTypeId!!
                                 )
@@ -261,7 +261,7 @@ fun Application.configureRouting(config: AppConfig) {
                         } else {
                             val catalog = config.polynomApplicationService.catalog(
                                 call.userSession.id,
-                                IdentifiableObjectTransport(
+                                IIdentifiableObject(
                                     objectId!!,
                                     typeId!!
                                 )
@@ -289,7 +289,7 @@ fun Application.configureRouting(config: AppConfig) {
                             println("yes")
                             val groups = config.polynomApplicationService.groupsByCatalog(
                                 call.userSession.id,
-                                IdentifiableObjectTransport(
+                                IIdentifiableObject(
                                     catalogObjectId!!,
                                     catalogTypeId!!
                                 )
@@ -300,14 +300,14 @@ fun Application.configureRouting(config: AppConfig) {
                             val groupContent = run {
                                 val elementGroups = config.polynomApplicationService.groupsByGroup(
                                     call.userSession.id,
-                                    IdentifiableObjectTransport(
+                                    IIdentifiableObject(
                                         groupObjectId!!,
                                         groupTypeId!!
                                     )
                                 )
                                 val elements = config.polynomApplicationService.elements(
                                     call.userSession.id,
-                                    IdentifiableObjectTransport(
+                                    IIdentifiableObject(
                                         groupObjectId,
                                         groupTypeId
                                     )
@@ -330,7 +330,7 @@ fun Application.configureRouting(config: AppConfig) {
 
                         val elements = config.polynomApplicationService.elements(
                             call.userSession.id,
-                            IdentifiableObjectTransport(
+                            IIdentifiableObject(
                                 groupObjectId!!,
                                 groupTypeId!!
                             )
@@ -367,7 +367,7 @@ fun Application.configureRouting(config: AppConfig) {
                         }
 
                         val sessionId = call.userSession.id
-                        val parentGroup = ParentGroup(IdentifiableObjectTransport(groupObjectId, groupTypeId))
+                        val parentGroup = ParentGroup(IIdentifiableObject(groupObjectId, groupTypeId))
 
                         val results: List<String>
                         val elapsed = measureTimeMillis {
@@ -392,6 +392,7 @@ fun Application.configureRouting(config: AppConfig) {
                     }
                 }
             }
+            concept(config.polynomApplicationService)
         }
     }
 }

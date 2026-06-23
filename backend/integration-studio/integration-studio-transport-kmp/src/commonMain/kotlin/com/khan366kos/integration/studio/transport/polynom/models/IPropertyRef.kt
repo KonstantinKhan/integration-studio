@@ -1,0 +1,49 @@
+package com.khan366kos.integration.studio.transport.polynom.models
+
+import kotlinx.serialization.SerialName
+import kotlinx.serialization.Serializable
+
+@Serializable
+data class IPropertyRef(
+    @SerialName("name")
+    val name: String? = null,
+
+    @SerialName("id")
+    val id: String? = null,
+
+    @SerialName("writeAccess")
+    val writeAccess: Boolean,
+
+    @SerialName("objectId")
+    val objectId: Int,
+
+    @SerialName("typeId")
+    val typeId: Int,
+
+    @SerialName("type")
+    val type: Int,
+
+    @SerialName("isOwn")
+    val isOwn: Boolean,
+
+    @SerialName("isLinked")
+    val isLinked: Boolean,
+
+    @SerialName("contract")
+    val contract: IIdentifiableObject,
+
+    @SerialName("definition")
+    val definition: IIdentifiableObject,
+
+    @SerialName("contractPropertySource")
+    val contractPropertySource: IIdentifiableObject,
+
+    @SerialName("linkedPropertyInfo")
+    val linkedPropertyInfo: ILinkedPropertyRef,
+
+    @SerialName("value")
+    val value: IIdentifiableObject,
+
+    @SerialName("evaluationPropertyInfo")
+    val evaluationPropertyInfo: IEvaluationPropertyRef,
+)

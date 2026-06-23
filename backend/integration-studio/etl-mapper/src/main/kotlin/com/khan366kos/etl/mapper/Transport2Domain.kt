@@ -12,13 +12,14 @@ import com.khan366kos.common.models.business.elementGroup.simple.ElementGroupNam
 import com.khan366kos.common.models.business.elementGroup.simple.ElementGroupPath
 import com.khan366kos.common.models.definitions.StorageDefinition
 import com.khan366kos.common.models.simple.*
+import com.khan366kos.common.polynom.models.Reference
 import com.khan366kos.integration.studio.transport.models.AuthorizationRequestTransport
 import com.khan366kos.integration.studio.transport.models.ElementCatalogTransport
 import com.khan366kos.integration.studio.transport.models.ElementGroupTransport
 import com.khan366kos.integration.studio.transport.models.ElementTransport
 import com.khan366kos.integration.studio.transport.models.EtlSheetTransport
 import com.khan366kos.integration.studio.transport.models.EtlWorkbookTransport
-import com.khan366kos.integration.studio.transport.models.NamedObjectTransport
+import com.khan366kos.integration.studio.transport.models.NamedObjectDto
 import com.khan366kos.integration.studio.transport.models.ReferenceTransport
 import com.khan366kos.integration.studio.transport.models.StorageDefinitionTransport
 import com.khan366kos.integration.studio.transport.models.ViewpointCatalogTransport
@@ -48,7 +49,7 @@ fun AuthorizationRequestTransport.toAuthorizationCredentials(): AuthorizationCre
         storageId = this.storageId
     )
 
-fun NamedObjectTransport.toPathElement(): PathElement =
+fun NamedObjectDto.toPathElement(): PathElement =
     PathElement(
         objectId = ObjectId(objectId),
         typeId = TypeId(typeId),
@@ -130,7 +131,7 @@ fun ElementGroupTransport.toElementGroup(): ElementGroup =
         isAllPartSizesTab = isAllPartSizesTab ?: false,
     )
 
-fun NamedObjectTransport.toPathElementGroup(): ElementGroupPath =
+fun NamedObjectDto.toPathElementGroup(): ElementGroupPath =
     ElementGroupPath(
         objectId = ObjectId(objectId),
         typeId = TypeId(typeId),

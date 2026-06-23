@@ -1,5 +1,6 @@
 package com.khan366kos.integration.studio.transport.models
 
+import com.khan366kos.integration.studio.transport.polynom.models.IIdentifiableObject
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 
@@ -21,10 +22,10 @@ data class UserOptionsTransport(
     val objectsAutoSave: Boolean = false,
 
     @SerialName("favoritesCatalog")
-    val favoritesCatalog: IdentifiableObjectTransport? = null,
+    val favoritesCatalog: IIdentifiableObject? = null,
 
     @SerialName("storedConditions")
-    val storedConditions: List<IdentifiableObjectTransport>? = null,
+    val storedConditions: List<IIdentifiableObject>? = null,
 
     @SerialName("additionalUserOptions")
     val additionalUserOptions: AdditionalUserOptionsTransport? = null

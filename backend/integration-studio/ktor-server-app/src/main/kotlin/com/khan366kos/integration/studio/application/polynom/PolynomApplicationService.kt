@@ -4,25 +4,24 @@ import com.khan366kos.common.models.auth.SessionId
 import com.khan366kos.common.models.business.Catalog
 import com.khan366kos.common.models.business.Element
 import com.khan366kos.common.models.business.Owner
-import com.khan366kos.common.models.business.Reference
+import com.khan366kos.common.polynom.models.Reference
 import com.khan366kos.common.models.business.elementGroup.ElementGroup
-import com.khan366kos.common.models.auth.simple.AccessToken
-import com.khan366kos.common.models.auth.simple.RefreshToken
 import com.khan366kos.common.requests.CreateElementRequest
-import com.khan366kos.common.requests.PropertyAssignmentRequest
 import com.khan366kos.common.responses.ElementResponse
-import com.khan366kos.common.responses.PropertyOwnerResponse
+import com.khan366kos.integration.studio.transport.polynom.response.IPropertyOwnerResponse
 import com.khan366kos.etl.polynom.bff.PolynomApi
 import com.khan366kos.etl.polynom.bff.auth.AuthProvider
 import com.khan366kos.etl.polynom.bff.auth.LoginRequest
 import com.khan366kos.etl.polynom.bff.auth.LoginResponse
-import com.khan366kos.integration.studio.transport.models.IdentifiableObjectTransport
 import com.khan366kos.integration.studio.transport.models.ParentGroup
 import com.khan366kos.integration.studio.transport.models.StorageDefinitionTransport
 import com.khan366kos.integration.studio.transport.models.UserTransport
 import com.khan366kos.integration.studio.transport.polynom.command.CreateReferenceCommand
 import com.khan366kos.integration.studio.transport.polynom.command.CreateReferenceResponse
 import com.khan366kos.integration.studio.transport.polynom.command.DeleteReferenceCommand
+import com.khan366kos.integration.studio.transport.polynom.models.IIdentifiableObject
+import com.khan366kos.integration.studio.transport.polynom.request.GroupRequestDto
+import com.khan366kos.integration.studio.transport.polynom.response.AppointedConceptsDto
 import io.ktor.client.statement.HttpResponse
 
 /**
@@ -86,7 +85,7 @@ class PolynomApplicationService(
      * @param request идентификатор справочника
      * @return справочник
      */
-    suspend fun reference(sessionId: String, request: IdentifiableObjectTransport): Reference {
+    suspend fun reference(sessionId: String, request: IIdentifiableObject): Reference {
         val authContext = authProvider.getAuthContext(SessionId(sessionId))
         return polynomApi.reference(authContext, request)
     }
@@ -101,17 +100,17 @@ class PolynomApplicationService(
         return polynomApi.referenceDelete(authContext, request)
     }
 
-    suspend fun catalogs(sessionId: String, request: IdentifiableObjectTransport): List<Catalog> {
+    suspend fun catalogs(sessionId: String, request: IIdentifiableObject): List<Catalog> {
         val authContext = authProvider.getAuthContext(SessionId(sessionId))
         return polynomApi.catalogs(authContext, request)
     }
 
-    suspend fun catalog(sessionId: String, request: IdentifiableObjectTransport): Catalog {
+    suspend fun catalog(sessionId: String, request: IIdentifiableObject): Catalog {
         val authContext = authProvider.getAuthContext(SessionId(sessionId))
         return polynomApi.catalog(authContext, request)
     }
 
-    suspend fun groupsByCatalog(sessionId: String, request: IdentifiableObjectTransport): List<ElementGroup> {
+    suspend fun groupsByCatalog(sessionId: String, request: IIdentifiableObject): List<ElementGroup> {
         val authContext = authProvider.getAuthContext(SessionId(sessionId))
         return try {
             println("try")
@@ -126,7 +125,7 @@ class PolynomApplicationService(
      * @param request идентификатор группы
      * @return список групп
      */
-    suspend fun groupsByGroup(sessionId: String, request: IdentifiableObjectTransport): List<ElementGroup> {
+    suspend fun groupsByGroup(sessionId: String, request: IIdentifiableObject): List<ElementGroup> {
         val authContext = authProvider.getAuthContext(SessionId(sessionId))
         return polynomApi.groupsByGroup(authContext, request)
     }
@@ -152,7 +151,7 @@ class PolynomApplicationService(
      * @param request идентификатор группы
      * @return список элементов
      */
-    suspend fun elements(sessionId: String, request: IdentifiableObjectTransport): List<Element> {
+    suspend fun elements(sessionId: String, request: IIdentifiableObject): List<Element> {
         val authContext = authProvider.getAuthContext(SessionId(sessionId))
         return polynomApi.elements(authContext, request)
     }
@@ -166,25 +165,20 @@ class PolynomApplicationService(
      * @param request владелец (тип + объект)
      * @return свойства владельца
      */
-    suspend fun getProperties(sessionId: String, request: Owner): PropertyOwnerResponse {
+    suspend fun getProperties(sessionId: String, request: Owner): IPropertyOwnerResponse {
         val authContext = authProvider.getAuthContext(SessionId(sessionId))
         return polynomApi.getProperties(authContext, request)
     }
-    
-    /**
-     * Устанавливает значения свойств владельца.
-     * 
-     * @param sessionId идентификатор сессии
-     * @param request назначение свойств
-     * @return результат операции
-     */
-    suspend fun setPropertyValues(sessionId: String, request: PropertyAssignmentRequest): String {
-        val authContext = authProvider.getAuthContext(SessionId(sessionId))
-        return polynomApi.setPropertyValues(authContext, request)
-    }
+
 
     suspend fun create(sessionId: String, request: ParentGroup): String {
         val authContext = authProvider.getAuthContext(SessionId(sessionId))
         return polynomApi.createElement(authContext, request)
+    }
+
+    suspend fun conceptGetByConceptAppointer(sessionId: String, request: GroupRequestDto): AppointedConceptsDto {
+        val authContext = authProvider.getAuthContext(SessionId(sessionId))
+        println("request: ${request.group}")
+        return polynomApi.conceptGetByConceptAppointer(authContext, request.group)
     }
 }

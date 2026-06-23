@@ -4,14 +4,11 @@ import com.khan366kos.common.models.auth.AuthContext
 import com.khan366kos.common.models.business.Catalog
 import com.khan366kos.common.models.business.Element
 import com.khan366kos.common.models.business.Owner
-import com.khan366kos.common.models.business.Reference
+import com.khan366kos.common.polynom.models.Reference
 import com.khan366kos.common.models.business.elementGroup.ElementGroup
-import com.khan366kos.common.models.auth.simple.AccessToken
-import com.khan366kos.common.models.auth.simple.RefreshToken
 import com.khan366kos.common.requests.CreateElementRequest
-import com.khan366kos.common.requests.PropertyAssignmentRequest
 import com.khan366kos.common.responses.ElementResponse
-import com.khan366kos.common.responses.PropertyOwnerResponse
+import com.khan366kos.integration.studio.transport.polynom.response.IPropertyOwnerResponse
 import com.khan366kos.etl.mapper.toCatalog
 import com.khan366kos.etl.mapper.toCreateReferenceResponse
 import com.khan366kos.etl.mapper.toElement
@@ -25,19 +22,18 @@ import com.khan366kos.integration.studio.transport.models.ElementGroupTransport
 import com.khan366kos.integration.studio.transport.models.ElementTransport
 import com.khan366kos.integration.studio.transport.models.ReferenceTransport
 import com.khan366kos.integration.studio.transport.models.StorageDefinitionTransport
-import com.khan366kos.integration.studio.transport.models.IdentifiableObjectTransport
 import com.khan366kos.integration.studio.transport.models.ParentGroup
 import com.khan366kos.integration.studio.transport.models.UserTransport
 import com.khan366kos.integration.studio.transport.polynom.command.CreateReferenceCommand
 import com.khan366kos.integration.studio.transport.polynom.command.CreateReferenceResponse
 import com.khan366kos.integration.studio.transport.polynom.command.DeleteReferenceCommand
+import com.khan366kos.integration.studio.transport.polynom.models.IIdentifiableObject
+import com.khan366kos.integration.studio.transport.polynom.response.AppointedConceptsDto
 import io.ktor.client.HttpClient
 import io.ktor.client.call.body
 import io.ktor.client.request.HttpRequestBuilder
-import io.ktor.client.request.delete
 import io.ktor.client.request.header
 import io.ktor.client.request.post
-import io.ktor.client.request.put
 import io.ktor.client.request.setBody
 import io.ktor.client.request.get
 import io.ktor.client.statement.HttpResponse
@@ -70,7 +66,7 @@ class PolynomApi(
             .map { it.toReference() }
     }
 
-    suspend fun reference(authContext: AuthContext, request: IdentifiableObjectTransport): Reference =
+    suspend fun reference(authContext: AuthContext, request: IIdentifiableObject): Reference =
         httpClient.post("reference/get-by-id") {
             authenticate(authContext)
             setBody(request)
@@ -90,7 +86,7 @@ class PolynomApi(
             setBody(request)
         }
 
-    suspend fun catalogs(authContext: AuthContext, request: IdentifiableObjectTransport): List<Catalog> =
+    suspend fun catalogs(authContext: AuthContext, request: IIdentifiableObject): List<Catalog> =
         httpClient.post("element-catalog/get-by-reference") {
             authenticate(authContext)
             setBody(request)
@@ -100,14 +96,14 @@ class PolynomApi(
     /**
      * Получает каталог по идентификатору.
      */
-    suspend fun catalog(authContext: AuthContext, request: IdentifiableObjectTransport): Catalog =
+    suspend fun catalog(authContext: AuthContext, request: IIdentifiableObject): Catalog =
         httpClient.post("element-catalog/get-by-id") {
             authenticate(authContext)
             setBody(request)
         }.body<ElementCatalogTransport>()
             .toCatalog()
 
-    suspend fun groupsByCatalog(authContext: AuthContext, request: IdentifiableObjectTransport): List<ElementGroup> =
+    suspend fun groupsByCatalog(authContext: AuthContext, request: IIdentifiableObject): List<ElementGroup> =
         try {
             httpClient.post("element-group/get-by-catalog") {
                 authenticate(authContext)
@@ -123,7 +119,7 @@ class PolynomApi(
         }
 
 
-    suspend fun groupsByGroup(authContext: AuthContext, request: IdentifiableObjectTransport): List<ElementGroup> =
+    suspend fun groupsByGroup(authContext: AuthContext, request: IIdentifiableObject): List<ElementGroup> =
         httpClient.post("element-group/get-by-group") {
             authenticate(authContext)
             setBody(request)
@@ -136,31 +132,34 @@ class PolynomApi(
             setBody(request)
         }.body()
 
-    suspend fun elements(authContext: AuthContext, request: IdentifiableObjectTransport): List<Element> =
+    suspend fun elements(authContext: AuthContext, request: IIdentifiableObject): List<Element> =
         httpClient.post("element/get-by-group") {
             authenticate(authContext)
             setBody(request)
         }.body<List<ElementTransport>>()
             .map { it.toElement() }
 
-    suspend fun getProperties(authContext: AuthContext, request: Owner): PropertyOwnerResponse =
+    suspend fun getProperties(authContext: AuthContext, request: Owner): IPropertyOwnerResponse =
         httpClient.post("property-owner/get-properties") {
             authenticate(authContext)
             contentType(ContentType.Application.Json)
             setBody(request)
         }.body()
 
-    suspend fun setPropertyValues(authContext: AuthContext, request: PropertyAssignmentRequest): String =
-        httpClient.put("property-owner/set-property-values") {
-            authenticate(authContext)
-            setBody(request)
-        }.bodyAsText()
-
     suspend fun createElement(authContext: AuthContext, request: ParentGroup): String =
         httpClient.post("element/create") {
             authenticate(authContext)
             setBody(request)
         }.bodyAsText()
+
+    suspend fun conceptGetByConceptAppointer(
+        authContext: AuthContext,
+        request: IIdentifiableObject
+    ): AppointedConceptsDto =
+        httpClient.post("concept/get-by-concept-appointer") {
+            authenticate(authContext)
+            setBody(request)
+        }.body()
 
     private suspend fun HttpRequestBuilder.authenticate(authContext: AuthContext) {
         val validCredentials = tokenManager.getValidCredentials(

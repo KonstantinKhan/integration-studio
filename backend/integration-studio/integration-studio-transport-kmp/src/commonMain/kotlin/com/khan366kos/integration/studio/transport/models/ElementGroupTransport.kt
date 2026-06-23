@@ -1,5 +1,6 @@
 package com.khan366kos.integration.studio.transport.models
 
+import com.khan366kos.integration.studio.transport.polynom.models.IIdentifiableObject
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 
@@ -33,13 +34,13 @@ data class ElementGroupTransport(
     val typeId: Int,
 
     @SerialName("path")
-    val path: List<NamedObjectTransport>? = null,
+    val path: List<NamedObjectDto>? = null,
 
     @SerialName("parentCatalog")
-    val parentCatalog: IdentifiableObjectTransport? = null,
+    val parentCatalog: IIdentifiableObject? = null,
 
     @SerialName("parentGroup")
-    val parentGroup: IdentifiableObjectTransport? = null,
+    val parentGroup: IIdentifiableObject? = null,
 
     @SerialName("hasObjects")
     val hasObjects: Boolean = false,

@@ -1,5 +1,6 @@
 package com.khan366kos.integration.studio.transport.models
 
+import com.khan366kos.integration.studio.transport.polynom.models.IIdentifiableObject
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 
@@ -22,9 +23,9 @@ data class ElementTransport(
     @SerialName("typeId")
     val typeId: Int,
     @SerialName("path")
-    val path: List<NamedObjectTransport>? = null,
+    val path: List<NamedObjectDto>? = null,
     @SerialName("ownerGroup")
-    val ownerGroup: IdentifiableObjectTransport? = null,
+    val ownerGroup: IIdentifiableObject? = null,
     @SerialName("isMaterial")
     val isMaterial: Boolean,
     @SerialName("isAssortmentInstancesOwner")

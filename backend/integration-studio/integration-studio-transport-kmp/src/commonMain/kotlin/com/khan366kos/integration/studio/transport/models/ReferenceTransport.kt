@@ -30,7 +30,7 @@ data class ReferenceTransport(
     val typeId: Int,
 
     @SerialName("path")
-    val path: List<NamedObjectTransport>? = null,
+    val path: List<NamedObjectDto>? = null,
 
     @SerialName("documentCatalog")
     val documentCatalog: ElementCatalogTransport? = null,

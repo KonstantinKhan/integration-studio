@@ -18,3 +18,4 @@ dependencyResolutionManagement {
 include("integration-studio-polynom")
 include("integration-studio-polynom:reference-service")
 include("integration-studio-polynom:reference-service")
+include("integration-studio-mapping")

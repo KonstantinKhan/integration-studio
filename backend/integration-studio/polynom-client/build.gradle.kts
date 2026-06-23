@@ -9,6 +9,7 @@ dependencies {
     implementation(projects.integrationStudioTransportKmp)
     implementation(projects.integrationStudioCommonModels)
     implementation(projects.etlMapper)
+    implementation(projects.integrationStudioMapping)
 
     implementation(libs.ktor.client.core)
     implementation(libs.ktor.client.cio)
