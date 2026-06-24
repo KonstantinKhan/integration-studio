@@ -2,6 +2,7 @@ package com.khan366kos.integration.studio.transport.polynom.models
 
 import com.khan366kos.integration.studio.transport.polynom.models.definitions.IEnumDoublePropertyValue
 import com.khan366kos.integration.studio.transport.polynom.models.definitions.IEnumIntPropertyValue
+import com.khan366kos.integration.studio.transport.polynom.models.definitions.IEnumStringPropertyValue
 import com.khan366kos.integration.studio.transport.polynom.models.definitions.items.IEnumStringItem
 import com.khan366kos.integration.studio.transport.polynom.models.properties.IBinaryPropertyValue
 import com.khan366kos.integration.studio.transport.polynom.models.properties.IBooleanPropertyValue
@@ -72,7 +73,7 @@ data class IAblePropertyValues(
     val enumIntProperties: List<IEnumIntPropertyValue>? = null,
 
     @SerialName("enumStringProperties")
-    val enumStringProperties: List<IEnumStringItem>? = null,
+    val enumStringProperties: List<IEnumStringPropertyValue>? = null,
 
     @SerialName("tableProperties")
     val tableProperties: List<ITablePropertyValue>? = null

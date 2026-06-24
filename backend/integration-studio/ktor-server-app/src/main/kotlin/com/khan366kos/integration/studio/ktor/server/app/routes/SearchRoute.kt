@@ -18,4 +18,10 @@ fun Route.search(service: PolynomApplicationService): Route = route("search") {
         println("result: $result")
         call.respond(HttpStatusCode.OK, result)
     }
+
+    post("changed-objects") {
+        val request = call.receive<IPropertySearchRequest>()
+        val result = service.searchChangedObjects(call.userSession.id, request)
+        call.respond(HttpStatusCode.OK, result)
+    }
 }

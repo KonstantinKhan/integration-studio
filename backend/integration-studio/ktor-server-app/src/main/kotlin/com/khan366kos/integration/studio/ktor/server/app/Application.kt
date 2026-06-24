@@ -7,6 +7,7 @@ import io.ktor.server.sessions.*
 import com.khan366kos.integration.studio.ktor.server.app.session.InMemorySessionStore
 import io.ktor.client.HttpClient
 import io.ktor.client.engine.cio.CIO
+import io.ktor.client.engine.cio.endpoint
 import io.ktor.client.plugins.contentnegotiation.ContentNegotiation
 import io.ktor.client.plugins.defaultRequest
 import io.ktor.http.ContentType
@@ -30,6 +31,12 @@ fun Application.module() {
     val httpClient = HttpClient(CIO) {
         engine {
             maxConnectionsCount = 20
+            endpoint {
+                connectTimeout = 30_000
+                socketTimeout = 30_000
+                keepAliveTime = 60_000
+            }
+            requestTimeout = 60_000
         }
         install(ContentNegotiation) {
             json(Json {
@@ -47,7 +54,6 @@ fun Application.module() {
                 path("/api/v1/")
             }
         }
-
     }
 
     val config = AppConfig.create(

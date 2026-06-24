@@ -1,6 +1,7 @@
 'use client'
 
 import { useState } from 'react'
+import Link from 'next/link'
 import { Button } from 'primereact/button'
 import { apiClient } from '@/api/api-client'
 
@@ -26,7 +27,12 @@ const Header = () => {
       className="flex items-center justify-between px-8 py-4 border-b-2 shadow-sm"
       style={{ backgroundColor: '#f4f1ea', borderColor: '#d2b48c' }}
     >
-      <h1 className="text-xl font-bold text-stone-800">Integration Studio</h1>
+      <div className="flex items-center gap-3">
+        <h1 className="text-xl font-bold text-stone-800">Integration Studio</h1>
+        <Link href="/polynom/changes">
+          <Button label="Изменения" icon="pi pi-history" size="small" outlined />
+        </Link>
+      </div>
 
       <div className="flex items-center gap-4">
         {error && (

@@ -43,7 +43,7 @@ data class IDoublePropertyDefinition(
     val ownerGroup: IIdentifiableObject,
 
     @SerialName("defaultPropertyValue")
-    val defaultPropertyValue: IIdentifiableObject,
+    val defaultPropertyValue: IIdentifiableObject? = null,
 
     @SerialName("measureEntity")
     val measureEntity: IIdentifiableObject,

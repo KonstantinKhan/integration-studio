@@ -5,8 +5,11 @@ import com.khan366kos.common.models.business.Catalog
 import com.khan366kos.common.models.business.Element
 import com.khan366kos.common.polynom.models.Reference
 import com.khan366kos.common.models.business.elementGroup.ElementGroup
+import com.khan366kos.common.models.PropertyResult
+import com.khan366kos.common.models.PropertyValue
 import com.khan366kos.common.requests.CreateElementRequest
 import com.khan366kos.common.responses.ElementResponse
+import com.khan366kos.integration.studio.ktor.server.app.dto.EnrichedSearchResultItem
 import com.khan366kos.integration.studio.transport.polynom.response.IPropertyOwnerResponse
 import com.khan366kos.etl.polynom.bff.PolynomApi
 import com.khan366kos.etl.polynom.bff.auth.AuthProvider
@@ -25,6 +28,9 @@ import com.khan366kos.integration.studio.transport.polynom.request.OwnerRequest
 import com.khan366kos.integration.studio.transport.polynom.response.AppointedConceptsDto
 import com.khan366kos.integration.studio.transport.polynom.response.IPropertySearchResultObjectIPaginatedList
 import io.ktor.client.statement.HttpResponse
+import kotlinx.coroutines.async
+import kotlinx.coroutines.awaitAll
+import kotlinx.coroutines.coroutineScope
 
 /**
  * Application-сервис для работы с Polynom API.
@@ -39,9 +45,9 @@ class PolynomApplicationService(
     private val authProvider: AuthProvider,
     private val polynomApi: PolynomApi
 ) {
-    
+
     // ==================== Authentication ====================
-    
+
     /**
      * Получает список определений хранилищ (не требует аутентификации).
      */
@@ -50,7 +56,7 @@ class PolynomApplicationService(
 
     suspend fun signIn(loginRequest: LoginRequest): LoginResponse =
         polynomApi.signIn(loginRequest)
-    
+
     /**
      * Получает информацию о текущем пользователе.
      * 
@@ -61,9 +67,9 @@ class PolynomApplicationService(
         val authContext = authProvider.getAuthContext(SessionId(sessionId))
         return polynomApi.currentUserInfo(authContext)
     }
-    
+
     // ==================== References ====================
-    
+
     /**
      * Получает все справочники.
      * 
@@ -74,7 +80,7 @@ class PolynomApplicationService(
         val authContext = authProvider.getAuthContext(SessionId(sessionId))
         return polynomApi.references(authContext)
     }
-    
+
     /**
      * Получает справочник по идентификатору.
      * 
@@ -111,10 +117,12 @@ class PolynomApplicationService(
         val authContext = authProvider.getAuthContext(SessionId(sessionId))
         return try {
             println("try")
-            polynomApi.groupsByCatalog(authContext, request) }
-        catch (e: Exception) { throw e }
+            polynomApi.groupsByCatalog(authContext, request)
+        } catch (e: Exception) {
+            throw e
+        }
     }
-    
+
     /**
      * Получает группы элементов по группе.
      * 
@@ -126,9 +134,9 @@ class PolynomApplicationService(
         val authContext = authProvider.getAuthContext(SessionId(sessionId))
         return polynomApi.groupsByGroup(authContext, request)
     }
-    
+
     // ==================== Elements ====================
-    
+
     /**
      * Создаёт новый элемент.
      * 
@@ -140,7 +148,7 @@ class PolynomApplicationService(
         val authContext = authProvider.getAuthContext(SessionId(sessionId))
         return polynomApi.element(authContext, request)
     }
-    
+
     /**
      * Получает элементы по группе.
      * 
@@ -158,6 +166,49 @@ class PolynomApplicationService(
         return polynomApi.getProperties(authContext, request)
     }
 
+    suspend fun getPropertiesEnriched(sessionId: String, request: OwnerRequest): List<PropertyResult> {
+        val response = getProperties(sessionId, request)
+
+        val valueIndex = mutableMapOf<Pair<Int, Int>, PropertyValue>()
+
+        response.values.stringProperties?.forEach { value ->
+            valueIndex[value.typeId to value.objectId] =
+                PropertyValue.StringVal(value.value ?: "Unknown", value.typeId, value.objectId)
+        }
+
+        response.values.dateTimeProperties?.forEach { value ->
+            valueIndex[value.typeId to value.objectId] =
+                PropertyValue.DateTimeVal(value.value.value, value.typeId, value.objectId)
+        }
+
+        response.values.booleanProperties?.forEach { value ->
+            valueIndex[value.typeId to value.objectId] =
+                PropertyValue.BooleanVal(value.value ?: false, value.typeId, value.objectId)
+        }
+
+        response.values.setProperties?.forEach { value ->
+            valueIndex[value.typeId to value.objectId] =
+                PropertyValue.SetVal(value.value ?: "Unknown", value.typeId, value.objectId)
+        }
+
+        response.values.enumProperties?.forEach { value ->
+            valueIndex[value.typeId to value.objectId] =
+                PropertyValue.EnumVal(value.value ?: "Unknown", value.typeId, value.objectId)
+        }
+
+        return response.propertyOwner.properties?.map { property ->
+            val key = property.value?.typeId to property.value?.objectId
+            val propertyValue =
+                valueIndex[key] ?: PropertyValue.UnknownVal(typeId = property.typeId, objectId = property.objectId)
+            PropertyResult(
+                name = property.name ?: "Unknown",
+                value = propertyValue,
+                typeId = property.typeId,
+                objectId = property.objectId
+            )
+        } ?: emptyList()
+    }
+
 
     suspend fun create(sessionId: String, request: ParentGroup): String {
         val authContext = authProvider.getAuthContext(SessionId(sessionId))
@@ -169,8 +220,33 @@ class PolynomApplicationService(
         return polynomApi.conceptGetByConceptAppointer(authContext, request.group)
     }
 
-    suspend fun executePropertySearch(sessionId: String, request: IPropertySearchRequest): IPropertySearchResultObjectIPaginatedList {
+    suspend fun executePropertySearch(
+        sessionId: String,
+        request: IPropertySearchRequest
+    ): IPropertySearchResultObjectIPaginatedList {
         val authContext = authProvider.getAuthContext(SessionId(sessionId))
         return polynomApi.executePropertySearch(authContext, request)
+    }
+
+    suspend fun searchChangedObjects(
+        sessionId: String,
+        request: IPropertySearchRequest
+    ): List<EnrichedSearchResultItem> = coroutineScope {
+        val searchResult = executePropertySearch(sessionId, request)
+        searchResult.items?.map { item ->
+            async {
+                val props = getPropertiesEnriched(
+                    sessionId,
+                    OwnerRequest(IIdentifiableObject(item.objectId, item.typeId))
+                )
+                EnrichedSearchResultItem(
+                    name = item.name,
+                    objectId = item.objectId,
+                    typeId = item.typeId,
+                    iconCode = item.iconCode,
+                    properties = props
+                )
+            }
+        }?.awaitAll() ?: emptyList()
     }
 }
