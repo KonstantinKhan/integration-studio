@@ -22,6 +22,9 @@ data class IDateTimePropertyValue(
     @SerialName("definition")
     val definition: IIdentifiableObject,
 
+    @SerialName("isNull")
+    val isNull: Boolean,
+
     @SerialName("value")
     val value: IDateTimeValue
 )

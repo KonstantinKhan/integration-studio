@@ -36,13 +36,13 @@ data class IPropertyRef(
     val definition: IIdentifiableObject,
 
     @SerialName("contractPropertySource")
-    val contractPropertySource: IIdentifiableObject,
+    val contractPropertySource: IIdentifiableObject? = null,
 
     @SerialName("linkedPropertyInfo")
-    val linkedPropertyInfo: ILinkedPropertyRef,
+    val linkedPropertyInfo: ILinkedPropertyInfoRef,
 
     @SerialName("value")
-    val value: IIdentifiableObject,
+    val value: IIdentifiableObject? = null,
 
     @SerialName("evaluationPropertyInfo")
     val evaluationPropertyInfo: IEvaluationPropertyRef,

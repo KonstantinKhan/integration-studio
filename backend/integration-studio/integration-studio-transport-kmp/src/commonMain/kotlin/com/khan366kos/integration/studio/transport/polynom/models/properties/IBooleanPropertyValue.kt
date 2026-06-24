@@ -21,6 +21,9 @@ data class IBooleanPropertyValue(
     @SerialName("definition")
     val definition: IIdentifiableObject,
 
+    @SerialName("isNull")
+    val isNull: Boolean,
+
     @SerialName("value")
     val value: Boolean? = null
 )

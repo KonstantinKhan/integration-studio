@@ -43,5 +43,5 @@ data class IRtfPropertyDefinition(
     val ownerGroup: IIdentifiableObject,
 
     @SerialName("defaultPropertyValue")
-    val defaultPropertyValue: IIdentifiableObject,
+    val defaultPropertyValue: IIdentifiableObject? = null,
 )

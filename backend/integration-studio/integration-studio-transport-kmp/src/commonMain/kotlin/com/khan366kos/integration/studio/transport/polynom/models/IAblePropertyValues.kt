@@ -18,26 +18,62 @@ import com.khan366kos.integration.studio.transport.polynom.models.properties.IRt
 import com.khan366kos.integration.studio.transport.polynom.models.properties.ISetPropertyValue
 import com.khan366kos.integration.studio.transport.polynom.models.properties.IStringPropertyValue
 import com.khan366kos.integration.studio.transport.polynom.models.properties.ITablePropertyValue
+import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 
 @Serializable
 data class IAblePropertyValues(
-    val doubleProperties: List<IDoublePropertyValue> = emptyList(),
-    val stringProperties: List<IStringPropertyValue> = emptyList(),
-    val booleanProperties: List<IBooleanPropertyValue> = emptyList(),
-    val colorProperties: List<IColorPropertyValue> = emptyList(),
-    val opticProperties: List<IOpticPropertyValue> = emptyList(),
-    val dateTimeProperties: List<IDateTimePropertyValue> = emptyList(),
-    val imageProperties: List<IImagePropertyValue> = emptyList(),
-    val rtfProperties: List<IRtfPropertyValue> = emptyList(),
-    val enumProperties: List<IEnumPropertyValue> = emptyList(),
-    val setProperties: List<ISetPropertyValue> = emptyList(),
-    val integerProperties: List<IIntegerPropertyValue> = emptyList(),
-    val binaryProperties: List<IBinaryPropertyValue> = emptyList(),
-    val guidProperties: List<IGuidPropertyValue> = emptyList(),
-    val enumBoolProperties: List<IEnumBoolPropertyValue> = emptyList(),
-    val enumDoubleProperties: List<IEnumDoublePropertyValue> = emptyList(),
-    val enumIntProperties: List<IEnumIntPropertyValue> = emptyList(),
-    val enumStringProperties: List<IEnumStringItem> = emptyList(),
+    @SerialName("doubleProperties")
+    val doubleProperties: List<IDoublePropertyValue>? = null,
+
+    @SerialName("stringProperties")
+    val stringProperties: List<IStringPropertyValue>? = null,
+
+    @SerialName("booleanProperties")
+    val booleanProperties: List<IBooleanPropertyValue>? = null,
+
+    @SerialName("colorProperties")
+    val colorProperties: List<IColorPropertyValue>? = null,
+
+    @SerialName("opticProperties")
+    val opticProperties: List<IOpticPropertyValue>? = null,
+
+    @SerialName("dateTimeProperties")
+    val dateTimeProperties: List<IDateTimePropertyValue>? = null,
+
+    @SerialName("imageProperties")
+    val imageProperties: List<IImagePropertyValue>? = null,
+
+    @SerialName("rtfProperties")
+    val rtfProperties: List<IRtfPropertyValue>? = null,
+
+    @SerialName("enumProperties")
+    val enumProperties: List<IEnumPropertyValue>? = null,
+
+    @SerialName("setProperties")
+    val setProperties: List<ISetPropertyValue>? = null,
+
+    @SerialName("integerProperties")
+    val integerProperties: List<IIntegerPropertyValue>? = null,
+
+    @SerialName("binaryProperties")
+    val binaryProperties: List<IBinaryPropertyValue>? = null,
+
+    @SerialName("guidProperties")
+    val guidProperties: List<IGuidPropertyValue>? = null,
+
+    @SerialName("enumBoolProperties")
+    val enumBoolProperties: List<IEnumBoolPropertyValue>? = null,
+
+    @SerialName("enumDoubleProperties")
+    val enumDoubleProperties: List<IEnumDoublePropertyValue>? = null,
+
+    @SerialName("enumIntProperties")
+    val enumIntProperties: List<IEnumIntPropertyValue>? = null,
+
+    @SerialName("enumStringProperties")
+    val enumStringProperties: List<IEnumStringItem>? = null,
+
+    @SerialName("tableProperties")
     val tableProperties: List<ITablePropertyValue>? = null
 )

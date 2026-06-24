@@ -40,7 +40,7 @@ data class IContractRef(
     val canUnassign: Boolean,
 
     @SerialName("superConcept")
-    val superConcept: INamedObject,
+    val superConcept: INamedObject? = null,
 
     @SerialName("ownPropertyValues")
     val ownPropertyValues: Boolean

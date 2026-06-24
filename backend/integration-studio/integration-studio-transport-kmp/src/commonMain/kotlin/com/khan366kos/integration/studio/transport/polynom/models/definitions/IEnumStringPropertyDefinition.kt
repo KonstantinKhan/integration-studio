@@ -44,7 +44,7 @@ data class IEnumStringPropertyDefinition(
     val ownerGroup: IIdentifiableObject,
 
     @SerialName("defaultPropertyValue")
-    val defaultPropertyValue: IIdentifiableObject,
+    val defaultPropertyValue: IIdentifiableObject? = null,
 
     @SerialName("items")
     val items: List<IEnumStringItem>? = null,

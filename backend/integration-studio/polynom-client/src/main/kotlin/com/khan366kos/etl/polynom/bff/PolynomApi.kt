@@ -3,7 +3,6 @@ package com.khan366kos.etl.polynom.bff
 import com.khan366kos.common.models.auth.AuthContext
 import com.khan366kos.common.models.business.Catalog
 import com.khan366kos.common.models.business.Element
-import com.khan366kos.common.models.business.Owner
 import com.khan366kos.common.polynom.models.Reference
 import com.khan366kos.common.models.business.elementGroup.ElementGroup
 import com.khan366kos.common.requests.CreateElementRequest
@@ -28,6 +27,7 @@ import com.khan366kos.integration.studio.transport.polynom.command.CreateReferen
 import com.khan366kos.integration.studio.transport.polynom.command.CreateReferenceResponse
 import com.khan366kos.integration.studio.transport.polynom.command.DeleteReferenceCommand
 import com.khan366kos.integration.studio.transport.polynom.models.IIdentifiableObject
+import com.khan366kos.integration.studio.transport.polynom.request.OwnerRequest
 import com.khan366kos.integration.studio.transport.polynom.response.AppointedConceptsDto
 import io.ktor.client.HttpClient
 import io.ktor.client.call.body
@@ -139,7 +139,7 @@ class PolynomApi(
         }.body<List<ElementTransport>>()
             .map { it.toElement() }
 
-    suspend fun getProperties(authContext: AuthContext, request: Owner): IPropertyOwnerResponse =
+    suspend fun getProperties(authContext: AuthContext, request: OwnerRequest): IPropertyOwnerResponse =
         httpClient.post("property-owner/get-properties") {
             authenticate(authContext)
             contentType(ContentType.Application.Json)

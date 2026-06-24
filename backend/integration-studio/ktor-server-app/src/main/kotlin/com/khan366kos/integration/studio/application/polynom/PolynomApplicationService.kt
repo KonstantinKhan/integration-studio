@@ -3,7 +3,6 @@ package com.khan366kos.integration.studio.application.polynom
 import com.khan366kos.common.models.auth.SessionId
 import com.khan366kos.common.models.business.Catalog
 import com.khan366kos.common.models.business.Element
-import com.khan366kos.common.models.business.Owner
 import com.khan366kos.common.polynom.models.Reference
 import com.khan366kos.common.models.business.elementGroup.ElementGroup
 import com.khan366kos.common.requests.CreateElementRequest
@@ -21,6 +20,7 @@ import com.khan366kos.integration.studio.transport.polynom.command.CreateReferen
 import com.khan366kos.integration.studio.transport.polynom.command.DeleteReferenceCommand
 import com.khan366kos.integration.studio.transport.polynom.models.IIdentifiableObject
 import com.khan366kos.integration.studio.transport.polynom.request.GroupRequestDto
+import com.khan366kos.integration.studio.transport.polynom.request.OwnerRequest
 import com.khan366kos.integration.studio.transport.polynom.response.AppointedConceptsDto
 import io.ktor.client.statement.HttpResponse
 
@@ -45,12 +45,7 @@ class PolynomApplicationService(
      */
     suspend fun storageDefinitions(): List<StorageDefinitionTransport> =
         polynomApi.storageDefinitions()
-    
-    /**
-     * Выполняет вход пользователя.
-     * 
-     * @return ответ с токенами доступа
-     */
+
     suspend fun signIn(loginRequest: LoginRequest): LoginResponse =
         polynomApi.signIn(loginRequest)
     
@@ -155,17 +150,8 @@ class PolynomApplicationService(
         val authContext = authProvider.getAuthContext(SessionId(sessionId))
         return polynomApi.elements(authContext, request)
     }
-    
-    // ==================== Properties ====================
-    
-    /**
-     * Получает свойства владельца.
-     * 
-     * @param sessionId идентификатор сессии
-     * @param request владелец (тип + объект)
-     * @return свойства владельца
-     */
-    suspend fun getProperties(sessionId: String, request: Owner): IPropertyOwnerResponse {
+
+    suspend fun getProperties(sessionId: String, request: OwnerRequest): IPropertyOwnerResponse {
         val authContext = authProvider.getAuthContext(SessionId(sessionId))
         return polynomApi.getProperties(authContext, request)
     }

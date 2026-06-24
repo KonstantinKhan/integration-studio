@@ -102,14 +102,14 @@ data class IContractPropertySourceRef(
     val propertySource: IPropertySourceRef,
 
     @SerialName("defaultMeasureUnit")
-    val defaultMeasureUnit: IIdentifiableObject,
+    val defaultMeasureUnit: IIdentifiableObject? = null,
 
     @SerialName("defaultPropertyValue")
-    val defaultPropertyValue: IIdentifiableObject,
+    val defaultPropertyValue: IIdentifiableObject? = null,
 
     @SerialName("appointedFormula")
-    val appointedFormula: INamedObject,
+    val appointedFormula: INamedObject? = null,
 
     @SerialName("ownerContract")
-    val ownerContract: INamedObject
+    val ownerContract: INamedObject? = null,
 )

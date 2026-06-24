@@ -1,6 +1,7 @@
 package com.khan366kos.integration.studio.ktor.server.app
 
 import com.khan366kos.integration.studio.ktor.server.app.config.AppConfig
+import com.khan366kos.integration.studio.ktor.server.app.routes.devSessionRoute
 import io.ktor.server.application.*
 import io.ktor.server.sessions.*
 import com.khan366kos.integration.studio.ktor.server.app.session.InMemorySessionStore
@@ -17,6 +18,7 @@ import io.ktor.server.netty.EngineMain
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
+import kotlin.time.Duration.Companion.milliseconds
 
 fun main(args: Array<String>) {
     EngineMain.main(args)
@@ -50,7 +52,7 @@ fun Application.module() {
 
     launch {
         while (isActive) {
-            delay(60_000)
+            delay(60_000.milliseconds)
             config.sessionStore.cleanup(
                 expirationThresholdMs = 7 * 24 * 60 * 60 * 1000L
             )
@@ -70,4 +72,5 @@ fun Application.module() {
     configureHTTP()
     configureSerialization()
     configureRouting(config)
+    devSessionRoute(config)
 }

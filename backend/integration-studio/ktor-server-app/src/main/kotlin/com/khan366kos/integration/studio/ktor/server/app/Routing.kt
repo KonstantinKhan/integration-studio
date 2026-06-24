@@ -5,8 +5,6 @@ import com.khan366kos.common.models.auth.simple.Login
 import com.khan366kos.common.models.auth.simple.RefreshToken
 import com.khan366kos.common.models.auth.simple.StorageId
 import com.khan366kos.common.models.business.GroupContent
-import com.khan366kos.common.models.business.Identifier
-import com.khan366kos.common.models.business.Owner
 import com.khan366kos.integration.studio.transport.models.AuthorizationRequestTransport
 import com.khan366kos.etl.excel.service.ManagedWorkbookResult
 import com.khan366kos.etl.excel.service.dsl.function.useManagedWorkbook
@@ -16,10 +14,12 @@ import com.khan366kos.integration.studio.ktor.server.app.plugins.userSession
 import com.khan366kos.etl.mapper.toEtlWorkbookTransport
 import com.khan366kos.etl.polynom.bff.auth.LoginRequest
 import com.khan366kos.integration.studio.ktor.server.app.routes.concept
+import com.khan366kos.integration.studio.ktor.server.app.routes.propertyOwner
 import com.khan366kos.integration.studio.transport.models.ParentGroup
 import com.khan366kos.integration.studio.transport.polynom.command.CreateReferenceCommand
 import com.khan366kos.integration.studio.transport.polynom.command.DeleteReferenceCommand
 import com.khan366kos.integration.studio.transport.polynom.models.IIdentifiableObject
+import com.khan366kos.integration.studio.transport.polynom.request.OwnerRequest
 import io.ktor.http.*
 import io.ktor.http.content.*
 import io.ktor.server.application.*
@@ -344,8 +344,8 @@ fun Application.configureRouting(config: AppConfig) {
             route("properties") {
                 post {
                     try {
-                        val identifier: Identifier = call.receive<Identifier>()
-                        val response = config.polynomApplicationService.getProperties(call.userSession.id, Owner(identifier))
+                        val identifier = call.receive<IIdentifiableObject>()
+                        val response = config.polynomApplicationService.getProperties(call.userSession.id, OwnerRequest(identifier))
                         call.respond(HttpStatusCode.OK, response)
                     } catch (e: Exception) {
                         println("Error fetching properties: ${e.message}")
@@ -393,6 +393,7 @@ fun Application.configureRouting(config: AppConfig) {
                 }
             }
             concept(config.polynomApplicationService)
+            propertyOwner(config.polynomApplicationService)
         }
     }
 }

@@ -4,7 +4,7 @@ import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 
 @Serializable
-data class IEvaluationPropertyRef(
+data class IEvaluationPropertyInfoRef(
     @SerialName("writeAccess")
     val writeAccess: Boolean,
 
@@ -18,14 +18,14 @@ data class IEvaluationPropertyRef(
     val evaluationMode: Int,
 
     @SerialName("formula")
-    val formula: INamedObject? = null,
+    val formula: INamedObject,
 
     @SerialName("appointedFormula")
-    val appointedFormula: INamedObject? = null,
+    val appointedFormula: INamedObject,
 
     @SerialName("usePropertyValue")
     val usePropertyValue: Boolean,
 
     @SerialName("evaluationErrorMessage")
-    val evaluationErrorMessage: String? = null,
+    val evaluationErrorMessage: String? = null
 )
