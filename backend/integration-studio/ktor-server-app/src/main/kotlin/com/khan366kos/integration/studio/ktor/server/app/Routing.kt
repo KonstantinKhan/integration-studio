@@ -15,6 +15,7 @@ import com.khan366kos.etl.mapper.toEtlWorkbookTransport
 import com.khan366kos.etl.polynom.bff.auth.LoginRequest
 import com.khan366kos.integration.studio.ktor.server.app.routes.concept
 import com.khan366kos.integration.studio.ktor.server.app.routes.propertyOwner
+import com.khan366kos.integration.studio.ktor.server.app.routes.search
 import com.khan366kos.integration.studio.transport.models.ParentGroup
 import com.khan366kos.integration.studio.transport.polynom.command.CreateReferenceCommand
 import com.khan366kos.integration.studio.transport.polynom.command.DeleteReferenceCommand
@@ -394,6 +395,7 @@ fun Application.configureRouting(config: AppConfig) {
             }
             concept(config.polynomApplicationService)
             propertyOwner(config.polynomApplicationService)
+            search(config.polynomApplicationService)
         }
     }
 }

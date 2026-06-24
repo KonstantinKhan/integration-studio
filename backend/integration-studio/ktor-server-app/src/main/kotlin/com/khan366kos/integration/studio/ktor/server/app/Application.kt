@@ -18,6 +18,7 @@ import io.ktor.server.netty.EngineMain
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
+import kotlinx.serialization.json.Json
 import kotlin.time.Duration.Companion.milliseconds
 
 fun main(args: Array<String>) {
@@ -31,7 +32,11 @@ fun Application.module() {
             maxConnectionsCount = 20
         }
         install(ContentNegotiation) {
-            json()
+            json(Json {
+                ignoreUnknownKeys = true
+                isLenient = true
+                coerceInputValues = true
+            })
         }
         defaultRequest {
             contentType(ContentType.Application.Json)
@@ -42,6 +47,7 @@ fun Application.module() {
                 path("/api/v1/")
             }
         }
+
     }
 
     val config = AppConfig.create(

@@ -20,8 +20,10 @@ import com.khan366kos.integration.studio.transport.polynom.command.CreateReferen
 import com.khan366kos.integration.studio.transport.polynom.command.DeleteReferenceCommand
 import com.khan366kos.integration.studio.transport.polynom.models.IIdentifiableObject
 import com.khan366kos.integration.studio.transport.polynom.request.GroupRequestDto
+import com.khan366kos.integration.studio.transport.polynom.request.IPropertySearchRequest
 import com.khan366kos.integration.studio.transport.polynom.request.OwnerRequest
 import com.khan366kos.integration.studio.transport.polynom.response.AppointedConceptsDto
+import com.khan366kos.integration.studio.transport.polynom.response.IPropertySearchResultObjectIPaginatedList
 import io.ktor.client.statement.HttpResponse
 
 /**
@@ -164,7 +166,11 @@ class PolynomApplicationService(
 
     suspend fun conceptGetByConceptAppointer(sessionId: String, request: GroupRequestDto): AppointedConceptsDto {
         val authContext = authProvider.getAuthContext(SessionId(sessionId))
-        println("request: ${request.group}")
         return polynomApi.conceptGetByConceptAppointer(authContext, request.group)
+    }
+
+    suspend fun executePropertySearch(sessionId: String, request: IPropertySearchRequest): IPropertySearchResultObjectIPaginatedList {
+        val authContext = authProvider.getAuthContext(SessionId(sessionId))
+        return polynomApi.executePropertySearch(authContext, request)
     }
 }

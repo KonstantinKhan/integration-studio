@@ -27,8 +27,10 @@ import com.khan366kos.integration.studio.transport.polynom.command.CreateReferen
 import com.khan366kos.integration.studio.transport.polynom.command.CreateReferenceResponse
 import com.khan366kos.integration.studio.transport.polynom.command.DeleteReferenceCommand
 import com.khan366kos.integration.studio.transport.polynom.models.IIdentifiableObject
+import com.khan366kos.integration.studio.transport.polynom.request.IPropertySearchRequest
 import com.khan366kos.integration.studio.transport.polynom.request.OwnerRequest
 import com.khan366kos.integration.studio.transport.polynom.response.AppointedConceptsDto
+import com.khan366kos.integration.studio.transport.polynom.response.IPropertySearchResultObjectIPaginatedList
 import io.ktor.client.HttpClient
 import io.ktor.client.call.body
 import io.ktor.client.request.HttpRequestBuilder
@@ -157,6 +159,15 @@ class PolynomApi(
         request: IIdentifiableObject
     ): AppointedConceptsDto =
         httpClient.post("concept/get-by-concept-appointer") {
+            authenticate(authContext)
+            setBody(request)
+        }.body()
+
+    suspend fun executePropertySearch(
+        authContext: AuthContext,
+        request: IPropertySearchRequest
+    ): IPropertySearchResultObjectIPaginatedList =
+        httpClient.post("search/execute-property-search") {
             authenticate(authContext)
             setBody(request)
         }.body()
