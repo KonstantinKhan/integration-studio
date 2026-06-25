@@ -30,6 +30,7 @@ import com.khan366kos.integration.studio.transport.polynom.models.IIdentifiableO
 import com.khan366kos.integration.studio.transport.polynom.request.IPropertySearchRequest
 import com.khan366kos.integration.studio.transport.polynom.request.OwnerRequest
 import com.khan366kos.integration.studio.transport.polynom.response.AppointedConceptsDto
+import com.khan366kos.integration.studio.transport.polynom.response.IPropertySearchResultObject
 import com.khan366kos.integration.studio.transport.polynom.response.IPropertySearchResultObjectIPaginatedList
 import io.ktor.client.HttpClient
 import io.ktor.client.call.body
@@ -43,6 +44,7 @@ import io.ktor.client.statement.bodyAsText
 import io.ktor.http.ContentType
 import io.ktor.http.HttpHeaders
 import io.ktor.http.contentType
+import kotlin.system.measureTimeMillis
 
 class PolynomApi(
     private val httpClient: HttpClient,
@@ -119,7 +121,6 @@ class PolynomApi(
             println(e.message)
             throw e
         }
-
 
     suspend fun groupsByGroup(authContext: AuthContext, request: IIdentifiableObject): List<ElementGroup> =
         httpClient.post("element-group/get-by-group") {

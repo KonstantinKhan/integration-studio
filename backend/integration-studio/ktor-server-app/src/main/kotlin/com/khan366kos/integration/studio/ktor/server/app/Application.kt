@@ -16,6 +16,9 @@ import io.ktor.http.URLProtocol
 import io.ktor.http.path
 import io.ktor.serialization.kotlinx.json.json
 import io.ktor.server.netty.EngineMain
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
@@ -33,7 +36,7 @@ fun Application.module() {
             maxConnectionsCount = 20
             endpoint {
                 connectTimeout = 30_000
-                socketTimeout = 30_000
+                socketTimeout = 60_000
                 keepAliveTime = 60_000
             }
             requestTimeout = 60_000

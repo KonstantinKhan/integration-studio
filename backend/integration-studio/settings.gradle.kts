@@ -1,7 +1,6 @@
 rootProject.name = "integration-studio"
 enableFeaturePreview("TYPESAFE_PROJECT_ACCESSORS")
 
-
 include(":integration-studio-transport-kmp")
 include(":integration-studio-common-models")
 include(":etl-mapper")

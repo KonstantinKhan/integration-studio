@@ -395,7 +395,7 @@ fun Application.configureRouting(config: AppConfig) {
             }
             concept(config.polynomApplicationService)
             propertyOwner(config.polynomApplicationService)
-            search(config.polynomApplicationService)
+            search(config.polynomApplicationService, config)
         }
     }
 }

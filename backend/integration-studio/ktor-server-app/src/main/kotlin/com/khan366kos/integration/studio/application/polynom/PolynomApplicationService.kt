@@ -26,11 +26,18 @@ import com.khan366kos.integration.studio.transport.polynom.request.GroupRequestD
 import com.khan366kos.integration.studio.transport.polynom.request.IPropertySearchRequest
 import com.khan366kos.integration.studio.transport.polynom.request.OwnerRequest
 import com.khan366kos.integration.studio.transport.polynom.response.AppointedConceptsDto
+import com.khan366kos.integration.studio.transport.polynom.response.IPropertySearchResultObject
 import com.khan366kos.integration.studio.transport.polynom.response.IPropertySearchResultObjectIPaginatedList
 import io.ktor.client.statement.HttpResponse
+import jdk.jfr.internal.OldObjectSample.emit
+import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.coroutineScope
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.flatMapMerge
+import kotlinx.coroutines.flow.flow
+import kotlin.system.measureTimeMillis
 
 /**
  * Application-сервис для работы с Polynom API.
@@ -225,7 +232,40 @@ class PolynomApplicationService(
         request: IPropertySearchRequest
     ): IPropertySearchResultObjectIPaginatedList {
         val authContext = authProvider.getAuthContext(SessionId(sessionId))
-        return polynomApi.executePropertySearch(authContext, request)
+        val result = polynomApi.executePropertySearch(authContext, request)
+        return result
+    }
+
+    @OptIn(ExperimentalCoroutinesApi::class)
+    suspend fun searchObjects(
+        sessionId: String,
+        request: IPropertySearchRequest
+    ): Flow<List<PropertyResult>> {
+        val authContext = authProvider.getAuthContext(SessionId(sessionId))
+
+        return flow {
+            var page = 1
+            var hasNextPage = true
+            var totalItems = 0
+
+            while (hasNextPage) {
+                val response = polynomApi.executePropertySearch(authContext, request.copy(pageNumber = page))
+                response.items?.forEach {
+                    totalItems++
+                    emit(it)
+                }
+                hasNextPage = response.hasNextPage
+                page++
+            }
+        }.flatMapMerge(concurrency = 6) { obj ->
+            flow {
+                val props = getPropertiesEnriched(
+                    sessionId,
+                    OwnerRequest(owner = IIdentifiableObject(obj.objectId, obj.typeId))
+                )
+                emit(props)
+            }
+        }
     }
 
     suspend fun searchChangedObjects(

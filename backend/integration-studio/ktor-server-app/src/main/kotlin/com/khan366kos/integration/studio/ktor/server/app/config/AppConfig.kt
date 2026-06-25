@@ -6,6 +6,9 @@ import com.khan366kos.integration.studio.application.polynom.PolynomApplicationS
 import com.khan366kos.integration.studio.infrastructure.auth.SessionStoreAuthProvider
 import com.khan366kos.integration.studio.ktor.server.app.session.SessionStore
 import io.ktor.client.HttpClient
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.SupervisorJob
 
 /**
  * Configuration class for the application.
@@ -26,6 +29,10 @@ class AppConfig(
     val polynomApi: PolynomApi,
     val polynomApplicationService: PolynomApplicationService
 ) {
+
+    private val _backgroundScope = CoroutineScope(Dispatchers.IO + SupervisorJob())
+    val backgroundScope: CoroutineScope get() = _backgroundScope
+
     companion object {
         /**
          * Creates a new AppConfig with all dependencies wired up.
