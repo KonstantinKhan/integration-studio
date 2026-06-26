@@ -16,6 +16,7 @@ import io.ktor.http.URLProtocol
 import io.ktor.http.path
 import io.ktor.serialization.kotlinx.json.json
 import io.ktor.server.netty.EngineMain
+import io.ktor.server.sse.SSE
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
@@ -84,6 +85,7 @@ fun Application.module() {
             cookie.maxAgeInSeconds = 60 * 60 * 24 * 7
         }
     }
+    install(SSE)
     configureHTTP()
     configureSerialization()
     configureRouting(config)

@@ -1,5 +1,6 @@
 package com.khan366kos.integration.studio.ktor.server.app.routes
 
+import com.khan366kos.common.models.PropertyResult
 import com.khan366kos.integration.studio.application.polynom.PolynomApplicationService
 import com.khan366kos.integration.studio.ktor.server.app.config.AppConfig
 import com.khan366kos.integration.studio.ktor.server.app.plugins.userSession
@@ -11,11 +12,6 @@ import io.ktor.server.routing.Route
 import io.ktor.server.routing.post
 import io.ktor.server.routing.route
 import kotlinx.coroutines.launch
-import kotlin.system.measureTimeMillis
-import kotlin.time.Clock
-import kotlin.time.Duration
-import kotlin.time.DurationUnit
-import kotlin.time.Instant
 
 fun Route.search(service: PolynomApplicationService, config: AppConfig): Route = route("search") {
     post("execute-property-search") {
@@ -32,21 +28,15 @@ fun Route.search(service: PolynomApplicationService, config: AppConfig): Route =
     }
 
     post("changes") {
-        val duration = measureTimeMillis {
-            val request = call.receive<IPropertySearchRequest>()
-            config.backgroundScope.launch {
-                service.searchObjects(call.userSession.id, request)
-                    .collect { obj ->
-//                        println("obj: $obj")
-                    }
-            }.join()
-        }
+        val request = call.receive<IPropertySearchRequest>()
+        val response = mutableListOf<List<PropertyResult>>()
+        config.backgroundScope.launch {
+            service.searchObjects(call.userSession.id, request)
+                .collect { obj ->
+                    response.add(obj)
+                }
+        }.join()
 
-        val totalSeconds = duration / 1000
-        val minutes = totalSeconds / 60
-        val seconds = totalSeconds % 60
-        println("Время: $minutes мин $seconds сек")
-
-        call.respond(HttpStatusCode.Accepted, "Processing started")
+        call.respond(HttpStatusCode.Accepted, response)
     }
 }

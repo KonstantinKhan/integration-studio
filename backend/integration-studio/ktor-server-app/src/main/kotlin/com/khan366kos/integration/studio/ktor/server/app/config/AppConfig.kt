@@ -5,6 +5,7 @@ import com.khan366kos.etl.polynom.bff.auth.TokenManager
 import com.khan366kos.integration.studio.application.polynom.PolynomApplicationService
 import com.khan366kos.integration.studio.infrastructure.auth.SessionStoreAuthProvider
 import com.khan366kos.integration.studio.ktor.server.app.session.SessionStore
+import com.khan366kos.integration.studio.ktor.server.app.streaming.MigrationStreamRegistry
 import io.ktor.client.HttpClient
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -20,6 +21,8 @@ import kotlinx.coroutines.SupervisorJob
  * @param authProvider провайдер аутентификации
  * @param polynomApi HTTP-адаптер для Polynom API
  * @param polynomApplicationService сервис приложения
+ * @param backgroundScope общий scope для фоновых задач (survives request)
+ * @param migrationStreamRegistry реестр активных потоков миграции
  */
 class AppConfig(
     val sessionStore: SessionStore,
@@ -27,11 +30,10 @@ class AppConfig(
     val tokenManager: TokenManager,
     val authProvider: SessionStoreAuthProvider,
     val polynomApi: PolynomApi,
-    val polynomApplicationService: PolynomApplicationService
+    val polynomApplicationService: PolynomApplicationService,
+    val backgroundScope: CoroutineScope,
+    val migrationStreamRegistry: MigrationStreamRegistry,
 ) {
-
-    private val _backgroundScope = CoroutineScope(Dispatchers.IO + SupervisorJob())
-    val backgroundScope: CoroutineScope get() = _backgroundScope
 
     companion object {
         /**
@@ -47,11 +49,15 @@ class AppConfig(
             httpClient: HttpClient,
             baseUrl: String
         ): AppConfig {
+            val backgroundScope = CoroutineScope(Dispatchers.IO + SupervisorJob())
+
             val tokenRefreshApi = SessionStoreAuthProvider.createTokenRefreshApi(httpClient, baseUrl)
             val tokenManager = TokenManager(tokenRefreshApi)
             val authProvider = SessionStoreAuthProvider(sessionStore, tokenManager, httpClient, baseUrl)
             val polynomApi = PolynomApi(httpClient, tokenManager)
             val polynomApplicationService = PolynomApplicationService(authProvider, polynomApi)
+
+            val migrationStreamRegistry = MigrationStreamRegistry(backgroundScope)
 
             return AppConfig(
                 sessionStore = sessionStore,
@@ -59,7 +65,9 @@ class AppConfig(
                 tokenManager = tokenManager,
                 authProvider = authProvider,
                 polynomApi = polynomApi,
-                polynomApplicationService = polynomApplicationService
+                polynomApplicationService = polynomApplicationService,
+                backgroundScope = backgroundScope,
+                migrationStreamRegistry = migrationStreamRegistry,
             )
         }
     }

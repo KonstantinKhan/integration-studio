@@ -7,6 +7,8 @@ import com.khan366kos.common.polynom.models.Reference
 import com.khan366kos.common.models.business.elementGroup.ElementGroup
 import com.khan366kos.common.models.PropertyResult
 import com.khan366kos.common.models.PropertyValue
+import com.khan366kos.common.models.PropertyValueSimple
+import com.khan366kos.common.models.toSimple
 import com.khan366kos.common.requests.CreateElementRequest
 import com.khan366kos.common.responses.ElementResponse
 import com.khan366kos.integration.studio.ktor.server.app.dto.EnrichedSearchResultItem
@@ -206,7 +208,7 @@ class PolynomApplicationService(
         return response.propertyOwner.properties?.map { property ->
             val key = property.value?.typeId to property.value?.objectId
             val propertyValue =
-                valueIndex[key] ?: PropertyValue.UnknownVal(typeId = property.typeId, objectId = property.objectId)
+                valueIndex[key]?.toSimple() ?: PropertyValueSimple.UnknownValSimple("Неизвестный тип")
             PropertyResult(
                 name = property.name ?: "Unknown",
                 value = propertyValue,
@@ -264,6 +266,46 @@ class PolynomApplicationService(
                     OwnerRequest(owner = IIdentifiableObject(obj.objectId, obj.typeId))
                 )
                 emit(props)
+            }
+        }
+    }
+
+    /**
+     * Вариант [searchObjects], эмитящий на выходе обогащённый объект
+     * (с полями объекта + его свойствами). Используется SSE-стримингом миграции.
+     */
+    @OptIn(ExperimentalCoroutinesApi::class)
+    suspend fun searchObjectsEnriched(
+        sessionId: String,
+        request: IPropertySearchRequest
+    ): Flow<EnrichedSearchResultItem> {
+        val authContext = authProvider.getAuthContext(SessionId(sessionId))
+
+        return flow {
+            var page = 1
+            var hasNextPage = true
+
+            while (hasNextPage) {
+                val response = polynomApi.executePropertySearch(authContext, request.copy(pageNumber = page))
+                response.items?.forEach { emit(it) }
+                hasNextPage = response.hasNextPage
+                page++
+            }
+        }.flatMapMerge(concurrency = 6) { obj ->
+            flow {
+                val props = getPropertiesEnriched(
+                    sessionId,
+                    OwnerRequest(owner = IIdentifiableObject(obj.objectId, obj.typeId))
+                )
+                emit(
+                    EnrichedSearchResultItem(
+                        name = obj.name,
+                        objectId = obj.objectId,
+                        typeId = obj.typeId,
+                        iconCode = obj.iconCode,
+                        properties = props
+                    )
+                )
             }
         }
     }

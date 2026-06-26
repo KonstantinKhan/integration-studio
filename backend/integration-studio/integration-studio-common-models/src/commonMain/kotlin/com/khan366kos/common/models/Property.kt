@@ -54,13 +54,63 @@ sealed class PropertyValue {
         val value: Boolean,
         override val typeId: Int,
         override val objectId: Int,
-    ): PropertyValue()
+    ) : PropertyValue()
 }
 
 @Serializable
 data class PropertyResult(
     val name: String,
-    val value: PropertyValue,
+    val value: PropertyValueSimple,
     val typeId: Int,
     val objectId: Int
 )
+
+@Serializable
+sealed class PropertyValueSimple {
+
+    @Serializable
+    @SerialName("unknown")
+    data class UnknownValSimple(
+        val data: String = "Unknown",
+    ) : PropertyValueSimple()
+
+    @Serializable
+    @SerialName("string")
+    data class StringValSimple(
+        val data: String,
+    ) : PropertyValueSimple()
+
+    @Serializable
+    @SerialName("dateTime")
+    data class DateTimeValSimple(
+        val data: String,
+    ) : PropertyValueSimple()
+
+    @Serializable
+    @SerialName("enum")
+    data class EnumValSimple(
+        val data: String,
+    ) : PropertyValueSimple()
+
+    @Serializable
+    @SerialName("setVal")
+    data class SetValSimple(
+        val data: String,
+    ) : PropertyValueSimple()
+
+    @Serializable
+    @SerialName("boolean")
+    data class BooleanValSimple(
+        val data: Boolean,
+    ) : PropertyValueSimple()
+
+}
+
+fun PropertyValue.toSimple() = when (this) {
+    is PropertyValue.StringVal -> PropertyValueSimple.StringValSimple(value)
+    is PropertyValue.DateTimeVal -> PropertyValueSimple.DateTimeValSimple(value)
+    is PropertyValue.EnumVal -> PropertyValueSimple.EnumValSimple(value)
+    is PropertyValue.BooleanVal -> PropertyValueSimple.BooleanValSimple(value)
+    is PropertyValue.SetVal -> PropertyValueSimple.SetValSimple(value)
+    is PropertyValue.UnknownVal -> PropertyValueSimple.UnknownValSimple(value)
+}

@@ -15,7 +15,7 @@ function buildRequest(from: Date, to: Date) {
   return {
     pageNumber: 1,
     pageSize: 100,
-    ownerScope: { objectId: 56, typeId: 48 },
+    ownerScope: { objectId: 61, typeId: 48 },
     condition: {
       enabled: true,
       intersectionType: 0,
