@@ -17,7 +17,9 @@ import com.khan366kos.integration.studio.ktor.server.app.dto.EnrichedSearchResul
 import com.khan366kos.integration.studio.transport.polynom.response.IPropertyOwnerResponse
 import com.khan366kos.etl.polynom.bff.PolynomApi
 import com.khan366kos.etl.polynom.bff.auth.AuthProvider
+import com.khan366kos.integration.studio.bff.transport.request.ElementFromPeriodRequestBffDto
 import com.khan366kos.integration.studio.mapping.toDomain
+import com.khan366kos.integration.studio.mapping.toPolynomDto
 import com.khan366kos.integration.studio.transport.polynom.models.LoginRequest
 import com.khan366kos.integration.studio.transport.polynom.models.LoginResponse
 import com.khan366kos.integration.studio.transport.models.ParentGroup
@@ -238,7 +240,7 @@ class PolynomApplicationService(
     @OptIn(ExperimentalCoroutinesApi::class)
     suspend fun searchObjects(
         sessionId: String,
-        request: IPropertySearchRequest
+        request: ElementFromPeriodRequestBffDto
     ): Flow<List<PropertyResult>> {
         val authContext = authProvider.getAuthContext(SessionId(sessionId))
 
@@ -246,9 +248,10 @@ class PolynomApplicationService(
             var page = 1
             var hasNextPage = true
             var totalItems = 0
+            val polynomRequest = request.toPolynomDto()
 
             while (hasNextPage) {
-                val response = polynomApi.executePropertySearch(authContext, request.copy(pageNumber = page))
+                val response = polynomApi.executePropertySearch(authContext, polynomRequest.copy(pageNumber = page))
                 response.items?.forEach {
                     totalItems++
                     emit(it)
@@ -274,16 +277,16 @@ class PolynomApplicationService(
     @OptIn(ExperimentalCoroutinesApi::class)
     suspend fun searchObjectsEnriched(
         sessionId: String,
-        request: IPropertySearchRequest
+        request: ElementFromPeriodRequestBffDto
     ): Flow<EnrichedSearchResultItem> {
         val authContext = authProvider.getAuthContext(SessionId(sessionId))
-
+        val requestPolynom = request.toPolynomDto()
         return flow {
             var page = 1
             var hasNextPage = true
 
             while (hasNextPage) {
-                val response = polynomApi.executePropertySearch(authContext, request.copy(pageNumber = page))
+                val response = polynomApi.executePropertySearch(authContext, requestPolynom.copy(pageNumber = page))
                 response.items?.forEach { emit(it) }
                 hasNextPage = response.hasNextPage
                 page++

@@ -167,11 +167,15 @@ class PolynomApi(
     suspend fun executePropertySearch(
         authContext: AuthContext,
         request: IPropertySearchRequest
-    ): IPropertySearchResultObjectIPaginatedList =
-        httpClient.post("search/execute-property-search") {
+    ): IPropertySearchResultObjectIPaginatedList {
+        println("request: $request")
+        val response = httpClient.post("search/execute-property-search") {
             authenticate(authContext)
             setBody(request)
-        }.body()
+        }.body<IPropertySearchResultObjectIPaginatedList>()
+        return response
+    }
+
 
     suspend fun getClassification(
         authContext: AuthContext,

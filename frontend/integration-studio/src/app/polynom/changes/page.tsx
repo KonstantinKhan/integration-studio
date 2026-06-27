@@ -16,73 +16,27 @@ import { useMigrationStream } from '@/hooks/useMigrationStream'
 import { useNodes } from '@/hooks/useNodes'
 import { useTreeRoot } from '@/hooks/useTreeRoot'
 import type { EnrichedSearchResultItem } from '@/shared/types/enrichedSearchResultItem.interface'
-import type { IPropertySearchRequest } from '@/shared/types/propertySearchRequest.interface'
 import type { INode } from '@/shared/types/node.interface'
+import { formatDate } from '@/utils/format'
 
-function buildRequest(from: Date, to: Date): IPropertySearchRequest {
+function buildRequest(from: Date, to: Date, typeId: number, objectId: number) {
+
+  console.log('typeId', typeId, 'objectId', objectId);
+  
   const fromStr = formatDate(from)
   const toStr = formatDate(to)
-  return {
-    pageNumber: 1,
-    pageSize: 100,
-    ownerScope: { objectId: 61, typeId: 48 },
-    condition: {
-      enabled: true,
-      intersectionType: 0,
-      complexConditions: [
-        {
-          enabled: false,
-          intersectionType: 0,
-          simpleConditions: [
-            {
-              enabled: true,
-              searchConditionTargetQualifier: { objectId: 40, typeId: 54 },
-              operation: 6,
-              options: 0,
-              value: { typeId: 0, objectId: 0 },
-            },
-            {
-              enabled: true,
-              searchConditionTargetQualifier: { objectId: 40, typeId: 54 },
-              operation: 4,
-              options: 0,
-              value: { typeId: 0, objectId: 1 },
-            },
-          ],
-        },
-      ],
-    },
-    values: {
-      dateTimeProperties: [
-        {
-          objectId: 0,
-          typeId: 0,
-          value: {
-            objectId: 0,
-            dataType: 6,
-            value: toStr,
-            valueFrom: { value: fromStr, useTime: false },
-            valueTo: { value: toStr, useTime: false },
-            valueSingle: { value: toStr, useTime: false },
-            useTime: false,
-          },
-        },
-        {
-          objectId: 1,
-          typeId: 0,
-          value: {
-            objectId: 1,
-            dataType: 6,
-            value: toStr,
-            valueFrom: { value: fromStr, useTime: false },
-            valueTo: { value: toStr, useTime: false },
-            valueSingle: { value: toStr, useTime: false },
-            useTime: false,
-          },
-        },
-      ],
-    },
+  const scope = {
+    objectId: objectId,
+    typeId: typeId,
   }
+
+  const request = {
+    scope,
+    from: fromStr,
+    to: toStr,
+  }
+
+  return request
 }
 
 const STATUS_LABEL: Record<string, string> = {
@@ -239,6 +193,9 @@ const ChangesPage = () => {
   const [overrideNode, setOverrideNode] = useState<StoredNode | null>(null)
   const selectedNode = overrideNode ?? storedNode ?? null
 
+
+
+
   const { data: rootNode } = useTreeRoot()
   const { data: nodes = [], isLoading: nodesLoading } = useNodes(
     rootNode?.typeId,
@@ -322,8 +279,8 @@ const ChangesPage = () => {
   const isTerminal = status === 'COMPLETED' || status === 'FAILED'
 
   const handleStart = () => {
-    if (!from || !to) return
-    void start(buildRequest(from, to))
+    if (!from || !to || !selectedNode) return
+    void start(buildRequest(from, to, selectedNode.typeId, selectedNode.objectId))
   }
 
   const handleNodeChange = (key: string) => {

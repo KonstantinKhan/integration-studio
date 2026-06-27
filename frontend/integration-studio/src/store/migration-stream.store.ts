@@ -4,9 +4,9 @@ import {
   migrationStreamEventsUrl,
   startMigrationStream,
 } from '@/api/search-stream.api'
-import type { IPropertySearchRequest } from '@/shared/types/propertySearchRequest.interface'
 import type { EnrichedSearchResultItem } from '@/shared/types/enrichedSearchResultItem.interface'
 import type { MigrationStatus, StreamEvent } from '@/shared/types/streaming.interface'
+import type { ElementFromPeriodRequest } from '@/shared/types/request/уlementFromPeriodRequest.interface'
 
 const STORAGE_KEY = 'integration-studio.migration.streamId'
 
@@ -20,7 +20,7 @@ interface MigrationStreamState {
   connecting: boolean
   eventSource: EventSource | null
 
-  start: (request: IPropertySearchRequest) => Promise<void>
+  start: (request: ElementFromPeriodRequest) => Promise<void>
   /** При монтировании: проверить sessionStorage и переподключиться, если стрим жив */
   resumeFromStorage: () => Promise<void>
   reset: () => void

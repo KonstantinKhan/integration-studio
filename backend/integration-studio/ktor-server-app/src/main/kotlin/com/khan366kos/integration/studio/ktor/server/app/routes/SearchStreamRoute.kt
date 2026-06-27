@@ -1,5 +1,6 @@
 package com.khan366kos.integration.studio.ktor.server.app.routes
 
+import com.khan366kos.integration.studio.bff.transport.request.ElementFromPeriodRequestBffDto
 import com.khan366kos.integration.studio.ktor.server.app.config.AppConfig
 import com.khan366kos.integration.studio.ktor.server.app.plugins.userSession
 import com.khan366kos.integration.studio.ktor.server.app.streaming.MigrationStatus
@@ -9,6 +10,7 @@ import com.khan366kos.integration.studio.ktor.server.app.streaming.eventName
 import com.khan366kos.integration.studio.transport.polynom.request.IPropertySearchRequest
 import io.ktor.http.HttpStatusCode
 import io.ktor.server.request.receive
+import io.ktor.server.request.receiveText
 import io.ktor.server.response.respond
 import io.ktor.server.routing.Route
 import io.ktor.server.routing.get
@@ -34,7 +36,7 @@ fun Route.searchStream(config: AppConfig): Route = route("search/streams") {
     val registry: MigrationStreamRegistry = config.migrationStreamRegistry
 
     post("start") {
-        val request = call.receive<IPropertySearchRequest>()
+        val request = call.receive<ElementFromPeriodRequestBffDto>()
         val sessionId = call.userSession.id
 
         // Если уже есть RUNNING — вернуть его streamId (reconnect-сценарий).

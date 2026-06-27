@@ -2,6 +2,7 @@ package com.khan366kos.integration.studio.ktor.server.app.routes
 
 import com.khan366kos.common.models.PropertyResult
 import com.khan366kos.integration.studio.application.polynom.PolynomApplicationService
+import com.khan366kos.integration.studio.bff.transport.request.ElementFromPeriodRequestBffDto
 import com.khan366kos.integration.studio.ktor.server.app.config.AppConfig
 import com.khan366kos.integration.studio.ktor.server.app.plugins.userSession
 import com.khan366kos.integration.studio.transport.polynom.request.IPropertySearchRequest
@@ -27,7 +28,7 @@ fun Route.search(service: PolynomApplicationService, config: AppConfig): Route =
     }
 
     post("changes") {
-        val request = call.receive<IPropertySearchRequest>()
+        val request = call.receive<ElementFromPeriodRequestBffDto>()
         val response = mutableListOf<List<PropertyResult>>()
         config.backgroundScope.launch {
             service.searchObjects(call.userSession.id, request)

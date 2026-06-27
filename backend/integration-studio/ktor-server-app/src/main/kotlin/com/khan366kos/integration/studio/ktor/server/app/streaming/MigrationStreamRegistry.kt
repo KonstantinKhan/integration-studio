@@ -2,6 +2,7 @@ package com.khan366kos.integration.studio.ktor.server.app.streaming
 
 import com.khan366kos.common.models.PropertyResult
 import com.khan366kos.integration.studio.application.polynom.PolynomApplicationService
+import com.khan366kos.integration.studio.bff.transport.request.ElementFromPeriodRequestBffDto
 import com.khan366kos.integration.studio.ktor.server.app.dto.EnrichedSearchResultItem
 import com.khan366kos.integration.studio.transport.polynom.request.IPropertySearchRequest
 import com.khan366kos.integration.studio.transport.polynom.request.OwnerRequest
@@ -181,7 +182,7 @@ class MigrationStreamRegistry(
     fun start(
         sessionId: String,
         service: PolynomApplicationService,
-        request: IPropertySearchRequest
+        request: ElementFromPeriodRequestBffDto
     ): MigrationStream {
         runningFor(sessionId)?.let {
             throw IllegalStateException("Stream already running: ${it.streamId}")
