@@ -1,43 +1,31 @@
 export interface UnknownPropertyValue {
   type: 'unknown'
-  value: string
-  typeId: number
-  objectId: number
+  data: string
 }
 
 export interface StringPropertyValue {
   type: 'string'
-  value: string
-  typeId: number
-  objectId: number
+  data: string
 }
 
 export interface DateTimePropertyValue {
   type: 'dateTime'
-  value: string
-  typeId: number
-  objectId: number
+  data: string
 }
 
 export interface EnumPropertyValue {
   type: 'enum'
-  value: string
-  typeId: number
-  objectId: number
+  data: string
 }
 
 export interface SetPropertyValue {
   type: 'setVal'
-  value: string
-  typeId: number
-  objectId: number
+  data: string
 }
 
 export interface BooleanPropertyValue {
   type: 'boolean'
-  value: boolean
-  typeId: number
-  objectId: number
+  data: boolean
 }
 
 export type PropertyValue =

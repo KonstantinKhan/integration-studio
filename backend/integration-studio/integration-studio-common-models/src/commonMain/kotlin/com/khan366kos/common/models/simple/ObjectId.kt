@@ -11,4 +11,6 @@ value class ObjectId(private val value: Int) {
     }
 
     fun asString() = value.toString()
+
+    fun asInt() = value
 }

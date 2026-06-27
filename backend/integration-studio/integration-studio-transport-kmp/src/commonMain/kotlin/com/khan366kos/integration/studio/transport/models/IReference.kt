@@ -4,7 +4,7 @@ import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 
 @Serializable
-data class ReferenceTransport(
+data class IReference(
     @SerialName("name")
     val name: String? = null,
 

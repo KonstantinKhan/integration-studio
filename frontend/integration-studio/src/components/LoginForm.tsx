@@ -80,7 +80,7 @@ const LoginForm = () => {
     }))
   }
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = (e: React.SyntheticEvent<HTMLFormElement>) => {
     e.preventDefault()
     setSubmitted(true)
     setAuthError('')
@@ -116,7 +116,7 @@ const LoginForm = () => {
       {
         onSuccess: () => {
           setSelectedStorageId(storageObj.storageId)
-          router.push('/polynom')
+          router.push('/dashboard')
         },
         onError: (error) => {
           setAuthError(
@@ -143,7 +143,7 @@ const LoginForm = () => {
               htmlFor="username"
               className="block text-sm font-medium text-stone-700 mb-1"
             >
-              Username
+              Логин
             </label>
             <InputText
               id="username"
@@ -169,7 +169,7 @@ const LoginForm = () => {
               htmlFor="password"
               className="block text-sm font-medium text-stone-700 mb-1"
             >
-              Password
+              Пароль
             </label>
 
             <Password
@@ -194,6 +194,7 @@ const LoginForm = () => {
           )}
 
           <div>
+            Доступные базы
             <Dropdown
               className="w-full"
               value={selectedStorage}

@@ -12,6 +12,7 @@ repositories {
 dependencies {
     implementation(projects.integrationStudioCommonModels)
     implementation(projects.integrationStudioTransportKmp)
+    implementation(projects.integrationStudioBffTransport)
 
     testImplementation(kotlin("test"))
 }

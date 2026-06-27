@@ -20,7 +20,7 @@ import com.khan366kos.integration.studio.transport.models.ElementTransport
 import com.khan366kos.integration.studio.transport.models.EtlSheetTransport
 import com.khan366kos.integration.studio.transport.models.EtlWorkbookTransport
 import com.khan366kos.integration.studio.transport.models.NamedObjectDto
-import com.khan366kos.integration.studio.transport.models.ReferenceTransport
+import com.khan366kos.integration.studio.transport.models.IReference
 import com.khan366kos.integration.studio.transport.models.StorageDefinitionTransport
 import com.khan366kos.integration.studio.transport.models.ViewpointCatalogTransport
 
@@ -95,7 +95,7 @@ fun ViewpointCatalogTransport.toViewpointCatalog(): ViewpointCatalog =
         }
     )
 
-fun ReferenceTransport.toReference(): Reference =
+fun IReference.toReference(): Reference =
     Reference(
         id = ReferenceId(id ?: ""),
         name = ElementName(name ?: ""),

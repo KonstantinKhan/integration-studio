@@ -14,12 +14,12 @@ import com.khan366kos.etl.mapper.toElement
 import com.khan366kos.etl.mapper.toElementGroup
 import com.khan366kos.etl.mapper.toReference
 import com.khan366kos.etl.polynom.bff.auth.TokenManager
-import com.khan366kos.etl.polynom.bff.auth.LoginRequest
-import com.khan366kos.etl.polynom.bff.auth.LoginResponse
+import com.khan366kos.integration.studio.transport.polynom.models.LoginRequest
+import com.khan366kos.integration.studio.transport.polynom.models.LoginResponse
 import com.khan366kos.integration.studio.transport.models.ElementCatalogTransport
 import com.khan366kos.integration.studio.transport.models.ElementGroupTransport
 import com.khan366kos.integration.studio.transport.models.ElementTransport
-import com.khan366kos.integration.studio.transport.models.ReferenceTransport
+import com.khan366kos.integration.studio.transport.models.IReference
 import com.khan366kos.integration.studio.transport.models.StorageDefinitionTransport
 import com.khan366kos.integration.studio.transport.models.ParentGroup
 import com.khan366kos.integration.studio.transport.models.UserTransport
@@ -27,10 +27,12 @@ import com.khan366kos.integration.studio.transport.polynom.command.CreateReferen
 import com.khan366kos.integration.studio.transport.polynom.command.CreateReferenceResponse
 import com.khan366kos.integration.studio.transport.polynom.command.DeleteReferenceCommand
 import com.khan366kos.integration.studio.transport.polynom.models.IIdentifiableObject
+import com.khan366kos.integration.studio.transport.polynom.request.IClassificationNodeChildrenRequest
+import com.khan366kos.integration.studio.transport.polynom.request.IClassificationTreeRequest
 import com.khan366kos.integration.studio.transport.polynom.request.IPropertySearchRequest
 import com.khan366kos.integration.studio.transport.polynom.request.OwnerRequest
 import com.khan366kos.integration.studio.transport.polynom.response.AppointedConceptsDto
-import com.khan366kos.integration.studio.transport.polynom.response.IPropertySearchResultObject
+import com.khan366kos.integration.studio.transport.polynom.response.IClassificationTreeNodeIPaginatedList
 import com.khan366kos.integration.studio.transport.polynom.response.IPropertySearchResultObjectIPaginatedList
 import io.ktor.client.HttpClient
 import io.ktor.client.call.body
@@ -44,7 +46,6 @@ import io.ktor.client.statement.bodyAsText
 import io.ktor.http.ContentType
 import io.ktor.http.HttpHeaders
 import io.ktor.http.contentType
-import kotlin.system.measureTimeMillis
 
 class PolynomApi(
     private val httpClient: HttpClient,
@@ -63,25 +64,24 @@ class PolynomApi(
             authenticate(authContext)
         }.body()
 
-    suspend fun references(authContext: AuthContext): List<Reference> {
-        return httpClient.post("reference/get-all") {
+    suspend fun references(authContext: AuthContext): List<Reference> =
+        httpClient.post("reference/get-all") {
             authenticate(authContext)
-        }.body<List<ReferenceTransport>>()
+        }.body<List<IReference>>()
             .map { it.toReference() }
-    }
 
     suspend fun reference(authContext: AuthContext, request: IIdentifiableObject): Reference =
         httpClient.post("reference/get-by-id") {
             authenticate(authContext)
             setBody(request)
-        }.body<ReferenceTransport>()
+        }.body<IReference>()
             .toReference()
 
     suspend fun referenceCreate(authContext: AuthContext, request: CreateReferenceCommand): CreateReferenceResponse =
         httpClient.post("reference/create") {
             authenticate(authContext)
             setBody(request)
-        }.body<ReferenceTransport>()
+        }.body<IReference>()
             .toCreateReferenceResponse()
 
     suspend fun referenceDelete(authContext: AuthContext, request: DeleteReferenceCommand): HttpResponse =
@@ -169,6 +169,24 @@ class PolynomApi(
         request: IPropertySearchRequest
     ): IPropertySearchResultObjectIPaginatedList =
         httpClient.post("search/execute-property-search") {
+            authenticate(authContext)
+            setBody(request)
+        }.body()
+
+    suspend fun getClassification(
+        authContext: AuthContext,
+        request: IClassificationTreeRequest
+    ): IClassificationTreeNodeIPaginatedList =
+        httpClient.post("tree/get-classification") {
+            authenticate(authContext)
+            setBody(request)
+        }.body()
+
+    suspend fun getClassificationNodeChildren(
+        authContext: AuthContext,
+        request: IClassificationNodeChildrenRequest
+    ): IClassificationTreeNodeIPaginatedList =
+        httpClient.post("tree/get-classification-node-children") {
             authenticate(authContext)
             setBody(request)
         }.body()

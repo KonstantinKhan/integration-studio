@@ -3,11 +3,7 @@ package com.khan366kos.integration.studio.infrastructure.auth
 import com.khan366kos.common.models.auth.AuthContext
 import com.khan366kos.common.models.auth.AuthenticationException
 import com.khan366kos.common.models.auth.SessionId
-import com.khan366kos.common.models.auth.UserCredentials
-import com.khan366kos.common.models.auth.simple.AccessToken
-import com.khan366kos.common.models.auth.simple.RefreshToken
 import com.khan366kos.etl.polynom.bff.auth.AuthProvider
-import com.khan366kos.etl.polynom.bff.auth.LoginResponse
 import com.khan366kos.etl.polynom.bff.auth.TokenManager
 import com.khan366kos.etl.polynom.bff.auth.TokenRefreshApi
 import com.khan366kos.integration.studio.ktor.server.app.session.SessionStore

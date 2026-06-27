@@ -5,7 +5,7 @@ import com.khan366kos.common.models.auth.simple.AccessToken
 import com.khan366kos.common.models.auth.simple.Login
 import com.khan366kos.common.models.auth.simple.RefreshToken
 import com.khan366kos.common.models.auth.simple.StorageId
-import com.khan366kos.etl.polynom.bff.auth.LoginRequest
+import com.khan366kos.integration.studio.transport.polynom.models.LoginRequest
 import com.khan366kos.integration.studio.ktor.server.app.UserSession
 import com.khan366kos.integration.studio.ktor.server.app.config.AppConfig
 import io.ktor.http.HttpStatusCode
@@ -84,8 +84,8 @@ fun Application.devSessionRoute(config: AppConfig) {
                     val credentials = UserCredentials(
                         login = Login(login),
                         storageId = StorageId(storageId),
-                        accessToken = AccessToken(response.accessToken),
-                        refreshToken = RefreshToken(response.refreshToken),
+                        accessToken = AccessToken(response.accessToken ?: ""),
+                        refreshToken = RefreshToken(response.refreshToken ?: ""),
                         issuedAt = now,
                         expiresAt = now + (response.expiresIn * 1000L)
                     )

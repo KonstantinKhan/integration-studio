@@ -1,5 +1,6 @@
 package com.khan366kos.integration.studio.ktor.server.app
 
+import com.khan366kos.common.exceptions.RootNodeException
 import com.khan366kos.integration.studio.ktor.server.app.config.AppConfig
 import com.khan366kos.integration.studio.ktor.server.app.routes.devSessionRoute
 import io.ktor.server.application.*
@@ -11,11 +12,15 @@ import io.ktor.client.engine.cio.endpoint
 import io.ktor.client.plugins.contentnegotiation.ContentNegotiation
 import io.ktor.client.plugins.defaultRequest
 import io.ktor.http.ContentType
+import io.ktor.http.HttpStatusCode
 import io.ktor.http.contentType
 import io.ktor.http.URLProtocol
 import io.ktor.http.path
 import io.ktor.serialization.kotlinx.json.json
 import io.ktor.server.netty.EngineMain
+import io.ktor.server.plugins.statuspages.StatusPages
+import io.ktor.server.response.respond
+import io.ktor.server.response.respondText
 import io.ktor.server.sse.SSE
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -85,6 +90,17 @@ fun Application.module() {
             cookie.maxAgeInSeconds = 60 * 60 * 24 * 7
         }
     }
+
+    install(StatusPages) {
+        exception<RootNodeException> { call, cause ->
+            call.respondText(text = "500: $cause", status = HttpStatusCode.InternalServerError)
+        }
+
+        exception<Throwable> { call, cause ->
+            call.respondText(text = "500: $cause", status = HttpStatusCode.InternalServerError)
+        }
+    }
+
     install(SSE)
     configureHTTP()
     configureSerialization()

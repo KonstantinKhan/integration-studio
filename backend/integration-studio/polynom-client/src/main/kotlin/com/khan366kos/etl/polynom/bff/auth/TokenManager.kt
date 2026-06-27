@@ -4,6 +4,7 @@ import com.khan366kos.common.models.auth.UserCredentials
 import com.khan366kos.common.models.auth.simple.AccessToken
 import com.khan366kos.common.models.auth.simple.RefreshToken
 import com.khan366kos.etl.polynom.bff.config.AuthConfig
+import com.khan366kos.integration.studio.transport.polynom.models.LoginResponse
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import java.util.concurrent.ConcurrentHashMap
@@ -110,8 +111,8 @@ class TokenManager(
         return UserCredentials(
             login = userCredentials.login,
             storageId = userCredentials.storageId,
-            accessToken = AccessToken(response.accessToken),
-            refreshToken = RefreshToken(response.refreshToken),
+            accessToken = AccessToken(response.accessToken ?: ""),
+            refreshToken = RefreshToken(response.refreshToken ?: ""),
             issuedAt = now,
             expiresAt = expiresAt
         )

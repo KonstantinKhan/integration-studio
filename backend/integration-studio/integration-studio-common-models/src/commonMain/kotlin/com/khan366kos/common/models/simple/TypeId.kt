@@ -11,4 +11,6 @@ value class TypeId(private val value: Int) {
     }
 
     fun asString() = value.toString()
+
+    fun asInt(): Int = value
 }

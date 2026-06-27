@@ -22,6 +22,7 @@ dependencies {
     implementation(libs.ktor.server.content.negotiation)
     implementation(libs.ktor.server.sessions)
     implementation(libs.ktor.server.sse)
+    implementation(libs.ktor.status.pages)
 
     implementation(libs.ktor.client.cio)
     implementation(libs.ktor.client.content.negotiation)
@@ -32,6 +33,7 @@ dependencies {
 
     implementation(projects.integrationStudioTransportKmp)
     implementation(projects.integrationStudioCommonModels)
+    implementation(projects.integrationStudioBffTransport)
     implementation(projects.etlMapper)
     implementation(projects.polynomClient)
     implementation(projects.integrationStudioMapping)

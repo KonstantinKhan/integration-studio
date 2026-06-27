@@ -12,11 +12,13 @@ import com.khan366kos.integration.studio.ktor.server.app.config.AppConfig
 import com.khan366kos.integration.studio.ktor.server.app.plugins.SessionInterceptorPlugin
 import com.khan366kos.integration.studio.ktor.server.app.plugins.userSession
 import com.khan366kos.etl.mapper.toEtlWorkbookTransport
-import com.khan366kos.etl.polynom.bff.auth.LoginRequest
+import com.khan366kos.integration.studio.transport.polynom.models.LoginRequest
 import com.khan366kos.integration.studio.ktor.server.app.routes.concept
 import com.khan366kos.integration.studio.ktor.server.app.routes.propertyOwner
+import com.khan366kos.integration.studio.ktor.server.app.routes.references
 import com.khan366kos.integration.studio.ktor.server.app.routes.search
 import com.khan366kos.integration.studio.ktor.server.app.routes.searchStream
+import com.khan366kos.integration.studio.ktor.server.app.routes.tree
 import com.khan366kos.integration.studio.transport.models.ParentGroup
 import com.khan366kos.integration.studio.transport.polynom.command.CreateReferenceCommand
 import com.khan366kos.integration.studio.transport.polynom.command.DeleteReferenceCommand
@@ -97,8 +99,8 @@ fun Application.configureRouting(config: AppConfig) {
                 val credentials = com.khan366kos.common.models.auth.UserCredentials(
                     login = Login(authRequest.username),
                     storageId = StorageId(authRequest.storageId),
-                    accessToken = AccessToken(response.accessToken),
-                    refreshToken = RefreshToken(response.refreshToken),
+                    accessToken = AccessToken(response.accessToken ?: ""),
+                    refreshToken = RefreshToken(response.refreshToken ?: ""),
                     issuedAt = now,
                     expiresAt = now + (response.expiresIn * 1000L)
                 )
@@ -195,53 +197,6 @@ fun Application.configureRouting(config: AppConfig) {
         route("/") {
             install(SessionInterceptorPlugin) {
                 sessionStore = config.sessionStore
-            }
-            route("references") {
-                post("/create") {
-                    try {
-                        val request = call.receive<CreateReferenceCommand>()
-                        val reference = config.polynomApplicationService.referenceCreate(call.userSession.id, request)
-                        call.respond(HttpStatusCode.Created, reference)
-                    } catch (e: Error) {
-                        println("Error: ${e.message}")
-                    }
-                }
-                post("/delete") {
-                    try {
-                        val request = call.receive<DeleteReferenceCommand>()
-                        val response = config.polynomApplicationService.referenceDelete(call.userSession.id, request)
-                        call.respond(response.status)
-                    } catch (e: Error) {
-                        println("Error: ${e.message}")
-                        call.respond(HttpStatusCode.InternalServerError, e.message ?: "Unknown error")
-                    }
-                }
-                get {
-                    try {
-                        val typeId = call.parameters["typeId"]?.toInt()
-                        val objectId = call.parameters["objectId"]?.toInt()
-
-                        if (typeId == null && objectId == null) {
-                            val references = config.polynomApplicationService.references(call.userSession.id)
-                            call.respond(HttpStatusCode.OK, references)
-                        } else {
-                            val reference = config.polynomApplicationService.reference(
-                                call.userSession.id,
-                                IIdentifiableObject(
-                                    objectId!!,
-                                    typeId!!
-                                )
-                            )
-                            call.respond(HttpStatusCode.OK, reference)
-                        }
-                    } catch (e: Exception) {
-                        application.log.error("Error fetching references: ${e.message}", e)
-                        call.respond(
-                            HttpStatusCode.InternalServerError,
-                            mapOf("error" to "Ошибка получения справочников: ${e.message}")
-                        )
-                    }
-                }
             }
             route("catalogs") {
                 get {
@@ -347,7 +302,10 @@ fun Application.configureRouting(config: AppConfig) {
                 post {
                     try {
                         val identifier = call.receive<IIdentifiableObject>()
-                        val response = config.polynomApplicationService.getProperties(call.userSession.id, OwnerRequest(identifier))
+                        val response = config.polynomApplicationService.getProperties(
+                            call.userSession.id,
+                            OwnerRequest(identifier)
+                        )
                         call.respond(HttpStatusCode.OK, response)
                     } catch (e: Exception) {
                         println("Error fetching properties: ${e.message}")
@@ -364,7 +322,10 @@ fun Application.configureRouting(config: AppConfig) {
                         val concurrency = call.parameters["concurrency"]?.toInt() ?: 10
 
                         if (groupTypeId == null || groupObjectId == null) {
-                            call.respond(HttpStatusCode.BadRequest, mapOf("error" to "Missing groupTypeId or groupObjectId"))
+                            call.respond(
+                                HttpStatusCode.BadRequest,
+                                mapOf("error" to "Missing groupTypeId or groupObjectId")
+                            )
                             return@get
                         }
 
@@ -384,7 +345,10 @@ fun Application.configureRouting(config: AppConfig) {
                         val avg = Math.round(elapsed.toDouble() / count * 10.0) / 10.0
 
                         println("$count calls with concurrency=$concurrency completed in ${elapsed}ms ($rps req/s, avg ${avg}ms/req)")
-                        call.respond(HttpStatusCode.OK, TestConcurrentResponse(count, concurrency, elapsed, rps, avg, results))
+                        call.respond(
+                            HttpStatusCode.OK,
+                            TestConcurrentResponse(count, concurrency, elapsed, rps, avg, results)
+                        )
                     } catch (e: Exception) {
                         application.log.error("Error in /test: ${e.message}", e)
                         call.respond(
@@ -398,6 +362,8 @@ fun Application.configureRouting(config: AppConfig) {
             propertyOwner(config.polynomApplicationService)
             search(config.polynomApplicationService, config)
             searchStream(config)
+            references(config)
+            tree(config.polynomApplicationService)
         }
     }
 }

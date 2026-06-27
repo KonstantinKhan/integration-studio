@@ -1,5 +1,7 @@
 package com.khan366kos.integration.studio.application.polynom
 
+import com.khan366kos.common.models.Identifier
+import com.khan366kos.common.models.Node
 import com.khan366kos.common.models.auth.SessionId
 import com.khan366kos.common.models.business.Catalog
 import com.khan366kos.common.models.business.Element
@@ -15,8 +17,9 @@ import com.khan366kos.integration.studio.ktor.server.app.dto.EnrichedSearchResul
 import com.khan366kos.integration.studio.transport.polynom.response.IPropertyOwnerResponse
 import com.khan366kos.etl.polynom.bff.PolynomApi
 import com.khan366kos.etl.polynom.bff.auth.AuthProvider
-import com.khan366kos.etl.polynom.bff.auth.LoginRequest
-import com.khan366kos.etl.polynom.bff.auth.LoginResponse
+import com.khan366kos.integration.studio.mapping.toDomain
+import com.khan366kos.integration.studio.transport.polynom.models.LoginRequest
+import com.khan366kos.integration.studio.transport.polynom.models.LoginResponse
 import com.khan366kos.integration.studio.transport.models.ParentGroup
 import com.khan366kos.integration.studio.transport.models.StorageDefinitionTransport
 import com.khan366kos.integration.studio.transport.models.UserTransport
@@ -25,13 +28,14 @@ import com.khan366kos.integration.studio.transport.polynom.command.CreateReferen
 import com.khan366kos.integration.studio.transport.polynom.command.DeleteReferenceCommand
 import com.khan366kos.integration.studio.transport.polynom.models.IIdentifiableObject
 import com.khan366kos.integration.studio.transport.polynom.request.GroupRequestDto
+import com.khan366kos.integration.studio.transport.polynom.request.IClassificationNodeChildrenRequest
+import com.khan366kos.integration.studio.transport.polynom.request.IClassificationTreeRequest
 import com.khan366kos.integration.studio.transport.polynom.request.IPropertySearchRequest
 import com.khan366kos.integration.studio.transport.polynom.request.OwnerRequest
 import com.khan366kos.integration.studio.transport.polynom.response.AppointedConceptsDto
-import com.khan366kos.integration.studio.transport.polynom.response.IPropertySearchResultObject
+import com.khan366kos.integration.studio.transport.polynom.response.IClassificationTreeNodeIPaginatedList
 import com.khan366kos.integration.studio.transport.polynom.response.IPropertySearchResultObjectIPaginatedList
 import io.ktor.client.statement.HttpResponse
-import jdk.jfr.internal.OldObjectSample.emit
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
@@ -39,7 +43,6 @@ import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flatMapMerge
 import kotlinx.coroutines.flow.flow
-import kotlin.system.measureTimeMillis
 
 /**
  * Application-сервис для работы с Polynom API.
@@ -79,12 +82,6 @@ class PolynomApplicationService(
 
     // ==================== References ====================
 
-    /**
-     * Получает все справочники.
-     * 
-     * @param sessionId идентификатор сессии
-     * @return список справочников
-     */
     suspend fun references(sessionId: String): List<Reference> {
         val authContext = authProvider.getAuthContext(SessionId(sessionId))
         return polynomApi.references(authContext)
@@ -330,5 +327,30 @@ class PolynomApplicationService(
                 )
             }
         }?.awaitAll() ?: emptyList()
+    }
+
+    suspend fun getClassification(
+        sessionId: String,
+    ): List<Node> {
+        val authContext = authProvider.getAuthContext(SessionId(sessionId))
+        val response = polynomApi.getClassification(authContext, IClassificationTreeRequest.Root)
+        val result = response.items.map { it.toDomain() }
+        return result
+    }
+
+    suspend fun nodes(
+        sessionId: String,
+        identifier: Identifier
+    ): List<Node> {
+        val authContext = authProvider.getAuthContext(SessionId(sessionId))
+        val request = IClassificationNodeChildrenRequest(
+            pageNumber = 1, pageSize = 25, parentNodeObject = IIdentifiableObject(
+                typeId = identifier.typeId.asInt(),
+                objectId = identifier.objectId.asInt(),
+            )
+        )
+        val response = polynomApi.getClassificationNodeChildren(authContext, request)
+        val result = response.items.map { it.toDomain() }
+        return result
     }
 }
