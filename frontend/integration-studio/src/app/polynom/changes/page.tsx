@@ -1,6 +1,14 @@
 'use client'
 
-import { memo, useMemo, useState, useSyncExternalStore, useEffect, useRef, useLayoutEffect } from 'react'
+import {
+  memo,
+  useMemo,
+  useState,
+  useSyncExternalStore,
+  useEffect,
+  useRef,
+  useLayoutEffect,
+} from 'react'
 import { Calendar } from 'primereact/calendar'
 import { Button } from 'primereact/button'
 import { Dropdown } from 'primereact/dropdown'
@@ -10,14 +18,6 @@ import { useTreeRoot } from '@/hooks/useTreeRoot'
 import type { EnrichedSearchResultItem } from '@/shared/types/enrichedSearchResultItem.interface'
 import type { IPropertySearchRequest } from '@/shared/types/propertySearchRequest.interface'
 import type { INode } from '@/shared/types/node.interface'
-
-function pad(n: number): string {
-  return n.toString().padStart(2, '0')
-}
-
-function formatDate(date: Date): string {
-  return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}T00:00:00.000`
-}
 
 function buildRequest(from: Date, to: Date): IPropertySearchRequest {
   const fromStr = formatDate(from)
@@ -98,7 +98,7 @@ function propValue(item: EnrichedSearchResultItem, name: string): string {
   const prop = item.properties.find((p) => p.name === name)
 
   if (!prop) return ''
-  
+
   const v = prop.value.data
   return typeof v === 'string' ? v : String(v)
 }
@@ -135,7 +135,7 @@ const STORAGE_KEY = 'polynom.changes.selectedNode'
 // Создаем хранилище для синхронизации с localStorage
 function createStorageStore<T>(key: string, initialValue: T) {
   let currentValue: T = initialValue
-  
+
   // Пытаемся загрузить значение при инициализации
   if (typeof window !== 'undefined') {
     try {
@@ -147,31 +147,33 @@ function createStorageStore<T>(key: string, initialValue: T) {
       // ignore
     }
   }
-  
+
   const listeners = new Set<() => void>()
-  
+
   const subscribe = (callback: () => void) => {
     listeners.add(callback)
-    
+
     // Подписываемся на событие storage для синхронизации между вкладками
     const handleStorage = (event: StorageEvent) => {
       if (event.key === key) {
         try {
-          const newValue = event.newValue ? JSON.parse(event.newValue) : initialValue
+          const newValue = event.newValue
+            ? JSON.parse(event.newValue)
+            : initialValue
           if (JSON.stringify(newValue) !== JSON.stringify(currentValue)) {
             currentValue = newValue
-            listeners.forEach(l => l())
+            listeners.forEach((l) => l())
           }
         } catch {
           // ignore
         }
       }
     }
-    
+
     if (typeof window !== 'undefined') {
       window.addEventListener('storage', handleStorage)
     }
-    
+
     return () => {
       listeners.delete(callback)
       if (typeof window !== 'undefined') {
@@ -179,9 +181,9 @@ function createStorageStore<T>(key: string, initialValue: T) {
       }
     }
   }
-  
+
   const getSnapshot = () => currentValue
-  
+
   const setValue = (value: T) => {
     const newValue = value
     if (JSON.stringify(newValue) !== JSON.stringify(currentValue)) {
@@ -189,10 +191,10 @@ function createStorageStore<T>(key: string, initialValue: T) {
       if (typeof window !== 'undefined') {
         localStorage.setItem(key, JSON.stringify(newValue))
       }
-      listeners.forEach(l => l())
+      listeners.forEach((l) => l())
     }
   }
-  
+
   return { subscribe, getSnapshot, setValue }
 }
 
@@ -212,9 +214,12 @@ const ChangesPage = () => {
   const [from, setFrom] = useState<Date | null>(null)
   const [to, setTo] = useState<Date | null>(null)
   const [opened, setOpened] = useState(false)
-  
+
   // Ref для предотвращения cascading renders
-  const validationRef = useRef<{ isValidated: boolean; nodeKey: string | null }>({
+  const validationRef = useRef<{
+    isValidated: boolean
+    nodeKey: string | null
+  }>({
     isValidated: false,
     nodeKey: null,
   })
@@ -222,15 +227,15 @@ const ChangesPage = () => {
   const mounted = useSyncExternalStore(
     mountedStore.subscribe,
     mountedStore.getSnapshot,
-    mountedStore.getServerSnapshot
+    mountedStore.getServerSnapshot,
   )
-  
+
   const storedNode = useSyncExternalStore(
     nodeStore.subscribe,
     nodeStore.getSnapshot,
-    () => null // серверный снапшот
+    () => null, // серверный снапшот
   )
-  
+
   const [overrideNode, setOverrideNode] = useState<StoredNode | null>(null)
   const selectedNode = overrideNode ?? storedNode ?? null
 
@@ -245,34 +250,40 @@ const ChangesPage = () => {
   useEffect(() => {
     // Если данные еще не загружены или нет выбранного узла - ничего не делаем
     if (!selectedNode || nodes.length === 0) return
-    
+
     const nodeKey = `${selectedNode.typeId}:${selectedNode.objectId}`
-    
+
     // Проверяем, не валидировали ли мы уже этот узел
-    if (validationRef.current.isValidated && validationRef.current.nodeKey === nodeKey) {
+    if (
+      validationRef.current.isValidated &&
+      validationRef.current.nodeKey === nodeKey
+    ) {
       return
     }
-    
+
     // Проверяем, существует ли узел с таким typeId и objectId в списке nodes или это rootNode
     const existsInNodes = nodes.some(
-      (n) => n.typeId === selectedNode.typeId && n.objectId === selectedNode.objectId
+      (n) =>
+        n.typeId === selectedNode.typeId &&
+        n.objectId === selectedNode.objectId,
     )
-    
-    const isRootNode = rootNode && 
-      rootNode.typeId === selectedNode.typeId && 
+
+    const isRootNode =
+      rootNode &&
+      rootNode.typeId === selectedNode.typeId &&
       rootNode.objectId === selectedNode.objectId
-    
+
     // Если узел не найден ни в nodes, ни в rootNode - сбрасываем выбор
     if (!existsInNodes && !isRootNode) {
       console.log('Выбранный узел не найден на сервере, сбрасываем выбор')
-      
+
       // Используем setTimeout для разрыва цикла рендеринга
       const timeoutId = setTimeout(() => {
         setOverrideNode(null)
         nodeStore.setValue(null)
         validationRef.current = { isValidated: true, nodeKey: null }
       }, 0)
-      
+
       return () => clearTimeout(timeoutId)
     } else {
       validationRef.current = { isValidated: true, nodeKey: nodeKey }
@@ -293,7 +304,7 @@ const ChangesPage = () => {
     if (selectedNode) push(selectedNode, 1)
     return list
   }, [rootNode, nodes, selectedNode])
-  
+
   const selectedKey = selectedNode
     ? `${selectedNode.typeId}:${selectedNode.objectId}`
     : rootNode
@@ -331,7 +342,10 @@ const ChangesPage = () => {
   }
 
   // Фиксируем размеры календарей после рендеринга
-  const calendarRefs = useRef<{ from: HTMLDivElement | null; to: HTMLDivElement | null }>({
+  const calendarRefs = useRef<{
+    from: HTMLDivElement | null
+    to: HTMLDivElement | null
+  }>({
     from: null,
     to: null,
   })
@@ -340,7 +354,7 @@ const ChangesPage = () => {
     // После монтирования фиксируем размеры контейнеров календарей
     const fromEl = calendarRefs.current.from
     const toEl = calendarRefs.current.to
-    
+
     if (fromEl) {
       const rect = fromEl.getBoundingClientRect()
       if (rect.width > 0) {
@@ -348,7 +362,7 @@ const ChangesPage = () => {
         fromEl.style.minHeight = `${rect.height}px`
       }
     }
-    
+
     if (toEl) {
       const rect = toEl.getBoundingClientRect()
       if (rect.width > 0) {
@@ -392,8 +406,10 @@ const ChangesPage = () => {
           className="max-w-3xl mx-auto mb-6 p-6 rounded-xl border-2 shadow-md flex flex-wrap items-end gap-4"
           style={{ backgroundColor: '#f4f1ea', borderColor: '#d2b48c' }}
         >
-          <div 
-            ref={(el) => { calendarRefs.current.from = el }}
+          <div
+            ref={(el) => {
+              calendarRefs.current.from = el
+            }}
             className="flex flex-col gap-1"
             style={{ minWidth: '200px', width: 'auto' }}
           >
@@ -407,8 +423,10 @@ const ChangesPage = () => {
               />
             </div>
           </div>
-          <div 
-            ref={(el) => { calendarRefs.current.to = el }}
+          <div
+            ref={(el) => {
+              calendarRefs.current.to = el
+            }}
             className="flex flex-col gap-1"
             style={{ minWidth: '200px', width: 'auto' }}
           >
