@@ -12,7 +12,7 @@ dependencies {
     implementation(libs.logback.classic)
     implementation(libs.log4j.to.slf4j)
 
-    implementation(projects.integrationStudioCommonModels)
+    implementation(projects.integrationStudioDomain)
 
     testImplementation(libs.kotest.framework.engine)
     testImplementation(libs.kotest.runner.junit5)

@@ -1,9 +1,9 @@
 package com.khan366kos.integration.studio.mapping
 
-import com.khan366kos.common.models.Node
-import com.khan366kos.common.models.simple.ObjectId
-import com.khan366kos.common.models.simple.TypeId
-import com.khan366kos.common.polynom.models.Concept
+import com.khan366kos.domain.polynom.Node
+import com.khan366kos.domain.models.simple.ObjectId
+import com.khan366kos.domain.models.simple.TypeId
+import com.khan366kos.domain.polynom.models.Concept
 import com.khan366kos.integration.studio.transport.models.AppointedConceptDto
 import com.khan366kos.integration.studio.transport.polynom.models.IClassificationTreeNode
 

@@ -1,7 +1,7 @@
 package com.khan366kos.etl.polynom.bff.auth
 
-import com.khan366kos.common.models.auth.AuthContext
-import com.khan366kos.common.models.auth.SessionId
+import com.khan366kos.domain.models.auth.AuthContext
+import com.khan366kos.domain.models.auth.SessionId
 
 /**
  * Порт для получения и обновления контекста аутентификации.

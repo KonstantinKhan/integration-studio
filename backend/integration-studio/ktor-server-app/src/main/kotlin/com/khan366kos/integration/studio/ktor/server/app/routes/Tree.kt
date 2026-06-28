@@ -1,10 +1,10 @@
 package com.khan366kos.integration.studio.ktor.server.app.routes
 
-import com.khan366kos.common.exceptions.NodeException
-import com.khan366kos.common.exceptions.RootNodeException
-import com.khan366kos.common.models.Identifier
-import com.khan366kos.common.models.simple.ObjectId
-import com.khan366kos.common.models.simple.TypeId
+import com.khan366kos.domain.exceptions.NodeException
+import com.khan366kos.domain.exceptions.RootNodeException
+import com.khan366kos.domain.polynom.Identifier
+import com.khan366kos.domain.models.simple.ObjectId
+import com.khan366kos.domain.models.simple.TypeId
 import com.khan366kos.integration.studio.application.polynom.PolynomApplicationService
 import com.khan366kos.integration.studio.ktor.server.app.plugins.userSession
 import com.khan366kos.integration.studio.mapping.toBffDto

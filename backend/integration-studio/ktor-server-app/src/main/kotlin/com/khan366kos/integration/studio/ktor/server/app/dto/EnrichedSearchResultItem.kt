@@ -1,6 +1,6 @@
 package com.khan366kos.integration.studio.ktor.server.app.dto
 
-import com.khan366kos.common.models.PropertyResult
+import com.khan366kos.domain.polynom.PropertyResult
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 

@@ -1,8 +1,8 @@
 package com.khan366kos.etl.polynom.bff.auth
 
-import com.khan366kos.common.models.auth.UserCredentials
-import com.khan366kos.common.models.auth.simple.AccessToken
-import com.khan366kos.common.models.auth.simple.RefreshToken
+import com.khan366kos.domain.models.auth.UserCredentials
+import com.khan366kos.domain.models.auth.simple.AccessToken
+import com.khan366kos.domain.models.auth.simple.RefreshToken
 import com.khan366kos.etl.polynom.bff.config.AuthConfig
 import com.khan366kos.integration.studio.transport.polynom.models.LoginResponse
 import kotlinx.coroutines.sync.Mutex

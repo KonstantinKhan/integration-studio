@@ -20,9 +20,8 @@ import type { INode } from '@/shared/types/node.interface'
 import { formatDate } from '@/utils/format'
 
 function buildRequest(from: Date, to: Date, typeId: number, objectId: number) {
+  console.log('typeId', typeId, 'objectId', objectId)
 
-  console.log('typeId', typeId, 'objectId', objectId);
-  
   const fromStr = formatDate(from)
   const toStr = formatDate(to)
   const scope = {
@@ -193,9 +192,6 @@ const ChangesPage = () => {
   const [overrideNode, setOverrideNode] = useState<StoredNode | null>(null)
   const selectedNode = overrideNode ?? storedNode ?? null
 
-
-
-
   const { data: rootNode } = useTreeRoot()
   const { data: nodes = [], isLoading: nodesLoading } = useNodes(
     rootNode?.typeId,
@@ -280,7 +276,9 @@ const ChangesPage = () => {
 
   const handleStart = () => {
     if (!from || !to || !selectedNode) return
-    void start(buildRequest(from, to, selectedNode.typeId, selectedNode.objectId))
+    void start(
+      buildRequest(from, to, selectedNode.typeId, selectedNode.objectId),
+    )
   }
 
   const handleNodeChange = (key: string) => {
@@ -479,7 +477,7 @@ const ChangesPage = () => {
                   <MigrationRow
                     key={`${item.typeId}-${item.objectId}`}
                     index={i + 1}
-                    code={propValue(item, PROP_CLASSIFIER_CODE)}
+                    code={item.name ?? 'нет данных'}
                     designation={propValue(item, PROP_DESIGNATION)}
                   />
                 ))}

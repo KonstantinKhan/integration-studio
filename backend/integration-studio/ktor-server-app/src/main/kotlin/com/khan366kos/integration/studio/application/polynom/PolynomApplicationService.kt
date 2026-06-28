@@ -1,19 +1,19 @@
 package com.khan366kos.integration.studio.application.polynom
 
-import com.khan366kos.common.models.Identifier
-import com.khan366kos.common.models.Node
-import com.khan366kos.common.models.auth.SessionId
-import com.khan366kos.common.models.business.Catalog
-import com.khan366kos.common.models.business.Element
-import com.khan366kos.common.polynom.models.Reference
-import com.khan366kos.common.models.business.elementGroup.ElementGroup
-import com.khan366kos.common.models.PropertyResult
-import com.khan366kos.common.models.PropertyValue
-import com.khan366kos.common.models.PropertyValueSimple
-import com.khan366kos.common.models.toSimple
-import com.khan366kos.common.requests.CreateElementRequest
-import com.khan366kos.common.responses.ElementResponse
-import com.khan366kos.integration.studio.ktor.server.app.dto.EnrichedSearchResultItem
+import com.khan366kos.domain.polynom.Identifier
+import com.khan366kos.domain.polynom.Node
+import com.khan366kos.domain.models.auth.SessionId
+import com.khan366kos.domain.models.business.Catalog
+import com.khan366kos.domain.models.business.Element
+import com.khan366kos.domain.polynom.models.Reference
+import com.khan366kos.domain.models.business.elementGroup.ElementGroup
+import com.khan366kos.domain.polynom.PolynomElement
+import com.khan366kos.domain.polynom.PropertyResult
+import com.khan366kos.domain.polynom.Property
+import com.khan366kos.domain.polynom.PropertyValueSimple
+import com.khan366kos.domain.polynom.toSimple
+import com.khan366kos.domain.requests.CreateElementRequest
+import com.khan366kos.domain.responses.ElementResponse
 import com.khan366kos.integration.studio.transport.polynom.response.IPropertyOwnerResponse
 import com.khan366kos.etl.polynom.bff.PolynomApi
 import com.khan366kos.etl.polynom.bff.auth.AuthProvider
@@ -35,7 +35,6 @@ import com.khan366kos.integration.studio.transport.polynom.request.IClassificati
 import com.khan366kos.integration.studio.transport.polynom.request.IPropertySearchRequest
 import com.khan366kos.integration.studio.transport.polynom.request.OwnerRequest
 import com.khan366kos.integration.studio.transport.polynom.response.AppointedConceptsDto
-import com.khan366kos.integration.studio.transport.polynom.response.IClassificationTreeNodeIPaginatedList
 import com.khan366kos.integration.studio.transport.polynom.response.IPropertySearchResultObjectIPaginatedList
 import io.ktor.client.statement.HttpResponse
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -174,37 +173,39 @@ class PolynomApplicationService(
         return polynomApi.getProperties(authContext, request)
     }
 
-    suspend fun getPropertiesEnriched(sessionId: String, request: OwnerRequest): List<PropertyResult> {
+    suspend fun polynomElement(sessionId: String, request: OwnerRequest): PolynomElement {
         val response = getProperties(sessionId, request)
 
-        val valueIndex = mutableMapOf<Pair<Int, Int>, PropertyValue>()
+        val valueIndex = mutableMapOf<Pair<Int, Int>, Property>()
 
-        response.values.stringProperties?.forEach { value ->
-            valueIndex[value.typeId to value.objectId] =
-                PropertyValue.StringVal(value.value ?: "Unknown", value.typeId, value.objectId)
+        with(response.values) {
+            stringProperties?.forEach { value ->
+                valueIndex[value.typeId to value.objectId] =
+                    Property.StringVal(value.value ?: "Unknown", value.typeId, value.objectId)
+            }
+
+            dateTimeProperties?.forEach { value ->
+                valueIndex[value.typeId to value.objectId] =
+                    Property.DateTimeVal(value.value.value, value.typeId, value.objectId)
+            }
+
+            booleanProperties?.forEach { value ->
+                valueIndex[value.typeId to value.objectId] =
+                    Property.BooleanVal(value.value ?: false, value.typeId, value.objectId)
+            }
+
+            setProperties?.forEach { value ->
+                valueIndex[value.typeId to value.objectId] =
+                    Property.SetVal(value.value ?: "Unknown", value.typeId, value.objectId)
+            }
+
+            enumProperties?.forEach { value ->
+                valueIndex[value.typeId to value.objectId] =
+                    Property.EnumVal(value.value ?: "Unknown", value.typeId, value.objectId)
+            }
         }
 
-        response.values.dateTimeProperties?.forEach { value ->
-            valueIndex[value.typeId to value.objectId] =
-                PropertyValue.DateTimeVal(value.value.value, value.typeId, value.objectId)
-        }
-
-        response.values.booleanProperties?.forEach { value ->
-            valueIndex[value.typeId to value.objectId] =
-                PropertyValue.BooleanVal(value.value ?: false, value.typeId, value.objectId)
-        }
-
-        response.values.setProperties?.forEach { value ->
-            valueIndex[value.typeId to value.objectId] =
-                PropertyValue.SetVal(value.value ?: "Unknown", value.typeId, value.objectId)
-        }
-
-        response.values.enumProperties?.forEach { value ->
-            valueIndex[value.typeId to value.objectId] =
-                PropertyValue.EnumVal(value.value ?: "Unknown", value.typeId, value.objectId)
-        }
-
-        return response.propertyOwner.properties?.map { property ->
+        val properties = response.propertyOwner.properties?.map { property ->
             val key = property.value?.typeId to property.value?.objectId
             val propertyValue =
                 valueIndex[key]?.toSimple() ?: PropertyValueSimple.UnknownValSimple("Неизвестный тип")
@@ -215,6 +216,17 @@ class PolynomApplicationService(
                 objectId = property.objectId
             )
         } ?: emptyList()
+
+        val element = PolynomElement(
+            name = when (val value = properties.find { it.name == "Наименование" }?.value) {
+                is PropertyValueSimple.StringValSimple -> value.data
+                else -> throw NotImplementedError()
+            },
+            properties = properties.filter { it.name != "Наименование" },
+            typeId = response.propertyOwner.typeId,
+            objectId = response.propertyOwner.objectId,
+        )
+        return element
     }
 
 
@@ -241,7 +253,7 @@ class PolynomApplicationService(
     suspend fun searchObjects(
         sessionId: String,
         request: ElementFromPeriodRequestBffDto
-    ): Flow<List<PropertyResult>> {
+    ): Flow<PolynomElement> {
         val authContext = authProvider.getAuthContext(SessionId(sessionId))
 
         return flow {
@@ -261,7 +273,7 @@ class PolynomApplicationService(
             }
         }.flatMapMerge(concurrency = 6) { obj ->
             flow {
-                val props = getPropertiesEnriched(
+                val props = polynomElement(
                     sessionId,
                     OwnerRequest(owner = IIdentifiableObject(obj.objectId, obj.typeId))
                 )
@@ -278,7 +290,7 @@ class PolynomApplicationService(
     suspend fun searchObjectsEnriched(
         sessionId: String,
         request: ElementFromPeriodRequestBffDto
-    ): Flow<EnrichedSearchResultItem> {
+    ): Flow<PolynomElement> {
         val authContext = authProvider.getAuthContext(SessionId(sessionId))
         val requestPolynom = request.toPolynomDto()
         return flow {
@@ -293,18 +305,12 @@ class PolynomApplicationService(
             }
         }.flatMapMerge(concurrency = 6) { obj ->
             flow {
-                val props = getPropertiesEnriched(
+                val element = polynomElement(
                     sessionId,
                     OwnerRequest(owner = IIdentifiableObject(obj.objectId, obj.typeId))
                 )
                 emit(
-                    EnrichedSearchResultItem(
-                        name = obj.name,
-                        objectId = obj.objectId,
-                        typeId = obj.typeId,
-                        iconCode = obj.iconCode,
-                        properties = props
-                    )
+                    element
                 )
             }
         }
@@ -313,21 +319,15 @@ class PolynomApplicationService(
     suspend fun searchChangedObjects(
         sessionId: String,
         request: IPropertySearchRequest
-    ): List<EnrichedSearchResultItem> = coroutineScope {
+    ): List<PolynomElement> = coroutineScope {
         val searchResult = executePropertySearch(sessionId, request)
         searchResult.items?.map { item ->
             async {
-                val props = getPropertiesEnriched(
+                val element = polynomElement(
                     sessionId,
                     OwnerRequest(IIdentifiableObject(item.objectId, item.typeId))
                 )
-                EnrichedSearchResultItem(
-                    name = item.name,
-                    objectId = item.objectId,
-                    typeId = item.typeId,
-                    iconCode = item.iconCode,
-                    properties = props
-                )
+               element
             }
         }?.awaitAll() ?: emptyList()
     }

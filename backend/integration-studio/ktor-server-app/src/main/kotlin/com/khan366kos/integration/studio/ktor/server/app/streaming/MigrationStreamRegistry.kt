@@ -1,12 +1,10 @@
 package com.khan366kos.integration.studio.ktor.server.app.streaming
 
-import com.khan366kos.common.models.PropertyResult
+import com.khan366kos.domain.polynom.PolynomElement
 import com.khan366kos.integration.studio.application.polynom.PolynomApplicationService
 import com.khan366kos.integration.studio.bff.transport.request.ElementFromPeriodRequestBffDto
-import com.khan366kos.integration.studio.ktor.server.app.dto.EnrichedSearchResultItem
-import com.khan366kos.integration.studio.transport.polynom.request.IPropertySearchRequest
-import com.khan366kos.integration.studio.transport.polynom.request.OwnerRequest
-import com.khan366kos.integration.studio.transport.polynom.models.IIdentifiableObject
+import com.khan366kos.integration.studio.bff.transport.response.PolynomElementBffDto
+import com.khan366kos.integration.studio.mapping.toBffDto
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.Job
@@ -49,7 +47,7 @@ sealed class SseEvent {
     @Serializable
     @SerialName("item")
     data class Item(
-        @SerialName("item") val item: EnrichedSearchResultItem
+        @SerialName("item") val item: PolynomElementBffDto
     ) : SseEvent()
 
     @Serializable
@@ -205,7 +203,7 @@ class MigrationStreamRegistry(
                 service.searchObjectsEnriched(sessionId, request)
                     .onEach { item ->
                         stream.markProcessed()
-                        stream.emit(SseEvent.Item(item = item))
+                        stream.emit(SseEvent.Item(item = item.toBffDto()))
                         stream.emit(SseEvent.Progress(processed = stream.processedCount))
                     }
                     .collect()

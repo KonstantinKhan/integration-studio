@@ -1,6 +1,6 @@
 package com.khan366kos.integration.studio.ktor.server.app
 
-import com.khan366kos.common.exceptions.RootNodeException
+import com.khan366kos.domain.exceptions.RootNodeException
 import com.khan366kos.integration.studio.ktor.server.app.config.AppConfig
 import com.khan366kos.integration.studio.ktor.server.app.routes.devSessionRoute
 import io.ktor.server.application.*
@@ -19,12 +19,8 @@ import io.ktor.http.path
 import io.ktor.serialization.kotlinx.json.json
 import io.ktor.server.netty.EngineMain
 import io.ktor.server.plugins.statuspages.StatusPages
-import io.ktor.server.response.respond
 import io.ktor.server.response.respondText
 import io.ktor.server.sse.SSE
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch

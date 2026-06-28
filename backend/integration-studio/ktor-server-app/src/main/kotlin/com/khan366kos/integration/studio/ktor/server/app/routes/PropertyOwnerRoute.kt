@@ -13,7 +13,7 @@ import io.ktor.server.routing.route
 fun Route.propertyOwner(service: PolynomApplicationService): Route = route("property-owner") {
     post("/get-properties") {
         val request = call.receive<OwnerRequest>()
-        val results = service.getPropertiesEnriched(call.userSession.id, request)
+        val results = service.polynomElement(call.userSession.id, request)
         call.respond(HttpStatusCode.OK, results)
     }
 }

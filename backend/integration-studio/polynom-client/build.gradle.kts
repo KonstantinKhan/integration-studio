@@ -7,7 +7,7 @@ dependencies {
     implementation(libs.kotlinx.coroutines.core)
 
     implementation(projects.integrationStudioTransportKmp)
-    implementation(projects.integrationStudioCommonModels)
+    implementation(projects.integrationStudioDomain)
     implementation(projects.etlMapper)
     implementation(projects.integrationStudioMapping)
 

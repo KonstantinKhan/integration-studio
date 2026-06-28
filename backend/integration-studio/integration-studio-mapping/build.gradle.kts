@@ -12,7 +12,7 @@ repositories {
 dependencies {
     implementation(libs.kotlinx.datetime)
 
-    implementation(projects.integrationStudioCommonModels)
+    implementation(projects.integrationStudioDomain)
     implementation(projects.integrationStudioTransportKmp)
     implementation(projects.integrationStudioBffTransport)
 

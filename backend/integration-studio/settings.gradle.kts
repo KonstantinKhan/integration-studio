@@ -2,7 +2,7 @@ rootProject.name = "integration-studio"
 enableFeaturePreview("TYPESAFE_PROJECT_ACCESSORS")
 
 include(":integration-studio-transport-kmp")
-include(":integration-studio-common-models")
+include(":integration-studio-domain")
 include(":etl-mapper")
 include(":ktor-server-app")
 include(":polynom-client")

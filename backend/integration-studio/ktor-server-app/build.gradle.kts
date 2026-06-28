@@ -32,7 +32,7 @@ dependencies {
     implementation(libs.logback.classic)
 
     implementation(projects.integrationStudioTransportKmp)
-    implementation(projects.integrationStudioCommonModels)
+    implementation(projects.integrationStudioDomain)
     implementation(projects.integrationStudioBffTransport)
     implementation(projects.etlMapper)
     implementation(projects.polynomClient)

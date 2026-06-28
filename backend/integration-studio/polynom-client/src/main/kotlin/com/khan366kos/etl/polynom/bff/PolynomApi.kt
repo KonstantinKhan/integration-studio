@@ -1,12 +1,12 @@
 package com.khan366kos.etl.polynom.bff
 
-import com.khan366kos.common.models.auth.AuthContext
-import com.khan366kos.common.models.business.Catalog
-import com.khan366kos.common.models.business.Element
-import com.khan366kos.common.polynom.models.Reference
-import com.khan366kos.common.models.business.elementGroup.ElementGroup
-import com.khan366kos.common.requests.CreateElementRequest
-import com.khan366kos.common.responses.ElementResponse
+import com.khan366kos.domain.models.auth.AuthContext
+import com.khan366kos.domain.models.business.Catalog
+import com.khan366kos.domain.models.business.Element
+import com.khan366kos.domain.polynom.models.Reference
+import com.khan366kos.domain.models.business.elementGroup.ElementGroup
+import com.khan366kos.domain.requests.CreateElementRequest
+import com.khan366kos.domain.responses.ElementResponse
 import com.khan366kos.integration.studio.transport.polynom.response.IPropertyOwnerResponse
 import com.khan366kos.etl.mapper.toCatalog
 import com.khan366kos.etl.mapper.toCreateReferenceResponse

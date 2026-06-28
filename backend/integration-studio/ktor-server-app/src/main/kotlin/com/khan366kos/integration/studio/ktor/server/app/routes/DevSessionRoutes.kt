@@ -1,10 +1,10 @@
 package com.khan366kos.integration.studio.ktor.server.app.routes
 
-import com.khan366kos.common.models.auth.UserCredentials
-import com.khan366kos.common.models.auth.simple.AccessToken
-import com.khan366kos.common.models.auth.simple.Login
-import com.khan366kos.common.models.auth.simple.RefreshToken
-import com.khan366kos.common.models.auth.simple.StorageId
+import com.khan366kos.domain.models.auth.UserCredentials
+import com.khan366kos.domain.models.auth.simple.AccessToken
+import com.khan366kos.domain.models.auth.simple.Login
+import com.khan366kos.domain.models.auth.simple.RefreshToken
+import com.khan366kos.domain.models.auth.simple.StorageId
 import com.khan366kos.integration.studio.transport.polynom.models.LoginRequest
 import com.khan366kos.integration.studio.ktor.server.app.UserSession
 import com.khan366kos.integration.studio.ktor.server.app.config.AppConfig

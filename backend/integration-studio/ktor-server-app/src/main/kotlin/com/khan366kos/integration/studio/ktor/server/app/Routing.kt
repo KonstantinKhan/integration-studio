@@ -1,10 +1,10 @@
 package com.khan366kos.integration.studio.ktor.server.app
 
-import com.khan366kos.common.models.auth.simple.AccessToken
-import com.khan366kos.common.models.auth.simple.Login
-import com.khan366kos.common.models.auth.simple.RefreshToken
-import com.khan366kos.common.models.auth.simple.StorageId
-import com.khan366kos.common.models.business.GroupContent
+import com.khan366kos.domain.models.auth.simple.AccessToken
+import com.khan366kos.domain.models.auth.simple.Login
+import com.khan366kos.domain.models.auth.simple.RefreshToken
+import com.khan366kos.domain.models.auth.simple.StorageId
+import com.khan366kos.domain.models.business.GroupContent
 import com.khan366kos.integration.studio.transport.models.AuthorizationRequestTransport
 import com.khan366kos.etl.excel.service.ManagedWorkbookResult
 import com.khan366kos.etl.excel.service.dsl.function.useManagedWorkbook
@@ -20,8 +20,6 @@ import com.khan366kos.integration.studio.ktor.server.app.routes.search
 import com.khan366kos.integration.studio.ktor.server.app.routes.searchStream
 import com.khan366kos.integration.studio.ktor.server.app.routes.tree
 import com.khan366kos.integration.studio.transport.models.ParentGroup
-import com.khan366kos.integration.studio.transport.polynom.command.CreateReferenceCommand
-import com.khan366kos.integration.studio.transport.polynom.command.DeleteReferenceCommand
 import com.khan366kos.integration.studio.transport.polynom.models.IIdentifiableObject
 import com.khan366kos.integration.studio.transport.polynom.request.OwnerRequest
 import io.ktor.http.*
@@ -96,7 +94,7 @@ fun Application.configureRouting(config: AppConfig) {
                 )
 
                 val now = System.currentTimeMillis()
-                val credentials = com.khan366kos.common.models.auth.UserCredentials(
+                val credentials = com.khan366kos.domain.models.auth.UserCredentials(
                     login = Login(authRequest.username),
                     storageId = StorageId(authRequest.storageId),
                     accessToken = AccessToken(response.accessToken ?: ""),

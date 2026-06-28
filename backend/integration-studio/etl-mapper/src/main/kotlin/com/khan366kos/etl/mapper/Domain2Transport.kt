@@ -1,9 +1,9 @@
 package com.khan366kos.etl.mapper
 
-import com.khan366kos.common.excel.models.EtlSheet
-import com.khan366kos.common.excel.models.EtlWorkbook
-import com.khan366kos.common.models.auth.AuthorizationCredentials
-import com.khan366kos.common.models.definitions.StorageDefinition
+import com.khan366kos.domain.excel.models.EtlSheet
+import com.khan366kos.domain.excel.models.EtlWorkbook
+import com.khan366kos.domain.models.auth.AuthorizationCredentials
+import com.khan366kos.domain.models.definitions.StorageDefinition
 import com.khan366kos.integration.studio.transport.models.AuthorizationRequestTransport
 import com.khan366kos.integration.studio.transport.models.EtlSheetTransport
 import com.khan366kos.integration.studio.transport.models.EtlWorkbookTransport

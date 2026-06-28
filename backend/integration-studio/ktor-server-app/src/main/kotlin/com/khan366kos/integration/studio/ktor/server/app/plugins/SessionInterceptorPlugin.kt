@@ -1,6 +1,6 @@
 package com.khan366kos.integration.studio.ktor.server.app.plugins
 
-import com.khan366kos.common.models.auth.UserCredentials
+import com.khan366kos.domain.models.auth.UserCredentials
 import com.khan366kos.integration.studio.ktor.server.app.UserSession
 import com.khan366kos.integration.studio.ktor.server.app.session.SessionStore
 import io.ktor.http.HttpStatusCode

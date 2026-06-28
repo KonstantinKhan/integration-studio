@@ -8,7 +8,7 @@ kotlin {
 
 dependencies {
     implementation(projects.integrationStudioTransportKmp)
-    implementation(projects.integrationStudioCommonModels)
+    implementation(projects.integrationStudioDomain)
     testImplementation(kotlin("test"))
 }
 

@@ -1,8 +1,8 @@
 package com.khan366kos.integration.studio.infrastructure.auth
 
-import com.khan366kos.common.models.auth.AuthContext
-import com.khan366kos.common.models.auth.AuthenticationException
-import com.khan366kos.common.models.auth.SessionId
+import com.khan366kos.domain.models.auth.AuthContext
+import com.khan366kos.domain.models.auth.AuthenticationException
+import com.khan366kos.domain.models.auth.SessionId
 import com.khan366kos.etl.polynom.bff.auth.AuthProvider
 import com.khan366kos.etl.polynom.bff.auth.TokenManager
 import com.khan366kos.etl.polynom.bff.auth.TokenRefreshApi
