@@ -1,7 +1,7 @@
 package com.khan366kos.integration.studio.ktor.server.app.db
 
 import org.jetbrains.exposed.sql.Table
-import org.jetbrains.exposed.sql.javatime.timestampWithTimeZoneWithTimeZone
+import org.jetbrains.exposed.sql.javatime.timestampWithTimeZone
 
 object MigrationRunsTable : Table("migration_runs") {
     val id         = uuid("id")
