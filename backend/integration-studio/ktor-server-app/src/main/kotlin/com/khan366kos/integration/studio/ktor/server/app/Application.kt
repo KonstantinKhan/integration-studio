@@ -2,9 +2,10 @@ package com.khan366kos.integration.studio.ktor.server.app
 
 import com.khan366kos.domain.exceptions.RootNodeException
 import com.khan366kos.integration.studio.ktor.server.app.config.AppConfig
+import com.khan366kos.integration.studio.ktor.server.app.db.DatabaseFactory
+import com.khan366kos.integration.studio.ktor.server.app.db.MigrationRepository
+import com.khan366kos.integration.studio.ktor.server.app.messaging.RabbitMqConfig
 import com.khan366kos.integration.studio.ktor.server.app.routes.devSessionRoute
-import io.ktor.server.application.*
-import io.ktor.server.sessions.*
 import com.khan366kos.integration.studio.ktor.server.app.session.InMemorySessionStore
 import io.ktor.client.HttpClient
 import io.ktor.client.engine.cio.CIO
@@ -13,13 +14,15 @@ import io.ktor.client.plugins.contentnegotiation.ContentNegotiation
 import io.ktor.client.plugins.defaultRequest
 import io.ktor.http.ContentType
 import io.ktor.http.HttpStatusCode
-import io.ktor.http.contentType
 import io.ktor.http.URLProtocol
+import io.ktor.http.contentType
 import io.ktor.http.path
 import io.ktor.serialization.kotlinx.json.json
+import io.ktor.server.application.*
 import io.ktor.server.netty.EngineMain
 import io.ktor.server.plugins.statuspages.StatusPages
 import io.ktor.server.response.respondText
+import io.ktor.server.sessions.*
 import io.ktor.server.sse.SSE
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.isActive
@@ -32,6 +35,29 @@ fun main(args: Array<String>) {
 }
 
 fun Application.module() {
+    val dbUrl      = environment.config.property("database.url").getString()
+    val dbUser     = environment.config.property("database.user").getString()
+    val dbPassword = environment.config.property("database.password").getString()
+    val dbPoolSize = environment.config.propertyOrNull("database.pool-size")?.getString()?.toInt() ?: 10
+
+    val dbJson = Json {
+        ignoreUnknownKeys = true
+        encodeDefaults = false
+        classDiscriminator = "type"
+    }
+    DatabaseFactory.init(dbUrl, dbUser, dbPassword, dbPoolSize)
+    val migrationRepository = MigrationRepository(dbJson)
+
+    val rabbitMqConfig = RabbitMqConfig(
+        host       = environment.config.property("rabbitmq.host").getString(),
+        port       = environment.config.property("rabbitmq.port").getString().toInt(),
+        vhost      = environment.config.property("rabbitmq.vhost").getString(),
+        user       = environment.config.property("rabbitmq.user").getString(),
+        password   = environment.config.property("rabbitmq.password").getString(),
+        exchange   = environment.config.property("rabbitmq.exchange").getString(),
+        routingKey = environment.config.property("rabbitmq.routing-key").getString(),
+    )
+
     val sessionStore = InMemorySessionStore()
     val httpClient = HttpClient(CIO) {
         engine {
@@ -64,7 +90,9 @@ fun Application.module() {
     val config = AppConfig.create(
         sessionStore = sessionStore,
         httpClient = httpClient,
-        baseUrl = "http://172.23.14.181:5100/api/v1"
+        baseUrl = "http://172.23.14.181:5100/api/v1",
+        rabbitMqConfig = rabbitMqConfig,
+        migrationRepository = migrationRepository,
     )
 
     launch {

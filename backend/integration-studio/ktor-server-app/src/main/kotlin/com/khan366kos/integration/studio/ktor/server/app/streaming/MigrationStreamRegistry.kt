@@ -4,6 +4,10 @@ import com.khan366kos.domain.polynom.PolynomElement
 import com.khan366kos.integration.studio.application.polynom.PolynomApplicationService
 import com.khan366kos.integration.studio.bff.transport.request.ElementFromPeriodRequestBffDto
 import com.khan366kos.integration.studio.bff.transport.response.PolynomElementBffDto
+import com.khan366kos.integration.studio.ktor.server.app.db.EventStatus
+import com.khan366kos.integration.studio.ktor.server.app.db.MigrationRepository
+import com.khan366kos.integration.studio.ktor.server.app.db.RunStatus
+import com.khan366kos.integration.studio.ktor.server.app.messaging.RabbitMqPublisher
 import com.khan366kos.integration.studio.mapping.toBffDto
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -15,8 +19,10 @@ import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.launch
+import kotlinx.datetime.Clock
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
+import org.slf4j.LoggerFactory
 import java.util.UUID
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.atomic.AtomicInteger
@@ -154,8 +160,11 @@ class MigrationStream(
  * GC когда Job завершён И подписчиков 0.
  */
 class MigrationStreamRegistry(
-    private val scope: CoroutineScope
+    private val scope: CoroutineScope,
+    private val repository: MigrationRepository,
+    private val publisher: RabbitMqPublisher,
 ) {
+    private val log = LoggerFactory.getLogger(MigrationStreamRegistry::class.java)
     /** sessionId -> активный stream */
     private val activeBySession = ConcurrentHashMap<String, MigrationStream>()
     /** streamId -> stream (включая терминальные, до освобождения подписчиков) */
@@ -198,18 +207,32 @@ class MigrationStreamRegistry(
         byId[streamId] = stream
 
         stream.job = scope.launch {
+            val runId = UUID.randomUUID()
+            val startedAt = Clock.System.now()
+            repository.createRun(runId, startedAt)
             try {
                 stream.emit(SseEvent.Started(streamId = streamId))
                 service.searchObjectsEnriched(sessionId, request)
                     .onEach { item ->
+                        val eventId = repository.insertEvent(runId, item)
+                        try {
+                            repository.updateEventStatus(eventId, EventStatus.PENDING)
+                            publisher.publish(item, runId)
+                            repository.updateEventStatus(eventId, EventStatus.DELIVERED)
+                        } catch (e: Exception) {
+                            log.error("Failed to publish event {} for run {}: {}", eventId, runId, e.message)
+                            repository.updateEventStatus(eventId, EventStatus.FAILED)
+                        }
                         stream.markProcessed()
                         stream.emit(SseEvent.Item(item = item.toBffDto()))
                         stream.emit(SseEvent.Progress(processed = stream.processedCount))
                     }
                     .collect()
+                repository.updateRunStatus(runId, RunStatus.COMPLETED, stream.processedCount)
                 stream.completeSuccess()
                 stream.emit(SseEvent.Done(processed = stream.processedCount))
             } catch (e: Throwable) {
+                repository.updateRunStatus(runId, RunStatus.FAILED, stream.processedCount)
                 stream.completeFailure(e.message ?: "Unknown error")
                 stream.emit(SseEvent.Error(message = e.message ?: "Unknown error"))
             } finally {

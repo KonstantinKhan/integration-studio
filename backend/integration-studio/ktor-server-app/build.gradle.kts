@@ -40,6 +40,14 @@ dependencies {
 
     implementation(projects.excelService)
 
+    implementation(libs.kotlinx.datetime)
+    implementation(libs.exposed.core)
+    implementation(libs.exposed.jdbc)
+    implementation(libs.exposed.kotlin.datetime)
+    implementation(libs.postgresql)
+    implementation(libs.hikari)
+    implementation(libs.amqp.client)
+
     testImplementation("io.ktor:ktor-server-test-host")
 }
 
