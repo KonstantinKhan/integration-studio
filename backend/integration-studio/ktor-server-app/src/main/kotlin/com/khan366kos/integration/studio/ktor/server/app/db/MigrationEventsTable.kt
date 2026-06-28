@@ -1,7 +1,7 @@
 package com.khan366kos.integration.studio.ktor.server.app.db
 
 import org.jetbrains.exposed.sql.Table
-import org.jetbrains.exposed.sql.kotlin.datetime.timestamp
+import org.jetbrains.exposed.sql.javatime.timestampWithTimeZoneWithTimeZone
 
 object MigrationEventsTable : Table("migration_events") {
     val id              = uuid("id")
@@ -11,8 +11,8 @@ object MigrationEventsTable : Table("migration_events") {
     val objectId        = integer("object_id")
     val payload         = jsonb("payload")
     val status          = varchar("status", 20)
-    val statusUpdatedAt = timestamp("status_updated_at")
-    val createdAt       = timestamp("created_at")
+    val statusUpdatedAt = timestampWithTimeZone("status_updated_at")
+    val createdAt       = timestampWithTimeZone("created_at")
 
     override val primaryKey = PrimaryKey(id)
 }

@@ -1,30 +1,29 @@
 package com.khan366kos.integration.studio.ktor.server.app.db
 
 import com.khan366kos.domain.polynom.PolynomElement
-import kotlinx.datetime.Clock
-import kotlinx.datetime.Instant
 import kotlinx.serialization.json.Json
 import org.jetbrains.exposed.sql.insert
 import org.jetbrains.exposed.sql.transactions.experimental.newSuspendedTransaction
 import org.jetbrains.exposed.sql.update
+import java.time.OffsetDateTime
 import java.util.UUID
 
 class MigrationRepository(private val json: Json) {
 
-    suspend fun createRun(id: UUID, startedAt: Instant) {
+    suspend fun createRun(id: UUID, startedAt: OffsetDateTime) {
         newSuspendedTransaction {
             MigrationRunsTable.insert { row ->
                 row[MigrationRunsTable.id]        = id
                 row[MigrationRunsTable.startedAt] = startedAt
                 row[MigrationRunsTable.status]    = RunStatus.RUNNING
-                row[MigrationRunsTable.createdAt] = Clock.System.now()
+                row[MigrationRunsTable.createdAt] = OffsetDateTime.now()
             }
         }
     }
 
     suspend fun insertEvent(runId: UUID, element: PolynomElement): UUID {
         val eventId = UUID.randomUUID()
-        val now = Clock.System.now()
+        val now = OffsetDateTime.now()
         newSuspendedTransaction {
             MigrationEventsTable.insert { row ->
                 row[MigrationEventsTable.id]              = eventId
@@ -45,7 +44,7 @@ class MigrationRepository(private val json: Json) {
         newSuspendedTransaction {
             MigrationEventsTable.update({ MigrationEventsTable.id eq id }) { row ->
                 row[MigrationEventsTable.status]          = newStatus
-                row[MigrationEventsTable.statusUpdatedAt] = Clock.System.now()
+                row[MigrationEventsTable.statusUpdatedAt] = OffsetDateTime.now()
             }
         }
     }

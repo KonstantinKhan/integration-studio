@@ -19,7 +19,7 @@ import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.launch
-import kotlinx.datetime.Clock
+import java.time.OffsetDateTime
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 import org.slf4j.LoggerFactory
@@ -208,7 +208,7 @@ class MigrationStreamRegistry(
 
         stream.job = scope.launch {
             val runId = UUID.randomUUID()
-            val startedAt = Clock.System.now()
+            val startedAt = OffsetDateTime.now()
             repository.createRun(runId, startedAt)
             try {
                 stream.emit(SseEvent.Started(streamId = streamId))

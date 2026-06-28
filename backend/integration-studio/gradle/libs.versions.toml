@@ -47,7 +47,7 @@ logging = { module = "io.ktor:ktor-client-logging", version.ref = "ktor" }
 
 exposed-core            = { module = "org.jetbrains.exposed:exposed-core",            version.ref = "exposed" }
 exposed-jdbc            = { module = "org.jetbrains.exposed:exposed-jdbc",            version.ref = "exposed" }
-exposed-kotlin-datetime = { module = "org.jetbrains.exposed:exposed-kotlin-datetime", version.ref = "exposed" }
+exposed-java-time       = { module = "org.jetbrains.exposed:exposed-java-time",       version.ref = "exposed" }
 postgresql              = { module = "org.postgresql:postgresql",                      version.ref = "postgresql" }
 hikari                  = { module = "com.zaxxer:HikariCP",                           version.ref = "hikari" }
 amqp-client             = { module = "com.rabbitmq:amqp-client",                      version.ref = "amqp" }
