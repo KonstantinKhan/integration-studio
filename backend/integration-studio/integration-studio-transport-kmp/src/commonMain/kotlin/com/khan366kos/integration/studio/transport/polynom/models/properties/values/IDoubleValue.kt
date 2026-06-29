@@ -25,5 +25,5 @@ data class IDoubleValue(
     val upperTolerance: Double? = null,
 
     @SerialName("measureUnit")
-    val measureUnit: IIdentifiableObject
+    val measureUnit: IIdentifiableObject? = null
 )
