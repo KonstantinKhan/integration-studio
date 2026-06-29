@@ -9,7 +9,7 @@ import {
   useRef,
   useLayoutEffect,
 } from 'react'
-import { useQuery } from '@tanstack/react-query'
+import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { Calendar } from 'primereact/calendar'
 import { Button } from 'primereact/button'
 import { Dropdown } from 'primereact/dropdown'
@@ -287,11 +287,19 @@ const ChangesPage = () => {
     <div style={{ paddingLeft: `${opt.depth * 1.5}rem` }}>{opt.name}</div>
   )
 
+  const queryClient = useQueryClient()
+
   const { status, processedCount, items, errorMessage, connecting, start } =
     useMigrationStream()
 
   const isRunning = status === 'RUNNING'
   const isTerminal = status === 'COMPLETED' || status === 'FAILED'
+
+  useEffect(() => {
+    if (status === 'COMPLETED' || status === 'FAILED') {
+      void queryClient.invalidateQueries({ queryKey: ['syncSummary'] })
+    }
+  }, [status, queryClient])
 
   const handleStart = () => {
     if (!from || !to || !selectedNode) return

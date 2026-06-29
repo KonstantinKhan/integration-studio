@@ -34,7 +34,14 @@ class SyncScheduler(
     private val log = LoggerFactory.getLogger(SyncScheduler::class.java)
 
     fun start() {
-        if (!config.enabled) return
+        if (!config.enabled) {
+            log.info("Auto-sync scheduler disabled")
+            return
+        }
+        log.info(
+            "Auto-sync scheduler enabled: interval={}min, scope={}:{}, user={}",
+            config.intervalMinutes, config.scopeTypeId, config.scopeObjectId, config.serviceUser
+        )
         scope.launch {
             try {
                 authenticate()
@@ -42,10 +49,9 @@ class SyncScheduler(
                 log.error("Auto-sync: service account authentication failed: {}", e.message, e)
                 return@launch
             }
-            log.info("Auto-sync scheduler started, interval={}min", config.intervalMinutes)
             while (isActive) {
-                delay(config.intervalMinutes.minutes)
                 runSync()
+                delay(config.intervalMinutes.minutes)
             }
         }
     }

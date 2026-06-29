@@ -3,12 +3,9 @@ function pad(n: number): string {
 }
 
 export function formatDate(date: Date): string {
-  const year = date.getFullYear()
-  const month = pad(date.getMonth() + 1)
-  const day = pad(date.getDate())
-  const hours = pad(date.getHours())
-  const minutes = pad(date.getMinutes())
-  return `${year}-${month}-${day}T${hours}:${minutes}:00.000`
+  // toISOString() даёт UTC — бэкенд хранит UTC, при отображении браузер конвертирует в локальный TZ
+  const iso = date.toISOString() // "2026-06-29T06:55:00.000Z"
+  return iso.slice(0, 23)        // "2026-06-29T06:55:00.000"
 }
 
 export function formatDisplayDateTime(isoString: string): string {
