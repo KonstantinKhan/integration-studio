@@ -7,6 +7,10 @@ import com.khan366kos.integration.studio.bff.transport.response.PolynomElementBf
 import com.khan366kos.integration.studio.ktor.server.app.db.EventStatus
 import com.khan366kos.integration.studio.ktor.server.app.db.MigrationRepository
 import com.khan366kos.integration.studio.ktor.server.app.db.RunStatus
+import com.khan366kos.integration.studio.ktor.server.app.db.RunType
+import com.khan366kos.integration.studio.ktor.server.app.errors.SyncError
+import com.khan366kos.integration.studio.ktor.server.app.errors.toSyncError
+import com.khan366kos.integration.studio.ktor.server.app.messaging.EmailNotifier
 import com.khan366kos.integration.studio.ktor.server.app.messaging.RabbitMqPublisher
 import com.khan366kos.integration.studio.mapping.toBffDto
 import kotlinx.coroutines.CoroutineScope
@@ -19,28 +23,24 @@ import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.launch
-import java.time.OffsetDateTime
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 import org.slf4j.LoggerFactory
+import java.time.OffsetDateTime
+import java.time.ZoneOffset
 import java.util.UUID
+import kotlinx.datetime.toJavaLocalDateTime
 import java.util.concurrent.ConcurrentHashMap
+import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.atomic.AtomicInteger
 import java.util.concurrent.atomic.AtomicReference
 
-/**
- * Состояние миграционного потока.
- */
 enum class MigrationStatus {
     @SerialName("RUNNING") RUNNING,
     @SerialName("COMPLETED") COMPLETED,
     @SerialName("FAILED") FAILED
 }
 
-/**
- * Событие, стримящееся на UI через SSE.
- * `type`-дискриминатор (classDiscriminator="type") используется как SSE event name.
- */
 @Serializable
 sealed class SseEvent {
 
@@ -75,7 +75,6 @@ sealed class SseEvent {
     ) : SseEvent()
 }
 
-/** SSE event name для [SseEvent] (совпадает с @SerialName подкласса). */
 fun SseEvent.eventName(): String = when (this) {
     is SseEvent.Started -> "started"
     is SseEvent.Item -> "item"
@@ -84,9 +83,6 @@ fun SseEvent.eventName(): String = when (this) {
     is SseEvent.Done -> "done"
 }
 
-/**
- * Ответ эндпоинта status.
- */
 @Serializable
 data class StreamStatusResponse(
     @SerialName("streamId") val streamId: String,
@@ -95,9 +91,6 @@ data class StreamStatusResponse(
     @SerialName("errorMessage") val errorMessage: String? = null
 )
 
-/**
- * Один активный поток миграции для пользователя.
- */
 class MigrationStream(
     val streamId: String,
     val sessionId: String,
@@ -151,23 +144,14 @@ class MigrationStream(
     }
 }
 
-/**
- * Реестр активных потоков миграции.
- * Один активный поток на пользователя (по sessionId).
- *
- * TTL: поток держится пока Job RUNNING независимо от подписчиков,
- * чтобы пережить кратковременный disconnect (refresh вкладки).
- * GC когда Job завершён И подписчиков 0.
- */
 class MigrationStreamRegistry(
     private val scope: CoroutineScope,
     private val repository: MigrationRepository,
     private val publisher: RabbitMqPublisher,
+    private val emailNotifier: EmailNotifier,
 ) {
     private val log = LoggerFactory.getLogger(MigrationStreamRegistry::class.java)
-    /** sessionId -> активный stream */
     private val activeBySession = ConcurrentHashMap<String, MigrationStream>()
-    /** streamId -> stream (включая терминальные, до освобождения подписчиков) */
     private val byId = ConcurrentHashMap<String, MigrationStream>()
 
     fun activeStreamIdFor(sessionId: String): String? = activeBySession[sessionId]?.streamId
@@ -176,20 +160,15 @@ class MigrationStreamRegistry(
 
     fun streamOf(streamId: String): MigrationStream? = byId[streamId]
 
-    /**
-     * Возвращает активный RUNNING поток для session если есть, иначе null.
-     */
     fun runningFor(sessionId: String): MigrationStream? =
         activeBySession[sessionId]?.takeIf { it.status == MigrationStatus.RUNNING }
 
-    /**
-     * Стартовать новый поток. Если уже есть RUNNING — выбросит IllegalStateException.
-     */
     @OptIn(ExperimentalCoroutinesApi::class)
     fun start(
         sessionId: String,
         service: PolynomApplicationService,
-        request: ElementFromPeriodRequestBffDto
+        request: ElementFromPeriodRequestBffDto,
+        type: String = RunType.MANUAL,
     ): MigrationStream {
         runningFor(sessionId)?.let {
             throw IllegalStateException("Stream already running: ${it.streamId}")
@@ -206,37 +185,83 @@ class MigrationStreamRegistry(
         activeBySession[sessionId] = stream
         byId[streamId] = stream
 
+        val fromDate = request.from.toJavaLocalDateTime().atOffset(ZoneOffset.UTC)
+        val toDate = request.to.toJavaLocalDateTime().atOffset(ZoneOffset.UTC)
+
         stream.job = scope.launch {
             val runId = UUID.randomUUID()
             val startedAt = OffsetDateTime.now()
-            repository.createRun(runId, startedAt)
+            repository.createRun(runId, startedAt, type, fromDate, toDate)
+
+            val sendingStarted = AtomicBoolean(false)
+            var currentEventId: UUID? = null
+
             try {
                 stream.emit(SseEvent.Started(streamId = streamId))
                 service.searchObjectsEnriched(sessionId, request)
                     .onEach { item ->
-                        val eventId = repository.insertEvent(runId, item)
+                        currentEventId = null
+
+                        val eventId = try {
+                            repository.insertEvent(runId, item)
+                        } catch (e: Exception) {
+                            throw SyncError.DatabaseError(e)
+                        }
+                        currentEventId = eventId
+
                         try {
                             repository.updateEventStatus(eventId, EventStatus.PENDING)
+                        } catch (e: Exception) {
+                            throw SyncError.DatabaseError(e)
+                        }
+
+                        if (!sendingStarted.getAndSet(true)) {
+                            try {
+                                repository.updateRunSendingStarted(runId, OffsetDateTime.now())
+                            } catch (e: Exception) {
+                                log.warn("Failed to set sending_started_at for run {}: {}", runId, e.message)
+                            }
+                        }
+
+                        try {
                             publisher.publish(item, runId)
+                        } catch (e: Exception) {
+                            throw SyncError.BrokerConnectionError(e)
+                        }
+
+                        try {
                             repository.updateEventStatus(eventId, EventStatus.DELIVERED)
                         } catch (e: Exception) {
-                            log.error("Failed to publish event {} for run {}: {}", eventId, runId, e.message)
-                            repository.updateEventStatus(eventId, EventStatus.FAILED)
+                            throw SyncError.DatabaseError(e)
                         }
+
+                        currentEventId = null
                         stream.markProcessed()
                         stream.emit(SseEvent.Item(item = item.toBffDto()))
                         stream.emit(SseEvent.Progress(processed = stream.processedCount))
                     }
                     .collect()
+
                 repository.updateRunStatus(runId, RunStatus.COMPLETED, stream.processedCount)
                 stream.completeSuccess()
                 stream.emit(SseEvent.Done(processed = stream.processedCount))
             } catch (e: Throwable) {
-                repository.updateRunStatus(runId, RunStatus.FAILED, stream.processedCount)
-                stream.completeFailure(e.message ?: "Unknown error")
-                stream.emit(SseEvent.Error(message = e.message ?: "Unknown error"))
+                val syncError = if (e is SyncError) e else e.toSyncError()
+                log.error("Sync run {} failed [{}]: {}", runId, syncError::class.simpleName, syncError.message, syncError.cause)
+
+                currentEventId?.let { eid ->
+                    try { repository.updateEventStatus(eid, EventStatus.FAILED) } catch (_: Exception) {}
+                }
+                try {
+                    repository.updateRunStatus(runId, RunStatus.FAILED, stream.processedCount)
+                    repository.updateRunErrorType(runId, syncError::class.simpleName ?: "ServiceError")
+                } catch (_: Exception) {}
+
+                emailNotifier.sendSyncError(runId, type, syncError)
+
+                stream.completeFailure(syncError.message ?: "Unknown error")
+                stream.emit(SseEvent.Error(message = syncError.message ?: "Unknown error"))
             } finally {
-                // Снимаем активную привязку. Сам stream остаётся в byId пока есть подписчики.
                 activeBySession.compute(sessionId) { _, current ->
                     if (current?.streamId == streamId) null else current
                 }
@@ -247,9 +272,6 @@ class MigrationStreamRegistry(
         return stream
     }
 
-    /**
-     * Освободить поток если Job завершён и подписчиков 0.
-     */
     fun maybeGc(streamId: String) {
         val stream = byId[streamId] ?: return
         if (stream.status != MigrationStatus.RUNNING && stream.subscribers == 0) {
@@ -258,9 +280,6 @@ class MigrationStreamRegistry(
         }
     }
 
-    /**
-     * Полная очистка по session (logout).
-     */
     fun clearForSession(sessionId: String) {
         activeBySession.remove(sessionId)
         byId.values.removeIf { it.sessionId == sessionId }

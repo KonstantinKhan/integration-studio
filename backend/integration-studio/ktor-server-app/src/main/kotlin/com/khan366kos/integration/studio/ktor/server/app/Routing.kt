@@ -18,6 +18,7 @@ import com.khan366kos.integration.studio.ktor.server.app.routes.propertyOwner
 import com.khan366kos.integration.studio.ktor.server.app.routes.references
 import com.khan366kos.integration.studio.ktor.server.app.routes.search
 import com.khan366kos.integration.studio.ktor.server.app.routes.searchStream
+import com.khan366kos.integration.studio.ktor.server.app.routes.syncSummary
 import com.khan366kos.integration.studio.ktor.server.app.routes.tree
 import com.khan366kos.integration.studio.transport.models.ParentGroup
 import com.khan366kos.integration.studio.transport.polynom.models.IIdentifiableObject
@@ -360,6 +361,7 @@ fun Application.configureRouting(config: AppConfig) {
             propertyOwner(config.polynomApplicationService)
             search(config.polynomApplicationService, config)
             searchStream(config)
+            syncSummary(config.migrationRepository)
             references(config)
             tree(config.polynomApplicationService)
         }

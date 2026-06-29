@@ -5,8 +5,12 @@ import com.khan366kos.etl.polynom.bff.auth.TokenManager
 import com.khan366kos.integration.studio.application.polynom.PolynomApplicationService
 import com.khan366kos.integration.studio.infrastructure.auth.SessionStoreAuthProvider
 import com.khan366kos.integration.studio.ktor.server.app.db.MigrationRepository
+import com.khan366kos.integration.studio.ktor.server.app.messaging.EmailConfig
+import com.khan366kos.integration.studio.ktor.server.app.messaging.EmailNotifier
 import com.khan366kos.integration.studio.ktor.server.app.messaging.RabbitMqConfig
 import com.khan366kos.integration.studio.ktor.server.app.messaging.RabbitMqPublisher
+import com.khan366kos.integration.studio.ktor.server.app.scheduling.SyncScheduler
+import com.khan366kos.integration.studio.ktor.server.app.scheduling.SyncSchedulerConfig
 import com.khan366kos.integration.studio.ktor.server.app.session.SessionStore
 import com.khan366kos.integration.studio.ktor.server.app.streaming.MigrationStreamRegistry
 import io.ktor.client.HttpClient
@@ -25,6 +29,8 @@ class AppConfig(
     val backgroundScope: CoroutineScope,
     val migrationStreamRegistry: MigrationStreamRegistry,
     val rabbitMqPublisher: RabbitMqPublisher,
+    val syncScheduler: SyncScheduler,
+    val migrationRepository: MigrationRepository,
 ) {
 
     companion object {
@@ -34,6 +40,8 @@ class AppConfig(
             baseUrl: String,
             rabbitMqConfig: RabbitMqConfig,
             migrationRepository: MigrationRepository,
+            emailConfig: EmailConfig,
+            schedulerConfig: SyncSchedulerConfig,
         ): AppConfig {
             val backgroundScope = CoroutineScope(Dispatchers.IO + SupervisorJob())
 
@@ -49,11 +57,22 @@ class AppConfig(
                 classDiscriminator = "type"
             }
             val rabbitMqPublisher = RabbitMqPublisher(rabbitMqConfig, json)
+            val emailNotifier = EmailNotifier(emailConfig)
 
             val migrationStreamRegistry = MigrationStreamRegistry(
                 scope = backgroundScope,
                 repository = migrationRepository,
                 publisher = rabbitMqPublisher,
+                emailNotifier = emailNotifier,
+            )
+
+            val syncScheduler = SyncScheduler(
+                scope = backgroundScope,
+                config = schedulerConfig,
+                sessionStore = sessionStore,
+                polynomApplicationService = polynomApplicationService,
+                registry = migrationStreamRegistry,
+                repository = migrationRepository,
             )
 
             return AppConfig(
@@ -66,6 +85,8 @@ class AppConfig(
                 backgroundScope = backgroundScope,
                 migrationStreamRegistry = migrationStreamRegistry,
                 rabbitMqPublisher = rabbitMqPublisher,
+                syncScheduler = syncScheduler,
+                migrationRepository = migrationRepository,
             )
         }
     }

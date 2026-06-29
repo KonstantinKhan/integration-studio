@@ -9,12 +9,15 @@ import {
   useRef,
   useLayoutEffect,
 } from 'react'
+import { useQuery } from '@tanstack/react-query'
 import { Calendar } from 'primereact/calendar'
 import { Button } from 'primereact/button'
 import { Dropdown } from 'primereact/dropdown'
 import { useMigrationStream } from '@/hooks/useMigrationStream'
 import { useNodes } from '@/hooks/useNodes'
 import { useTreeRoot } from '@/hooks/useTreeRoot'
+import { SyncInfoPanel } from '@/components/SyncInfoPanel'
+import { getSyncSummary } from '@/api/search-stream.api'
 import type { EnrichedSearchResultItem } from '@/shared/types/enrichedSearchResultItem.interface'
 import type { INode } from '@/shared/types/node.interface'
 import { formatDate } from '@/utils/format'
@@ -167,6 +170,22 @@ const ChangesPage = () => {
   const [from, setFrom] = useState<Date | null>(null)
   const [to, setTo] = useState<Date | null>(null)
   const [opened, setOpened] = useState(false)
+  const defaultsApplied = useRef(false)
+
+  const { data: syncSummary, isLoading: summaryLoading } = useQuery({
+    queryKey: ['syncSummary'],
+    queryFn: getSyncSummary,
+    staleTime: 30_000,
+  })
+
+  useEffect(() => {
+    if (defaultsApplied.current || summaryLoading) return
+    defaultsApplied.current = true
+    if (syncSummary?.lastAutoSync?.fromDate) {
+      setFrom(new Date(syncSummary.lastAutoSync.fromDate))
+    }
+    setTo(new Date())
+  }, [syncSummary, summaryLoading])
 
   // Ref для предотвращения cascading renders
   const validationRef = useRef<{
@@ -334,6 +353,8 @@ const ChangesPage = () => {
           Синхронизация изменённых объектов
         </h1>
 
+        <SyncInfoPanel summary={syncSummary} isLoading={summaryLoading} />
+
         <div className="mb-6">
           <span className="block text-sm font-medium text-stone-700 mb-1 ml-3">
             Область поиска
@@ -374,6 +395,9 @@ const ChangesPage = () => {
                 value={from}
                 onChange={(e) => setFrom(e.value as Date | null)}
                 dateFormat="dd.mm.yy"
+                showTime
+                hourFormat="24"
+                showSeconds={false}
                 showIcon
               />
             </div>
@@ -391,6 +415,9 @@ const ChangesPage = () => {
                 value={to}
                 onChange={(e) => setTo(e.value as Date | null)}
                 dateFormat="dd.mm.yy"
+                showTime
+                hourFormat="24"
+                showSeconds={false}
                 showIcon
               />
             </div>

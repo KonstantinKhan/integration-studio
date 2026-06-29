@@ -4,8 +4,10 @@ import com.khan366kos.domain.exceptions.RootNodeException
 import com.khan366kos.integration.studio.ktor.server.app.config.AppConfig
 import com.khan366kos.integration.studio.ktor.server.app.db.DatabaseFactory
 import com.khan366kos.integration.studio.ktor.server.app.db.MigrationRepository
+import com.khan366kos.integration.studio.ktor.server.app.messaging.EmailConfig
 import com.khan366kos.integration.studio.ktor.server.app.messaging.RabbitMqConfig
 import com.khan366kos.integration.studio.ktor.server.app.routes.devSessionRoute
+import com.khan366kos.integration.studio.ktor.server.app.scheduling.SyncSchedulerConfig
 import com.khan366kos.integration.studio.ktor.server.app.session.InMemorySessionStore
 import io.ktor.client.HttpClient
 import io.ktor.client.engine.cio.CIO
@@ -58,6 +60,26 @@ fun Application.module() {
         routingKey = environment.config.property("rabbitmq.routing-key").getString(),
     )
 
+    val emailConfig = EmailConfig(
+        enabled  = environment.config.propertyOrNull("email.enabled")?.getString()?.toBoolean() ?: false,
+        smtpHost = environment.config.propertyOrNull("email.smtp-host")?.getString() ?: "",
+        smtpPort = environment.config.propertyOrNull("email.smtp-port")?.getString()?.toInt() ?: 587,
+        smtpTls  = environment.config.propertyOrNull("email.smtp-tls")?.getString()?.toBoolean() ?: true,
+        from     = environment.config.propertyOrNull("email.from")?.getString() ?: "",
+        password = environment.config.propertyOrNull("email.password")?.getString() ?: "",
+        to       = environment.config.propertyOrNull("email.to")?.getString() ?: "",
+    )
+
+    val schedulerConfig = SyncSchedulerConfig(
+        enabled         = environment.config.propertyOrNull("sync-scheduler.enabled")?.getString()?.toBoolean() ?: false,
+        intervalMinutes = environment.config.propertyOrNull("sync-scheduler.interval-minutes")?.getString()?.toLong() ?: 15L,
+        scopeTypeId     = environment.config.propertyOrNull("sync-scheduler.scope-type-id")?.getString()?.toInt() ?: 0,
+        scopeObjectId   = environment.config.propertyOrNull("sync-scheduler.scope-object-id")?.getString()?.toInt() ?: 0,
+        serviceUser     = environment.config.propertyOrNull("sync-scheduler.service-user")?.getString() ?: "",
+        servicePassword = environment.config.propertyOrNull("sync-scheduler.service-password")?.getString() ?: "",
+        serviceStorageId = environment.config.propertyOrNull("sync-scheduler.service-storage-id")?.getString() ?: "",
+    )
+
     val sessionStore = InMemorySessionStore()
     val httpClient = HttpClient(CIO) {
         engine {
@@ -93,7 +115,11 @@ fun Application.module() {
         baseUrl = "http://172.23.14.181:5100/api/v1",
         rabbitMqConfig = rabbitMqConfig,
         migrationRepository = migrationRepository,
+        emailConfig = emailConfig,
+        schedulerConfig = schedulerConfig,
     )
+
+    config.syncScheduler.start()
 
     launch {
         while (isActive) {

@@ -7,6 +7,7 @@ import type {
   StartStreamResponse,
   StreamStatusResponse,
 } from '@/shared/types/streaming.interface'
+import type { SyncSummaryResponse } from '@/shared/types/sync-summary.interface'
 
 /**
  * Стартовать новую миграцию. Если уже есть RUNNING поток для сессии —
@@ -48,5 +49,9 @@ export async function getMigrationStreamStatus(
  */
 export function migrationStreamEventsUrl(streamId: string): string {
   return `${API_BASE_URL}/search/streams/${encodeURIComponent(streamId)}/events`
+}
+
+export async function getSyncSummary(): Promise<SyncSummaryResponse> {
+  return apiClient<SyncSummaryResponse>('/sync/summary', { method: 'GET' })
 }
 
