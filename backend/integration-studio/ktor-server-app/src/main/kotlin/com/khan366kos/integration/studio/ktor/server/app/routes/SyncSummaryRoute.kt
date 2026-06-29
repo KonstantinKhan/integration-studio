@@ -34,7 +34,7 @@ fun Route.syncSummary(repository: MigrationRepository): Route = route("sync/summ
         val lastAuto   = repository.getLastSuccessfulRun(RunType.AUTO)
         val lastManual = repository.getLastSuccessfulRun(RunType.MANUAL)
 
-        val errorsBetween = if (lastAuto != null && lastManual != null) {
+        val errorsBetween = if (lastAuto != null && lastManual != null && lastAuto.startedAt.isBefore(lastManual.startedAt)) {
             repository.countFailedRunsBetween(lastAuto.startedAt, lastManual.startedAt)
         } else 0
 

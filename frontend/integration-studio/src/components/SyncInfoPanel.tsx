@@ -22,6 +22,10 @@ export function SyncInfoPanel({ summary, isLoading }: Props) {
 
   const { lastAutoSync, lastManualSync, errorsBetween } = summary
 
+  const autoTime = lastAutoSync ? new Date(lastAutoSync.startedAt).getTime() : null
+  const manualTime = lastManualSync ? new Date(lastManualSync.startedAt).getTime() : null
+  const autoIsNewer = autoTime !== null && manualTime !== null && autoTime > manualTime
+
   return (
     <div
       className="max-w-3xl mx-auto mb-6 p-4 rounded-xl border-2 shadow-sm text-sm text-stone-700"
@@ -79,14 +83,20 @@ export function SyncInfoPanel({ summary, isLoading }: Props) {
         </div>
       </div>
 
-      {(lastAutoSync || lastManualSync) && (
+      {(lastAutoSync && lastManualSync) && (
         <div className="mt-3 pt-3 border-t border-stone-300">
-          <span className="text-stone-600">
-            Ошибочных синхронизаций за период между ними:{' '}
-            <span className={errorsBetween > 0 ? 'font-semibold text-red-600' : 'font-semibold text-green-700'}>
-              {errorsBetween}
+          {autoIsNewer ? (
+            <span className="font-semibold text-green-700">
+              Авто-синхронизация актуальна
             </span>
-          </span>
+          ) : (
+            <span className="text-stone-600">
+              Ошибочных синхронизаций за период между ними:{' '}
+              <span className={errorsBetween > 0 ? 'font-semibold text-red-600' : 'font-semibold text-green-700'}>
+                {errorsBetween}
+              </span>
+            </span>
+          )}
         </div>
       )}
     </div>
