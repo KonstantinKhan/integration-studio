@@ -23,6 +23,10 @@ class EmailNotifier(private val config: EmailConfig) {
                 put("mail.smtp.port", config.smtpPort.toString())
                 put("mail.smtp.auth", "true")
                 if (config.smtpTls) {
+                    // SSL/TLS (implicit) — порт 465
+                    put("mail.smtp.ssl.enable", "true")
+                } else {
+                    // STARTTLS — порт 587
                     put("mail.smtp.starttls.enable", "true")
                 }
             }
