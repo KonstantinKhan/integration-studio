@@ -170,7 +170,7 @@ const ChangesPage = () => {
   const [from, setFrom] = useState<Date | null>(null)
   const [to, setTo] = useState<Date | null>(null)
   const [opened, setOpened] = useState(false)
-  const defaultsApplied = useRef(false)
+  const lastAppliedAutoSync = useRef<string | null>(null)
 
   const { data: syncSummary, isLoading: summaryLoading } = useQuery({
     queryKey: ['syncSummary'],
@@ -181,8 +181,10 @@ const ChangesPage = () => {
   })
 
   useEffect(() => {
-    if (defaultsApplied.current || summaryLoading) return
-    defaultsApplied.current = true
+    if (summaryLoading) return
+    const autoStartedAt = syncSummary?.lastAutoSync?.startedAt ?? null
+    if (autoStartedAt === lastAppliedAutoSync.current) return
+    lastAppliedAutoSync.current = autoStartedAt
     if (syncSummary?.lastAutoSync?.fromDate) {
       setFrom(new Date(syncSummary.lastAutoSync.fromDate))
     }
