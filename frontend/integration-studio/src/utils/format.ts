@@ -6,5 +6,17 @@ export function formatDate(date: Date): string {
   const year = date.getFullYear()
   const month = pad(date.getMonth() + 1)
   const day = pad(date.getDate())
-  return `${year}-${month}-${day}T00:00:00.000`
+  const hours = pad(date.getHours())
+  const minutes = pad(date.getMinutes())
+  return `${year}-${month}-${day}T${hours}:${minutes}:00.000`
+}
+
+export function formatDisplayDateTime(isoString: string): string {
+  const d = new Date(isoString)
+  const day = pad(d.getDate())
+  const month = pad(d.getMonth() + 1)
+  const year = d.getFullYear()
+  const hours = pad(d.getHours())
+  const minutes = pad(d.getMinutes())
+  return `${day}.${month}.${year} ${hours}:${minutes}`
 }

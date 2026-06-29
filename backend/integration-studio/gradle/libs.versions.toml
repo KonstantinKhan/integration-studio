@@ -9,10 +9,11 @@ poi = "5.5.1"
 kotest = "6.0.7"
 log4j-api = "2.25.3"
 
-exposed    = "0.61.0"
-postgresql = "42.7.3"
-hikari     = "6.3.0"
-amqp       = "5.21.0"
+exposed      = "0.61.0"
+postgresql   = "42.7.3"
+hikari       = "6.3.0"
+amqp         = "5.21.0"
+jakarta-mail = "2.0.1"
 
 [libraries]
 kotlinx-datetime = { module = "org.jetbrains.kotlinx:kotlinx-datetime", version.ref = "kotlinx-datetime"}
@@ -51,6 +52,7 @@ exposed-java-time       = { module = "org.jetbrains.exposed:exposed-java-time", 
 postgresql              = { module = "org.postgresql:postgresql",                      version.ref = "postgresql" }
 hikari                  = { module = "com.zaxxer:HikariCP",                           version.ref = "hikari" }
 amqp-client             = { module = "com.rabbitmq:amqp-client",                      version.ref = "amqp" }
+jakarta-mail            = { module = "com.sun.mail:jakarta.mail",                     version.ref = "jakarta-mail" }
 
 [plugins]
 kotlin-jvm = { id = "org.jetbrains.kotlin.jvm", version.ref = "kotlin" }

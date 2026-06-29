@@ -47,6 +47,7 @@ dependencies {
     implementation(libs.postgresql)
     implementation(libs.hikari)
     implementation(libs.amqp.client)
+    implementation(libs.jakarta.mail)
 
     testImplementation("io.ktor:ktor-server-test-host")
 }

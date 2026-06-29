@@ -1,0 +1,101 @@
+package com.khan366kos.integration.studio.ktor.server.app.scheduling
+
+import com.khan366kos.domain.models.auth.UserCredentials
+import com.khan366kos.domain.models.auth.simple.AccessToken
+import com.khan366kos.domain.models.auth.simple.Login
+import com.khan366kos.domain.models.auth.simple.RefreshToken
+import com.khan366kos.domain.models.auth.simple.StorageId
+import com.khan366kos.integration.studio.application.polynom.PolynomApplicationService
+import com.khan366kos.integration.studio.bff.transport.IdentifierBffDto
+import com.khan366kos.integration.studio.bff.transport.request.ElementFromPeriodRequestBffDto
+import com.khan366kos.integration.studio.ktor.server.app.db.MigrationRepository
+import com.khan366kos.integration.studio.ktor.server.app.db.RunType
+import com.khan366kos.integration.studio.ktor.server.app.session.SessionStore
+import com.khan366kos.integration.studio.ktor.server.app.streaming.MigrationStreamRegistry
+import com.khan366kos.integration.studio.transport.polynom.models.LoginRequest
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.isActive
+import kotlinx.coroutines.launch
+import kotlinx.datetime.toKotlinLocalDateTime
+import org.slf4j.LoggerFactory
+import java.time.OffsetDateTime
+import java.time.ZoneOffset
+import kotlin.time.Duration.Companion.minutes
+
+class SyncScheduler(
+    private val scope: CoroutineScope,
+    private val config: SyncSchedulerConfig,
+    private val sessionStore: SessionStore,
+    private val polynomApplicationService: PolynomApplicationService,
+    private val registry: MigrationStreamRegistry,
+    private val repository: MigrationRepository,
+) {
+    private val log = LoggerFactory.getLogger(SyncScheduler::class.java)
+
+    fun start() {
+        if (!config.enabled) return
+        scope.launch {
+            try {
+                authenticate()
+            } catch (e: Exception) {
+                log.error("Auto-sync: service account authentication failed: {}", e.message, e)
+                return@launch
+            }
+            log.info("Auto-sync scheduler started, interval={}min", config.intervalMinutes)
+            while (isActive) {
+                delay(config.intervalMinutes.minutes)
+                runSync()
+            }
+        }
+    }
+
+    private suspend fun runSync() {
+        try {
+            val lastAuto = repository.getLastSuccessfulRun(RunType.AUTO)
+            val from = lastAuto?.startedAt ?: OffsetDateTime.now().minusMinutes(config.intervalMinutes)
+            val to = OffsetDateTime.now()
+
+            log.info("Auto-sync: starting run, from={}, to={}", from, to)
+
+            val request = ElementFromPeriodRequestBffDto(
+                scope = IdentifierBffDto(typeId = config.scopeTypeId, objectId = config.scopeObjectId),
+                from = from.atZoneSameInstant(ZoneOffset.UTC).toLocalDateTime().toKotlinLocalDateTime(),
+                to = to.atZoneSameInstant(ZoneOffset.UTC).toLocalDateTime().toKotlinLocalDateTime(),
+            )
+            registry.start(
+                sessionId = SERVICE_SESSION_ID,
+                service = polynomApplicationService,
+                request = request,
+                type = RunType.AUTO,
+            )
+        } catch (e: Exception) {
+            log.error("Auto-sync: failed to start run: {}", e.message, e)
+        }
+    }
+
+    private suspend fun authenticate() {
+        val response = polynomApplicationService.signIn(
+            LoginRequest(
+                storageId = config.serviceStorageId,
+                password = config.servicePassword,
+                login = config.serviceUser,
+            )
+        )
+        val now = System.currentTimeMillis()
+        val credentials = UserCredentials(
+            login = Login(config.serviceUser),
+            storageId = StorageId(config.serviceStorageId),
+            accessToken = AccessToken(response.accessToken ?: ""),
+            refreshToken = RefreshToken(response.refreshToken ?: ""),
+            issuedAt = now,
+            expiresAt = now + (response.expiresIn * 1000L),
+        )
+        sessionStore.store(SERVICE_SESSION_ID, credentials)
+        log.info("Auto-sync: service account authenticated as '{}'", config.serviceUser)
+    }
+
+    companion object {
+        const val SERVICE_SESSION_ID = "auto-sync-service"
+    }
+}
