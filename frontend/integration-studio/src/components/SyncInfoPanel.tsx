@@ -10,18 +10,9 @@ interface Props {
 }
 
 export function SyncInfoPanel({ summary, isLoading }: Props) {
-  if (isLoading) {
-    return (
-      <div
-        className="max-w-3xl mx-auto mb-6 p-4 rounded-xl border-2 animate-pulse"
-        style={{ backgroundColor: '#f4f1ea', borderColor: '#d2b48c', height: '80px' }}
-      />
-    )
-  }
-
-  if (!summary) return null
-
-  const { lastAutoSync, lastManualSync, errorsBetween } = summary
+  const lastAutoSync = summary?.lastAutoSync ?? null
+  const lastManualSync = summary?.lastManualSync ?? null
+  const errorsBetween = summary?.errorsBetween ?? 0
 
   const autoTime = lastAutoSync ? new Date(lastAutoSync.startedAt).getTime() : null
   const manualTime = lastManualSync ? new Date(lastManualSync.startedAt).getTime() : null
@@ -29,7 +20,7 @@ export function SyncInfoPanel({ summary, isLoading }: Props) {
 
   const [countdown, setCountdown] = useState<string | null>(null)
   useEffect(() => {
-    if (!lastAutoSync || !summary.schedulerIntervalMinutes) {
+    if (!lastAutoSync || !summary?.schedulerIntervalMinutes) {
       setCountdown(null)
       return
     }
@@ -45,7 +36,18 @@ export function SyncInfoPanel({ summary, isLoading }: Props) {
     update()
     const timer = setInterval(update, 1000)
     return () => clearInterval(timer)
-  }, [lastAutoSync?.startedAt, summary.schedulerIntervalMinutes])
+  }, [lastAutoSync?.startedAt, summary?.schedulerIntervalMinutes])
+
+  if (isLoading) {
+    return (
+      <div
+        className="max-w-3xl mx-auto mb-6 p-4 rounded-xl border-2 animate-pulse"
+        style={{ backgroundColor: '#f4f1ea', borderColor: '#d2b48c', height: '80px' }}
+      />
+    )
+  }
+
+  if (!summary) return null
 
   return (
     <div
