@@ -29,6 +29,7 @@ class MigrationRepository(private val json: Json) {
         type: String,
         fromDate: OffsetDateTime?,
         toDate: OffsetDateTime?,
+        initiatedBy: String? = null,
     ) {
         newSuspendedTransaction {
             MigrationRunsTable.insert { row ->
@@ -39,6 +40,7 @@ class MigrationRepository(private val json: Json) {
                 row[MigrationRunsTable.type]      = type
                 row[MigrationRunsTable.fromDate]  = fromDate
                 row[MigrationRunsTable.toDate]    = toDate
+                row[MigrationRunsTable.startedBy] = initiatedBy
             }
         }
     }

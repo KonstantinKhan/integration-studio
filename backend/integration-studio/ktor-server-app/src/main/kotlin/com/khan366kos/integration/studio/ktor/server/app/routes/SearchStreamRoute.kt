@@ -52,8 +52,9 @@ fun Route.searchStream(config: AppConfig): Route = route("search/streams") {
             return@post
         }
 
+        val login = config.sessionStore.retrieve(sessionId)?.login?.value
         val stream = try {
-            registry.start(sessionId, config.polynomApplicationService, request)
+            registry.start(sessionId, config.polynomApplicationService, request, initiatedBy = login)
         } catch (e: IllegalStateException) {
             // Race: стартанул параллельный запрос.
             val active = registry.runningFor(sessionId)

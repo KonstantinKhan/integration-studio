@@ -169,6 +169,7 @@ class MigrationStreamRegistry(
         service: PolynomApplicationService,
         request: ElementFromPeriodRequestBffDto,
         type: String = RunType.MANUAL,
+        initiatedBy: String? = null,
     ): MigrationStream {
         runningFor(sessionId)?.let {
             throw IllegalStateException("Stream already running: ${it.streamId}")
@@ -191,7 +192,7 @@ class MigrationStreamRegistry(
         stream.job = scope.launch {
             val runId = UUID.randomUUID()
             val startedAt = OffsetDateTime.now()
-            repository.createRun(runId, startedAt, type, fromDate, toDate)
+            repository.createRun(runId, startedAt, type, fromDate, toDate, initiatedBy)
 
             val sendingStarted = AtomicBoolean(false)
             var currentEventId: UUID? = null

@@ -74,6 +74,7 @@ class SyncScheduler(
                 service = polynomApplicationService,
                 request = request,
                 type = RunType.AUTO,
+                initiatedBy = config.serviceUser,
             )
         } catch (e: Exception) {
             log.error("Auto-sync: failed to start run: {}", e.message, e)

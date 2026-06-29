@@ -14,6 +14,7 @@ object MigrationRunsTable : Table("migration_runs") {
     val fromDate         = timestampWithTimeZone("from_date").nullable()
     val toDate           = timestampWithTimeZone("to_date").nullable()
     val errorType        = varchar("error_type", 60).nullable()
+    val startedBy        = varchar("started_by", 255).nullable()
 
     override val primaryKey = PrimaryKey(id)
 }
