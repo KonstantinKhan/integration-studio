@@ -17,7 +17,7 @@ fun ElementFromPeriodRequestBffDto.toPolynomDto() = IPropertySearchRequest(
         intersectionType = 0,
         complexConditions = listOf(
             IComplexConditionRequest(
-                enabled = true,
+                enabled = false,
                 intersectionType = 0,
                 simpleConditions = listOf(
                     ISimpleConditionRequest(
@@ -45,7 +45,7 @@ fun ElementFromPeriodRequestBffDto.toPolynomDto() = IPropertySearchRequest(
                 typeId = 0,
                 value = IDateTimeValue(
                     value = from.toString(),
-                    useTime = false,
+                    useTime = true,
                     objectId = 0,
                     typeId = 6,
                 )
@@ -55,7 +55,7 @@ fun ElementFromPeriodRequestBffDto.toPolynomDto() = IPropertySearchRequest(
                 typeId = 0,
                 value = IDateTimeValue(
                     value = to.toString(),
-                    useTime = false,
+                    useTime = true,
                     objectId = 1,
                     typeId = 6,
                 )
