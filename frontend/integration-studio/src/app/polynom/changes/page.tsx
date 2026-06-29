@@ -331,7 +331,7 @@ const ChangesPage = () => {
     <div className="min-h-screen bg-linear-to-br from-stone-100 via-amber-50 to-yellow-50 p-8">
       <div className="max-w-7xl mx-auto">
         <h1 className="text-4xl font-bold text-stone-800 mb-8 text-center">
-          Миграция изменённых объектов
+          Синхронизация изменённых объектов
         </h1>
 
         <div className="mb-6">
@@ -396,7 +396,7 @@ const ChangesPage = () => {
             </div>
           </div>
           <Button
-            label="Запустить миграцию"
+            label="Запустить синхронизацию"
             icon="pi pi-play"
             loading={connecting}
             disabled={!from || !to || connecting || isRunning}
@@ -465,7 +465,7 @@ const ChangesPage = () => {
                     №
                   </th>
                   <th className="py-2 px-3 text-xs font-semibold text-stone-600 uppercase tracking-wide">
-                    Код классификатора
+                    Наименование
                   </th>
                   <th className="py-2 px-3 text-xs font-semibold text-stone-600 uppercase tracking-wide">
                     Обозначение
