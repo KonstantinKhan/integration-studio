@@ -31,6 +31,7 @@ class AppConfig(
     val rabbitMqPublisher: RabbitMqPublisher,
     val syncScheduler: SyncScheduler,
     val migrationRepository: MigrationRepository,
+    val schedulerConfig: SyncSchedulerConfig,
 ) {
 
     companion object {
@@ -87,6 +88,7 @@ class AppConfig(
                 rabbitMqPublisher = rabbitMqPublisher,
                 syncScheduler = syncScheduler,
                 migrationRepository = migrationRepository,
+                schedulerConfig = schedulerConfig,
             )
         }
     }

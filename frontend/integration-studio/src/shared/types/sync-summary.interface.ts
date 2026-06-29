@@ -10,4 +10,5 @@ export interface SyncSummaryResponse {
   lastAutoSync: SyncRunInfo | null
   lastManualSync: SyncRunInfo | null
   errorsBetween: number
+  schedulerIntervalMinutes: number | null
 }

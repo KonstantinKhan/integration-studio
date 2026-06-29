@@ -3,6 +3,7 @@ package com.khan366kos.integration.studio.ktor.server.app.routes
 import com.khan366kos.integration.studio.ktor.server.app.db.MigrationRepository
 import com.khan366kos.integration.studio.ktor.server.app.db.MigrationRunRow
 import com.khan366kos.integration.studio.ktor.server.app.db.RunType
+import com.khan366kos.integration.studio.ktor.server.app.scheduling.SyncSchedulerConfig
 import io.ktor.http.HttpStatusCode
 import io.ktor.server.response.respond
 import io.ktor.server.routing.Route
@@ -25,11 +26,12 @@ data class SyncSummaryResponse(
     val lastAutoSync: SyncRunInfo?,
     val lastManualSync: SyncRunInfo?,
     val errorsBetween: Int,
+    val schedulerIntervalMinutes: Long?,
 )
 
 private val ISO = DateTimeFormatter.ISO_OFFSET_DATE_TIME
 
-fun Route.syncSummary(repository: MigrationRepository): Route = route("sync/summary") {
+fun Route.syncSummary(repository: MigrationRepository, schedulerConfig: SyncSchedulerConfig): Route = route("sync/summary") {
     get {
         val lastAuto   = repository.getLastSuccessfulRun(RunType.AUTO)
         val lastManual = repository.getLastSuccessfulRun(RunType.MANUAL)
@@ -41,9 +43,10 @@ fun Route.syncSummary(repository: MigrationRepository): Route = route("sync/summ
         call.respond(
             HttpStatusCode.OK,
             SyncSummaryResponse(
-                lastAutoSync   = lastAuto?.toInfo(),
-                lastManualSync = lastManual?.toInfo(),
-                errorsBetween  = errorsBetween,
+                lastAutoSync              = lastAuto?.toInfo(),
+                lastManualSync            = lastManual?.toInfo(),
+                errorsBetween             = errorsBetween,
+                schedulerIntervalMinutes  = if (schedulerConfig.enabled) schedulerConfig.intervalMinutes else null,
             )
         )
     }

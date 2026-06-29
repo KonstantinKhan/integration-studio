@@ -361,7 +361,7 @@ fun Application.configureRouting(config: AppConfig) {
             propertyOwner(config.polynomApplicationService)
             search(config.polynomApplicationService, config)
             searchStream(config)
-            syncSummary(config.migrationRepository)
+            syncSummary(config.migrationRepository, config.schedulerConfig)
             references(config)
             tree(config.polynomApplicationService)
         }

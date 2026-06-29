@@ -1,5 +1,6 @@
 'use client'
 
+import { useEffect, useState } from 'react'
 import type { SyncSummaryResponse } from '@/shared/types/sync-summary.interface'
 import { formatDisplayDateTime } from '@/utils/format'
 
@@ -26,6 +27,26 @@ export function SyncInfoPanel({ summary, isLoading }: Props) {
   const manualTime = lastManualSync ? new Date(lastManualSync.startedAt).getTime() : null
   const autoIsNewer = autoTime !== null && manualTime !== null && autoTime > manualTime
 
+  const [countdown, setCountdown] = useState<string | null>(null)
+  useEffect(() => {
+    if (!lastAutoSync || !summary.schedulerIntervalMinutes) {
+      setCountdown(null)
+      return
+    }
+    const nextSyncAt = new Date(lastAutoSync.startedAt).getTime() + summary.schedulerIntervalMinutes * 60_000
+    const update = () => {
+      const diff = nextSyncAt - Date.now()
+      if (diff <= 0) { setCountdown('скоро'); return }
+      const totalSec = Math.floor(diff / 1000)
+      const m = Math.floor(totalSec / 60)
+      const s = totalSec % 60
+      setCountdown(`${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`)
+    }
+    update()
+    const timer = setInterval(update, 1000)
+    return () => clearInterval(timer)
+  }, [lastAutoSync?.startedAt, summary.schedulerIntervalMinutes])
+
   return (
     <div
       className="max-w-3xl mx-auto mb-6 p-4 rounded-xl border-2 shadow-sm text-sm text-stone-700"
@@ -49,6 +70,11 @@ export function SyncInfoPanel({ summary, isLoading }: Props) {
               {lastAutoSync.processedCount !== null && (
                 <span className="text-xs text-stone-500">
                   Обработано: {lastAutoSync.processedCount}
+                </span>
+              )}
+              {countdown && (
+                <span className="text-xs text-stone-500">
+                  Следующая через: <span className="font-mono font-semibold">{countdown}</span>
                 </span>
               )}
             </>

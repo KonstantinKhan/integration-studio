@@ -176,6 +176,8 @@ const ChangesPage = () => {
     queryKey: ['syncSummary'],
     queryFn: getSyncSummary,
     staleTime: 30_000,
+    refetchInterval: (query) =>
+      query.state.data?.schedulerIntervalMinutes ? 60_000 : false,
   })
 
   useEffect(() => {
