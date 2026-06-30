@@ -8,24 +8,12 @@ import kotlinx.serialization.Serializable
 
 @Serializable
 data class IDateTimeValue(
-    @SerialName("value")
     val value: String,
-
-    @SerialName("useTime")
     val useTime: Boolean,
-
-    @SerialName("objectId")
     val objectId: Int? = null,
-
-    @SerialName("typeId")
     val typeId: Int? = null,
-
-    @SerialName("valueFrom")
+    val dataType: Int? = null,
     val valueFrom: ValueFrom? = null,
-
-    @SerialName("valueTo")
     val valueTo: ValueTo? = null,
-
-    @SerialName("valueSingle")
     val valueSingle: ValueSingle? = null,
 )

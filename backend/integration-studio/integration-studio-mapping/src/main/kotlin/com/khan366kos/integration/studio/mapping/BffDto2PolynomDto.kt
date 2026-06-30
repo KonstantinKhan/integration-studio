@@ -32,7 +32,7 @@ fun PolynomElementFromPeriodRequestBffDto.toPolynomDto() = IPropertySearchReques
                         searchConditionTargetQualifier = IIdentifiableObject(40, 54),
                         operation = 4,
                         options = 0,
-                        value = IIdentifiableObject(0, 0)
+                        value = IIdentifiableObject(1, 0)
                     )
                 )
             )
@@ -47,7 +47,7 @@ fun PolynomElementFromPeriodRequestBffDto.toPolynomDto() = IPropertySearchReques
                     value = from.toString(),
                     useTime = true,
                     objectId = 0,
-                    typeId = 6,
+                    dataType = 6,
                 )
             ),
             IDateTimePropertyValueRequest(
@@ -57,7 +57,7 @@ fun PolynomElementFromPeriodRequestBffDto.toPolynomDto() = IPropertySearchReques
                     value = to.toString(),
                     useTime = true,
                     objectId = 1,
-                    typeId = 6,
+                    dataType = 6,
                 )
             )
         )
