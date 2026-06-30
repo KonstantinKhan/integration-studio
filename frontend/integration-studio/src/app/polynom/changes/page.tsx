@@ -39,6 +39,7 @@ interface MigrationRowProps {
   index: number
   code: string
   designation: string
+  changeDate: string
 }
 
 /** Одна строка миграции. memo + стабильный key => не пересчитывается при добавлении новых. */
@@ -46,6 +47,7 @@ const SyncRow = memo(function SyncRow({
   index,
   code,
   designation,
+  changeDate,
 }: MigrationRowProps) {
   return (
     <tr className="border-b border-stone-200 last:border-0">
@@ -57,6 +59,9 @@ const SyncRow = memo(function SyncRow({
       </td>
       <td className="py-1.5 px-3 text-sm text-stone-800 break-all">
         {designation || '—'}
+      </td>
+      <td className="py-1.5 px-3 text-sm text-stone-800 break-all">
+        {changeDate || '—'}
       </td>
     </tr>
   )
@@ -482,10 +487,13 @@ const ChangesPage = () => {
                     №
                   </th>
                   <th className="py-2 px-3 text-xs font-semibold text-stone-600 uppercase tracking-wide">
-                    Наименование
+                    Код Классификатора
                   </th>
                   <th className="py-2 px-3 text-xs font-semibold text-stone-600 uppercase tracking-wide">
                     Обозначение
+                  </th>
+                  <th className="py-2 px-3 text-xs font-semibold text-stone-600 uppercase tracking-wide">
+                    Дата последнего изменения
                   </th>
                 </tr>
               </thead>
@@ -496,6 +504,7 @@ const ChangesPage = () => {
                     index={i + 1}
                     code={item.classifierCode ?? 'нет данных'}
                     designation={item.designation}
+                    changeDate={item.changeDate.toTimeString()}
                   />
                 ))}
               </tbody>
