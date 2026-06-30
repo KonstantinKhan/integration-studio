@@ -8,4 +8,5 @@ data class SyncSchedulerConfig(
     val serviceUser: String,
     val servicePassword: String,
     val serviceStorageId: String,
+    val externalApiTimezoneOffsetMinutes: Int = 0,
 )

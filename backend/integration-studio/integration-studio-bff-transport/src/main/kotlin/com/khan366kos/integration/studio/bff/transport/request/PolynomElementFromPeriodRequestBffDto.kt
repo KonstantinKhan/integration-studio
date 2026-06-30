@@ -8,6 +8,6 @@ import kotlinx.serialization.Serializable
 data class PolynomElementFromPeriodRequestBffDto(
     val scope: IdentifierBffDto,
     val from: LocalDateTime,
-    val to : LocalDateTime,
-) {
-}
+    val to: LocalDateTime,
+    val timezoneOffsetMinutes: Int = 0,
+)

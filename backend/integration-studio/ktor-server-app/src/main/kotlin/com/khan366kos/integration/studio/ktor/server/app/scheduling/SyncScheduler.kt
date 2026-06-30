@@ -64,10 +64,12 @@ class SyncScheduler(
 
             log.info("Auto-sync: starting run, from={}, to={}", from, to)
 
+            val apiOffset = ZoneOffset.ofTotalSeconds(config.externalApiTimezoneOffsetMinutes * 60)
             val request = PolynomElementFromPeriodRequestBffDto(
                 scope = IdentifierBffDto(typeId = config.scopeTypeId, objectId = config.scopeObjectId),
-                from = from.atZoneSameInstant(ZoneOffset.UTC).toLocalDateTime().toKotlinLocalDateTime(),
-                to = to.atZoneSameInstant(ZoneOffset.UTC).toLocalDateTime().toKotlinLocalDateTime(),
+                from = from.withOffsetSameInstant(apiOffset).toLocalDateTime().toKotlinLocalDateTime(),
+                to = to.withOffsetSameInstant(apiOffset).toLocalDateTime().toKotlinLocalDateTime(),
+                timezoneOffsetMinutes = config.externalApiTimezoneOffsetMinutes,
             )
             registry.start(
                 sessionId = SERVICE_SESSION_ID,

@@ -185,8 +185,9 @@ class SyncStreamRegistry(
         activeBySession[sessionId] = stream
         byId[streamId] = stream
 
-        val fromDate = request.from.toJavaLocalDateTime().atOffset(ZoneOffset.UTC)
-        val toDate = request.to.toJavaLocalDateTime().atOffset(ZoneOffset.UTC)
+        val clientOffset = ZoneOffset.ofTotalSeconds(request.timezoneOffsetMinutes * 60)
+        val fromDate = request.from.toJavaLocalDateTime().atOffset(clientOffset)
+        val toDate = request.to.toJavaLocalDateTime().atOffset(clientOffset)
 
         stream.job = scope.launch {
             val runId = UUID.randomUUID()

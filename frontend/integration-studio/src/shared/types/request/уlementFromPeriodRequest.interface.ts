@@ -4,4 +4,5 @@ export interface ElementFromPeriodRequest {
 	scope: Identifier,
 	from: string
 	to: string
+	timezoneOffsetMinutes?: number
 }

@@ -36,6 +36,7 @@ function buildRequest(from: Date, to: Date, typeId: number, objectId: number) {
     scope,
     from: fromStr,
     to: toStr,
+    timezoneOffsetMinutes: -new Date().getTimezoneOffset(),
   }
 
   return request

@@ -78,6 +78,7 @@ fun Application.module() {
         serviceUser     = environment.config.propertyOrNull("sync-scheduler.service-user")?.getString() ?: "",
         servicePassword = environment.config.propertyOrNull("sync-scheduler.service-password")?.getString() ?: "",
         serviceStorageId = environment.config.propertyOrNull("sync-scheduler.service-storage-id")?.getString() ?: "",
+        externalApiTimezoneOffsetMinutes = environment.config.propertyOrNull("sync-scheduler.external-api-timezone-offset-minutes")?.getString()?.toInt() ?: 0,
     )
 
     val sessionStore = InMemorySessionStore()
