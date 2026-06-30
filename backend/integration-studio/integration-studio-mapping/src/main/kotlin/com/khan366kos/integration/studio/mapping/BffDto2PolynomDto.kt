@@ -1,16 +1,16 @@
 package com.khan366kos.integration.studio.mapping
 
-import com.khan366kos.integration.studio.bff.transport.IdentifierBffDto
-import com.khan366kos.integration.studio.bff.transport.request.ElementFromPeriodRequestBffDto
+import com.khan366kos.integration.studio.bff.transport.models.IdentifierBffDto
+import com.khan366kos.integration.studio.bff.transport.request.PolynomElementFromPeriodRequestBffDto
 import com.khan366kos.integration.studio.transport.polynom.models.IIdentifiableObject
 import com.khan366kos.integration.studio.transport.polynom.models.properties.values.IDateTimeValue
 import com.khan366kos.integration.studio.transport.polynom.request.IAblePropertyValuesRequest
 import com.khan366kos.integration.studio.transport.polynom.request.IComplexConditionRequest
 import com.khan366kos.integration.studio.transport.polynom.request.IDateTimePropertyValueRequest
-import com.khan366kos.integration.studio.transport.polynom.request.IPropertySearchRequest
+import com.khan366kos.integration.studio.transport.polynom.request.search.IPropertySearchRequest
 import com.khan366kos.integration.studio.transport.polynom.request.ISimpleConditionRequest
 
-fun ElementFromPeriodRequestBffDto.toPolynomDto() = IPropertySearchRequest(
+fun PolynomElementFromPeriodRequestBffDto.toPolynomDto() = IPropertySearchRequest(
     ownerScope = scope.toPolynomDto(),
     condition = IComplexConditionRequest(
         enabled = true,

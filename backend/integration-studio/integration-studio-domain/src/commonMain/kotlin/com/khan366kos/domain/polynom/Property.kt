@@ -10,8 +10,8 @@ sealed class Property {
 
     @Serializable
     @SerialName("unknown")
-    data class UnknownVal(
-        val value: String = "unknown",
+    data class EmptyVal(
+        val value: String = "empty",
         override val typeId: Int,
         override val objectId: Int
     ) : Property()
@@ -69,9 +69,9 @@ data class PropertyResult(
 sealed class PropertyValueSimple {
 
     @Serializable
-    @SerialName("unknown")
-    data class UnknownValSimple(
-        val data: String = "Unknown",
+    @SerialName("empty")
+    data class EmptyValSimple(
+        val data: String = "empty",
     ) : PropertyValueSimple()
 
     @Serializable
@@ -112,5 +112,5 @@ fun Property.toSimple() = when (this) {
     is Property.EnumVal -> PropertyValueSimple.EnumValSimple(value)
     is Property.BooleanVal -> PropertyValueSimple.BooleanValSimple(value)
     is Property.SetVal -> PropertyValueSimple.SetValSimple(value)
-    is Property.UnknownVal -> PropertyValueSimple.UnknownValSimple(value)
+    is Property.EmptyVal -> PropertyValueSimple.EmptyValSimple(value)
 }

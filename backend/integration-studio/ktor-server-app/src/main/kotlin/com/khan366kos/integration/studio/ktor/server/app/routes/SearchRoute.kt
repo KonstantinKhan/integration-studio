@@ -1,12 +1,12 @@
 package com.khan366kos.integration.studio.ktor.server.app.routes
 
 import com.khan366kos.integration.studio.application.polynom.PolynomApplicationService
-import com.khan366kos.integration.studio.bff.transport.request.ElementFromPeriodRequestBffDto
-import com.khan366kos.integration.studio.bff.transport.response.PolynomElementBffDto
+import com.khan366kos.integration.studio.bff.transport.request.PolynomElementFromPeriodRequestBffDto
+import com.khan366kos.integration.studio.bff.transport.models.PolynomElementBffDto
 import com.khan366kos.integration.studio.ktor.server.app.config.AppConfig
 import com.khan366kos.integration.studio.ktor.server.app.plugins.userSession
 import com.khan366kos.integration.studio.mapping.toBffDto
-import com.khan366kos.integration.studio.transport.polynom.request.IPropertySearchRequest
+import com.khan366kos.integration.studio.transport.polynom.request.search.IPropertySearchRequest
 import io.ktor.http.HttpStatusCode
 import io.ktor.server.request.receive
 import io.ktor.server.response.respond
@@ -29,7 +29,7 @@ fun Route.search(service: PolynomApplicationService, config: AppConfig): Route =
     }
 
     post("changes") {
-        val request = call.receive<ElementFromPeriodRequestBffDto>()
+        val request = call.receive<PolynomElementFromPeriodRequestBffDto>()
         val response = mutableListOf<PolynomElementBffDto>()
         config.backgroundScope.launch {
             service.searchObjects(call.userSession.id, request)

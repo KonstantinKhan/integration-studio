@@ -1,9 +1,8 @@
 package com.khan366kos.integration.studio.ktor.server.app.streaming
 
-import com.khan366kos.domain.polynom.PolynomElement
 import com.khan366kos.integration.studio.application.polynom.PolynomApplicationService
-import com.khan366kos.integration.studio.bff.transport.request.ElementFromPeriodRequestBffDto
-import com.khan366kos.integration.studio.bff.transport.response.PolynomElementBffDto
+import com.khan366kos.integration.studio.bff.transport.request.PolynomElementFromPeriodRequestBffDto
+import com.khan366kos.integration.studio.bff.transport.models.PolynomElementBffDto
 import com.khan366kos.integration.studio.ktor.server.app.db.EventStatus
 import com.khan366kos.integration.studio.ktor.server.app.db.MigrationRepository
 import com.khan366kos.integration.studio.ktor.server.app.db.RunStatus
@@ -144,13 +143,13 @@ class MigrationStream(
     }
 }
 
-class MigrationStreamRegistry(
+class SyncStreamRegistry(
     private val scope: CoroutineScope,
     private val repository: MigrationRepository,
     private val publisher: RabbitMqPublisher,
     private val emailNotifier: EmailNotifier,
 ) {
-    private val log = LoggerFactory.getLogger(MigrationStreamRegistry::class.java)
+    private val log = LoggerFactory.getLogger(SyncStreamRegistry::class.java)
     private val activeBySession = ConcurrentHashMap<String, MigrationStream>()
     private val byId = ConcurrentHashMap<String, MigrationStream>()
 
@@ -167,7 +166,7 @@ class MigrationStreamRegistry(
     fun start(
         sessionId: String,
         service: PolynomApplicationService,
-        request: ElementFromPeriodRequestBffDto,
+        request: PolynomElementFromPeriodRequestBffDto,
         type: String = RunType.MANUAL,
         initiatedBy: String? = null,
     ): MigrationStream {

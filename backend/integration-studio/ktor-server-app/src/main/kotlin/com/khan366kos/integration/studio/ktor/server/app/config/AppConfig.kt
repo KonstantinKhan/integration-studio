@@ -12,7 +12,7 @@ import com.khan366kos.integration.studio.ktor.server.app.messaging.RabbitMqPubli
 import com.khan366kos.integration.studio.ktor.server.app.scheduling.SyncScheduler
 import com.khan366kos.integration.studio.ktor.server.app.scheduling.SyncSchedulerConfig
 import com.khan366kos.integration.studio.ktor.server.app.session.SessionStore
-import com.khan366kos.integration.studio.ktor.server.app.streaming.MigrationStreamRegistry
+import com.khan366kos.integration.studio.ktor.server.app.streaming.SyncStreamRegistry
 import io.ktor.client.HttpClient
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -27,7 +27,7 @@ class AppConfig(
     val polynomApi: PolynomApi,
     val polynomApplicationService: PolynomApplicationService,
     val backgroundScope: CoroutineScope,
-    val migrationStreamRegistry: MigrationStreamRegistry,
+    val syncStreamRegistry: SyncStreamRegistry,
     val rabbitMqPublisher: RabbitMqPublisher,
     val syncScheduler: SyncScheduler,
     val migrationRepository: MigrationRepository,
@@ -60,7 +60,7 @@ class AppConfig(
             val rabbitMqPublisher = RabbitMqPublisher(rabbitMqConfig, json)
             val emailNotifier = EmailNotifier(emailConfig)
 
-            val migrationStreamRegistry = MigrationStreamRegistry(
+            val syncStreamRegistry = SyncStreamRegistry(
                 scope = backgroundScope,
                 repository = migrationRepository,
                 publisher = rabbitMqPublisher,
@@ -72,7 +72,7 @@ class AppConfig(
                 config = schedulerConfig,
                 sessionStore = sessionStore,
                 polynomApplicationService = polynomApplicationService,
-                registry = migrationStreamRegistry,
+                registry = syncStreamRegistry,
                 repository = migrationRepository,
             )
 
@@ -84,7 +84,7 @@ class AppConfig(
                 polynomApi = polynomApi,
                 polynomApplicationService = polynomApplicationService,
                 backgroundScope = backgroundScope,
-                migrationStreamRegistry = migrationStreamRegistry,
+                syncStreamRegistry = syncStreamRegistry,
                 rabbitMqPublisher = rabbitMqPublisher,
                 syncScheduler = syncScheduler,
                 migrationRepository = migrationRepository,

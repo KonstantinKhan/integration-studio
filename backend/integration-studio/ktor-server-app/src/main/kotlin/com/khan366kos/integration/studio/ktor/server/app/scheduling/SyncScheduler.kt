@@ -6,12 +6,12 @@ import com.khan366kos.domain.models.auth.simple.Login
 import com.khan366kos.domain.models.auth.simple.RefreshToken
 import com.khan366kos.domain.models.auth.simple.StorageId
 import com.khan366kos.integration.studio.application.polynom.PolynomApplicationService
-import com.khan366kos.integration.studio.bff.transport.IdentifierBffDto
-import com.khan366kos.integration.studio.bff.transport.request.ElementFromPeriodRequestBffDto
+import com.khan366kos.integration.studio.bff.transport.models.IdentifierBffDto
+import com.khan366kos.integration.studio.bff.transport.request.PolynomElementFromPeriodRequestBffDto
 import com.khan366kos.integration.studio.ktor.server.app.db.MigrationRepository
 import com.khan366kos.integration.studio.ktor.server.app.db.RunType
 import com.khan366kos.integration.studio.ktor.server.app.session.SessionStore
-import com.khan366kos.integration.studio.ktor.server.app.streaming.MigrationStreamRegistry
+import com.khan366kos.integration.studio.ktor.server.app.streaming.SyncStreamRegistry
 import com.khan366kos.integration.studio.transport.polynom.models.LoginRequest
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.delay
@@ -28,7 +28,7 @@ class SyncScheduler(
     private val config: SyncSchedulerConfig,
     private val sessionStore: SessionStore,
     private val polynomApplicationService: PolynomApplicationService,
-    private val registry: MigrationStreamRegistry,
+    private val registry: SyncStreamRegistry,
     private val repository: MigrationRepository,
 ) {
     private val log = LoggerFactory.getLogger(SyncScheduler::class.java)
@@ -64,7 +64,7 @@ class SyncScheduler(
 
             log.info("Auto-sync: starting run, from={}, to={}", from, to)
 
-            val request = ElementFromPeriodRequestBffDto(
+            val request = PolynomElementFromPeriodRequestBffDto(
                 scope = IdentifierBffDto(typeId = config.scopeTypeId, objectId = config.scopeObjectId),
                 from = from.atZoneSameInstant(ZoneOffset.UTC).toLocalDateTime().toKotlinLocalDateTime(),
                 to = to.atZoneSameInstant(ZoneOffset.UTC).toLocalDateTime().toKotlinLocalDateTime(),

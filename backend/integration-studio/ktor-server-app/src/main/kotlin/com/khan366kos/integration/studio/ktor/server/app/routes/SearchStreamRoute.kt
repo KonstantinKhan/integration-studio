@@ -1,16 +1,14 @@
 package com.khan366kos.integration.studio.ktor.server.app.routes
 
-import com.khan366kos.integration.studio.bff.transport.request.ElementFromPeriodRequestBffDto
+import com.khan366kos.integration.studio.bff.transport.request.PolynomElementFromPeriodRequestBffDto
 import com.khan366kos.integration.studio.ktor.server.app.config.AppConfig
 import com.khan366kos.integration.studio.ktor.server.app.plugins.userSession
 import com.khan366kos.integration.studio.ktor.server.app.streaming.MigrationStatus
-import com.khan366kos.integration.studio.ktor.server.app.streaming.MigrationStreamRegistry
+import com.khan366kos.integration.studio.ktor.server.app.streaming.SyncStreamRegistry
 import com.khan366kos.integration.studio.ktor.server.app.streaming.SseEvent
 import com.khan366kos.integration.studio.ktor.server.app.streaming.eventName
-import com.khan366kos.integration.studio.transport.polynom.request.IPropertySearchRequest
 import io.ktor.http.HttpStatusCode
 import io.ktor.server.request.receive
-import io.ktor.server.request.receiveText
 import io.ktor.server.response.respond
 import io.ktor.server.routing.Route
 import io.ktor.server.routing.get
@@ -33,10 +31,10 @@ fun Route.searchStream(config: AppConfig): Route = route("search/streams") {
         encodeDefaults = false
         classDiscriminator = "type"
     }
-    val registry: MigrationStreamRegistry = config.migrationStreamRegistry
+    val registry: SyncStreamRegistry = config.syncStreamRegistry
 
     post("start") {
-        val request = call.receive<ElementFromPeriodRequestBffDto>()
+        val request = call.receive<PolynomElementFromPeriodRequestBffDto>()
         val sessionId = call.userSession.id
 
         // Если уже есть RUNNING — вернуть его streamId (reconnect-сценарий).

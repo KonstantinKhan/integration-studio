@@ -17,7 +17,7 @@ import com.khan366kos.domain.responses.ElementResponse
 import com.khan366kos.integration.studio.transport.polynom.response.IPropertyOwnerResponse
 import com.khan366kos.etl.polynom.bff.PolynomApi
 import com.khan366kos.etl.polynom.bff.auth.AuthProvider
-import com.khan366kos.integration.studio.bff.transport.request.ElementFromPeriodRequestBffDto
+import com.khan366kos.integration.studio.bff.transport.request.PolynomElementFromPeriodRequestBffDto
 import com.khan366kos.integration.studio.mapping.toDomain
 import com.khan366kos.integration.studio.mapping.toPolynomDto
 import com.khan366kos.integration.studio.transport.polynom.models.LoginRequest
@@ -32,10 +32,10 @@ import com.khan366kos.integration.studio.transport.polynom.models.IIdentifiableO
 import com.khan366kos.integration.studio.transport.polynom.request.GroupRequestDto
 import com.khan366kos.integration.studio.transport.polynom.request.IClassificationNodeChildrenRequest
 import com.khan366kos.integration.studio.transport.polynom.request.IClassificationTreeRequest
-import com.khan366kos.integration.studio.transport.polynom.request.IPropertySearchRequest
+import com.khan366kos.integration.studio.transport.polynom.request.search.IPropertySearchRequest
 import com.khan366kos.integration.studio.transport.polynom.request.OwnerRequest
 import com.khan366kos.integration.studio.transport.polynom.response.AppointedConceptsDto
-import com.khan366kos.integration.studio.transport.polynom.response.IPropertySearchResultObjectIPaginatedList
+import com.khan366kos.integration.studio.transport.polynom.response.search.IPropertySearchResultObjectIPaginatedList
 import io.ktor.client.statement.HttpResponse
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.async
@@ -181,7 +181,7 @@ class PolynomApplicationService(
         with(response.values) {
             stringProperties?.forEach { value ->
                 valueIndex[value.typeId to value.objectId] =
-                    Property.StringVal(value.value ?: "Unknown", value.typeId, value.objectId)
+                    Property.StringVal(value.value ?: "empty", value.typeId, value.objectId)
             }
 
             dateTimeProperties?.forEach { value ->
@@ -208,7 +208,7 @@ class PolynomApplicationService(
         val properties = response.propertyOwner.properties?.map { property ->
             val key = property.value?.typeId to property.value?.objectId
             val propertyValue =
-                valueIndex[key]?.toSimple() ?: PropertyValueSimple.UnknownValSimple("Неизвестный тип")
+                valueIndex[key]?.toSimple() ?: PropertyValueSimple.EmptyValSimple("")
             PropertyResult(
                 name = property.name ?: "Unknown",
                 value = propertyValue,
@@ -252,7 +252,7 @@ class PolynomApplicationService(
     @OptIn(ExperimentalCoroutinesApi::class)
     suspend fun searchObjects(
         sessionId: String,
-        request: ElementFromPeriodRequestBffDto
+        request: PolynomElementFromPeriodRequestBffDto
     ): Flow<PolynomElement> {
         val authContext = authProvider.getAuthContext(SessionId(sessionId))
 
@@ -289,7 +289,7 @@ class PolynomApplicationService(
     @OptIn(ExperimentalCoroutinesApi::class)
     suspend fun searchObjectsEnriched(
         sessionId: String,
-        request: ElementFromPeriodRequestBffDto
+        request: PolynomElementFromPeriodRequestBffDto
     ): Flow<PolynomElement> {
         val authContext = authProvider.getAuthContext(SessionId(sessionId))
         val requestPolynom = request.toPolynomDto()

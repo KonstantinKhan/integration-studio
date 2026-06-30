@@ -29,11 +29,11 @@ import com.khan366kos.integration.studio.transport.polynom.command.DeleteReferen
 import com.khan366kos.integration.studio.transport.polynom.models.IIdentifiableObject
 import com.khan366kos.integration.studio.transport.polynom.request.IClassificationNodeChildrenRequest
 import com.khan366kos.integration.studio.transport.polynom.request.IClassificationTreeRequest
-import com.khan366kos.integration.studio.transport.polynom.request.IPropertySearchRequest
+import com.khan366kos.integration.studio.transport.polynom.request.search.IPropertySearchRequest
 import com.khan366kos.integration.studio.transport.polynom.request.OwnerRequest
 import com.khan366kos.integration.studio.transport.polynom.response.AppointedConceptsDto
 import com.khan366kos.integration.studio.transport.polynom.response.IClassificationTreeNodeIPaginatedList
-import com.khan366kos.integration.studio.transport.polynom.response.IPropertySearchResultObjectIPaginatedList
+import com.khan366kos.integration.studio.transport.polynom.response.search.IPropertySearchResultObjectIPaginatedList
 import io.ktor.client.HttpClient
 import io.ktor.client.call.body
 import io.ktor.client.request.HttpRequestBuilder
@@ -97,9 +97,6 @@ class PolynomApi(
         }.body<List<ElementCatalogTransport>>()
             .map { it.toCatalog() }
 
-    /**
-     * Получает каталог по идентификатору.
-     */
     suspend fun catalog(authContext: AuthContext, request: IIdentifiableObject): Catalog =
         httpClient.post("element-catalog/get-by-id") {
             authenticate(authContext)
@@ -167,15 +164,11 @@ class PolynomApi(
     suspend fun executePropertySearch(
         authContext: AuthContext,
         request: IPropertySearchRequest
-    ): IPropertySearchResultObjectIPaginatedList {
-        println("request: $request")
-        val response = httpClient.post("search/execute-property-search") {
+    ): IPropertySearchResultObjectIPaginatedList =
+        httpClient.post("search/execute-property-search") {
             authenticate(authContext)
             setBody(request)
-        }.body<IPropertySearchResultObjectIPaginatedList>()
-        return response
-    }
-
+        }.body()
 
     suspend fun getClassification(
         authContext: AuthContext,
