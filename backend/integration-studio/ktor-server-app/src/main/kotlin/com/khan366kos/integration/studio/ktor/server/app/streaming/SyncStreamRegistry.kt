@@ -29,6 +29,7 @@ import java.time.OffsetDateTime
 import java.time.ZoneOffset
 import java.util.UUID
 import kotlinx.datetime.toJavaLocalDateTime
+import kotlinx.datetime.toKotlinLocalDateTime
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.atomic.AtomicInteger
@@ -148,6 +149,7 @@ class SyncStreamRegistry(
     private val repository: MigrationRepository,
     private val publisher: RabbitMqPublisher,
     private val emailNotifier: EmailNotifier,
+    private val externalApiTimezoneOffsetMinutes: Int = 0,
 ) {
     private val log = LoggerFactory.getLogger(SyncStreamRegistry::class.java)
     private val activeBySession = ConcurrentHashMap<String, MigrationStream>()
@@ -185,9 +187,14 @@ class SyncStreamRegistry(
         activeBySession[sessionId] = stream
         byId[streamId] = stream
 
-        val clientOffset = ZoneOffset.ofTotalSeconds(request.timezoneOffsetMinutes * 60)
-        val fromDate = request.from.toJavaLocalDateTime().atOffset(clientOffset)
-        val toDate = request.to.toJavaLocalDateTime().atOffset(clientOffset)
+        val fromDate = request.from.toJavaLocalDateTime().atOffset(ZoneOffset.UTC)
+        val toDate = request.to.toJavaLocalDateTime().atOffset(ZoneOffset.UTC)
+
+        val apiOffset = ZoneOffset.ofTotalSeconds(externalApiTimezoneOffsetMinutes * 60)
+        val apiRequest = request.copy(
+            from = fromDate.withOffsetSameInstant(apiOffset).toLocalDateTime().toKotlinLocalDateTime(),
+            to = toDate.withOffsetSameInstant(apiOffset).toLocalDateTime().toKotlinLocalDateTime(),
+        )
 
         stream.job = scope.launch {
             val runId = UUID.randomUUID()
@@ -199,7 +206,7 @@ class SyncStreamRegistry(
 
             try {
                 stream.emit(SseEvent.Started(streamId = streamId))
-                service.searchObjectsEnriched(sessionId, request)
+                service.searchObjectsEnriched(sessionId, apiRequest)
                     .onEach { item ->
                         currentEventId = null
 

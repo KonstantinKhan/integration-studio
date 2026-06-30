@@ -9,5 +9,4 @@ data class PolynomElementFromPeriodRequestBffDto(
     val scope: IdentifierBffDto,
     val from: LocalDateTime,
     val to: LocalDateTime,
-    val timezoneOffsetMinutes: Int = 0,
 )

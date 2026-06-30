@@ -65,6 +65,7 @@ class AppConfig(
                 repository = migrationRepository,
                 publisher = rabbitMqPublisher,
                 emailNotifier = emailNotifier,
+                externalApiTimezoneOffsetMinutes = schedulerConfig.externalApiTimezoneOffsetMinutes,
             )
 
             val syncScheduler = SyncScheduler(
