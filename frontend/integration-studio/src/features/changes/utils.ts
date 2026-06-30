@@ -1,3 +1,4 @@
+import type { EnrichedSearchResultItem } from '@/shared/types/enrichedSearchResultItem.interface'
 import { formatDate } from '@/utils/format'
 
 export function buildSyncRequest(
@@ -8,14 +9,7 @@ export function buildSyncRequest(
 ) {
   const fromStr = formatDate(from)
   const toStr = formatDate(to)
-  const scope = {
-    objectId: objectId,
-    typeId: typeId,
-  }
-  const request = {
-    scope,
-    from: fromStr,
-    to: toStr,
-  }
+  const scope = { objectId: objectId, typeId: typeId }
+  const request = { scope, from: fromStr, to: toStr }
   return request
 }

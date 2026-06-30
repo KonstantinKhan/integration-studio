@@ -1,14 +1,6 @@
 'use client'
 
-import {
-  memo,
-  useMemo,
-  useState,
-  useSyncExternalStore,
-  useEffect,
-  useRef,
-  useLayoutEffect,
-} from 'react'
+import { useMemo, useState, useEffect, useRef, useLayoutEffect } from 'react'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { Calendar } from 'primereact/calendar'
 import { Button } from 'primereact/button'
@@ -18,140 +10,22 @@ import { useNodes } from '@/hooks/useNodes'
 import { useTreeRoot } from '@/hooks/useTreeRoot'
 import { SyncInfoPanel } from '@/components/SyncInfoPanel'
 import { getSyncSummary } from '@/api/search-stream.api'
-import type { EnrichedSearchResultItem } from '@/shared/types/enrichedSearchResultItem.interface'
 import type { INode } from '@/shared/types/node.interface'
 import { buildSyncRequest } from '@/features/changes/utils'
 import { SYNC_STATUS, SYNC_STATUS_LABEL } from '@/features/changes/constants'
-
-const PROP_CLASSIFIER_CODE = 'Код классификатора'
-const PROP_DESIGNATION = 'Обозначение'
-
-function propValue(item: EnrichedSearchResultItem, name: string): string {
-  const prop = item.properties.find((p) => p.name === name)
-
-  if (!prop) return ''
-
-  const v = prop.value.data
-  return typeof v === 'string' ? v : String(v)
-}
-
-interface MigrationRowProps {
-  index: number
-  code: string
-  designation: string
-  changeDate: string
-}
-
-/** Одна строка миграции. memo + стабильный key => не пересчитывается при добавлении новых. */
-const SyncRow = memo(function SyncRow({
-  index,
-  code,
-  designation,
-  changeDate,
-}: MigrationRowProps) {
-  return (
-    <tr className="border-b border-stone-200 last:border-0">
-      <td className="py-1.5 px-3 text-stone-500 text-sm tabular-nums">
-        {index}
-      </td>
-      <td className="py-1.5 px-3 text-sm text-stone-700 break-all">
-        {code || '—'}
-      </td>
-      <td className="py-1.5 px-3 text-sm text-stone-800 break-all">
-        {designation || '—'}
-      </td>
-      <td className="py-1.5 px-3 text-sm text-stone-800 break-all">
-        {changeDate || '—'}
-      </td>
-    </tr>
-  )
-})
-
-const STORAGE_KEY = 'polynom.changes.selectedNode'
-
-// Создаем хранилище для синхронизации с localStorage
-function createStorageStore<T>(key: string, initialValue: T) {
-  let currentValue: T = initialValue
-
-  // Пытаемся загрузить значение при инициализации
-  if (typeof window !== 'undefined') {
-    try {
-      const raw = localStorage.getItem(key)
-      if (raw) {
-        currentValue = JSON.parse(raw) as T
-      }
-    } catch {
-      // ignore
-    }
-  }
-
-  const listeners = new Set<() => void>()
-
-  const subscribe = (callback: () => void) => {
-    listeners.add(callback)
-
-    // Подписываемся на событие storage для синхронизации между вкладками
-    const handleStorage = (event: StorageEvent) => {
-      if (event.key === key) {
-        try {
-          const newValue = event.newValue
-            ? JSON.parse(event.newValue)
-            : initialValue
-          if (JSON.stringify(newValue) !== JSON.stringify(currentValue)) {
-            currentValue = newValue
-            listeners.forEach((l) => l())
-          }
-        } catch {
-          // ignore
-        }
-      }
-    }
-
-    if (typeof window !== 'undefined') {
-      window.addEventListener('storage', handleStorage)
-    }
-
-    return () => {
-      listeners.delete(callback)
-      if (typeof window !== 'undefined') {
-        window.removeEventListener('storage', handleStorage)
-      }
-    }
-  }
-
-  const getSnapshot = () => currentValue
-
-  const setValue = (value: T) => {
-    const newValue = value
-    if (JSON.stringify(newValue) !== JSON.stringify(currentValue)) {
-      currentValue = newValue
-      if (typeof window !== 'undefined') {
-        localStorage.setItem(key, JSON.stringify(newValue))
-      }
-      listeners.forEach((l) => l())
-    }
-  }
-
-  return { subscribe, getSnapshot, setValue }
-}
-
-type StoredNode = { name: string; typeId: number; objectId: number } | null
-
-// Создаем хранилище для mounted состояния
-const mountedStore = {
-  subscribe: () => () => {},
-  getSnapshot: () => true,
-  getServerSnapshot: () => false,
-}
-
-// Создаем хранилище для узла
-const nodeStore = createStorageStore<StoredNode>(STORAGE_KEY, null)
+import { SyncRow } from '@/features/changes/components/SyncRow'
+import {
+  nodeStore,
+  type StoredNode,
+} from '@/features/changes/stores/selected-node.store'
+import { useSelectedNode } from '@/features/changes/hooks/useSelectedNode'
+import { useAutoDateSync } from '@/features/changes/hooks/useAutoDateSync'
 
 const ChangesPage = () => {
   const [from, setFrom] = useState<Date | null>(null)
   const [to, setTo] = useState<Date | null>(null)
   const [opened, setOpened] = useState(false)
-  const lastAppliedAutoSync = useRef<string | null>(null)
+  const { mounted, storedNode } = useSelectedNode()
 
   const { data: syncSummary, isLoading: summaryLoading } = useQuery({
     queryKey: ['syncSummary'],
@@ -161,18 +35,8 @@ const ChangesPage = () => {
       query.state.data?.schedulerIntervalMinutes ? 60_000 : false,
   })
 
-  useEffect(() => {
-    if (summaryLoading) return
-    const autoStartedAt = syncSummary?.lastAutoSync?.startedAt ?? null
-    if (autoStartedAt === lastAppliedAutoSync.current) return
-    lastAppliedAutoSync.current = autoStartedAt
-    if (syncSummary?.lastAutoSync?.fromDate) {
-      setFrom(new Date(syncSummary.lastAutoSync.fromDate))
-    }
-    setTo(new Date())
-  }, [syncSummary, summaryLoading])
+  useAutoDateSync(syncSummary, summaryLoading, setFrom, setTo)
 
-  // Ref для предотвращения cascading renders
   const validationRef = useRef<{
     isValidated: boolean
     nodeKey: string | null
@@ -180,18 +44,6 @@ const ChangesPage = () => {
     isValidated: false,
     nodeKey: null,
   })
-
-  const mounted = useSyncExternalStore(
-    mountedStore.subscribe,
-    mountedStore.getSnapshot,
-    mountedStore.getServerSnapshot,
-  )
-
-  const storedNode = useSyncExternalStore(
-    nodeStore.subscribe,
-    nodeStore.getSnapshot,
-    () => null, // серверный снапшот
-  )
 
   const [overrideNode, setOverrideNode] = useState<StoredNode | null>(null)
   const selectedNode = overrideNode ?? storedNode ?? null
