@@ -52,7 +52,7 @@ class MigrationRepository(private val json: Json) {
             MigrationEventsTable.insert { row ->
                 row[MigrationEventsTable.id]              = eventId
                 row[MigrationEventsTable.runId]           = runId
-                row[MigrationEventsTable.name]            = element.name
+                row[MigrationEventsTable.name]            = element.designation
                 row[MigrationEventsTable.typeId]          = element.typeId
                 row[MigrationEventsTable.objectId]        = element.objectId
                 row[MigrationEventsTable.payload]         = json.encodeToString(PolynomElement.serializer(), element)

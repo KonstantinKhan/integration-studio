@@ -1,18 +1,17 @@
+import type { SyncStatus } from '@/features/changes/constants'
 import type { EnrichedSearchResultItem } from './enrichedSearchResultItem.interface'
 import type { IPropertySearchRequest } from './propertySearchRequest.interface'
 
-export type MigrationStatus = 'RUNNING' | 'COMPLETED' | 'FAILED'
-
 export interface StreamStatusResponse {
   streamId: string
-  status: MigrationStatus
+  status: SyncStatus
   processedCount: number
   errorMessage: string | null
 }
 
 export interface StartStreamResponse {
   streamId: string
-  status?: MigrationStatus
+  status?: SyncStatus
   message?: string
 }
 

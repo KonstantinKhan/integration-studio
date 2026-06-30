@@ -20,32 +20,8 @@ import { SyncInfoPanel } from '@/components/SyncInfoPanel'
 import { getSyncSummary } from '@/api/search-stream.api'
 import type { EnrichedSearchResultItem } from '@/shared/types/enrichedSearchResultItem.interface'
 import type { INode } from '@/shared/types/node.interface'
-import { formatDate } from '@/utils/format'
-
-function buildRequest(from: Date, to: Date, typeId: number, objectId: number) {
-  console.log('typeId', typeId, 'objectId', objectId)
-
-  const fromStr = formatDate(from)
-  const toStr = formatDate(to)
-  const scope = {
-    objectId: objectId,
-    typeId: typeId,
-  }
-
-  const request = {
-    scope,
-    from: fromStr,
-    to: toStr,
-  }
-
-  return request
-}
-
-const STATUS_LABEL: Record<string, string> = {
-  RUNNING: 'Выполняется',
-  COMPLETED: 'Завершено',
-  FAILED: 'Ошибка',
-}
+import { buildSyncRequest } from '@/features/changes/utils'
+import { SYNC_STATUS, SYNC_STATUS_LABEL } from '@/features/changes/constants'
 
 const PROP_CLASSIFIER_CODE = 'Код классификатора'
 const PROP_DESIGNATION = 'Обозначение'
@@ -66,7 +42,7 @@ interface MigrationRowProps {
 }
 
 /** Одна строка миграции. memo + стабильный key => не пересчитывается при добавлении новых. */
-const MigrationRow = memo(function MigrationRow({
+const SyncRow = memo(function SyncRow({
   index,
   code,
   designation,
@@ -308,7 +284,7 @@ const ChangesPage = () => {
   const handleStart = () => {
     if (!from || !to || !selectedNode) return
     void start(
-      buildRequest(from, to, selectedNode.typeId, selectedNode.objectId),
+      buildSyncRequest(from, to, selectedNode.typeId, selectedNode.objectId),
     )
   }
 
@@ -458,7 +434,9 @@ const ChangesPage = () => {
                     : 'text-amber-700'
               }`}
             >
-              {connecting ? 'Подключение…' : STATUS_LABEL[status ?? 'RUNNING']}
+              {connecting
+                ? 'Подключение…'
+                : SYNC_STATUS_LABEL[status ?? SYNC_STATUS.RUNNING]}
             </span>
             <span className="text-sm text-stone-600">
               Обработано: <b>{processedCount}</b>
@@ -513,11 +491,11 @@ const ChangesPage = () => {
               </thead>
               <tbody>
                 {items.map((item, i) => (
-                  <MigrationRow
+                  <SyncRow
                     key={`${item.typeId}-${item.objectId}`}
                     index={i + 1}
-                    code={item.name ?? 'нет данных'}
-                    designation={propValue(item, PROP_DESIGNATION)}
+                    code={item.classifierCode ?? 'нет данных'}
+                    designation={item.designation}
                   />
                 ))}
               </tbody>

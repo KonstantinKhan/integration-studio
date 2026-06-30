@@ -16,7 +16,7 @@ fun Node.toBffDto() = NodeResponseBffDto(
 )
 
 fun PolynomElement.toBffDto() = PolynomElementBffDto(
-    name = name,
+    name = designation,
     properties = properties.map { it.toBffDto() },
     typeId = typeId,
     objectId = objectId

@@ -5,14 +5,15 @@ import {
   startMigrationStream,
 } from '@/api/search-stream.api'
 import type { EnrichedSearchResultItem } from '@/shared/types/enrichedSearchResultItem.interface'
-import type { MigrationStatus, StreamEvent } from '@/shared/types/streaming.interface'
-import type { ElementFromPeriodRequest } from '@/shared/types/request/уlementFromPeriodRequest.interface'
+import type { StreamEvent } from '@/shared/types/streaming.interface'
+import type { ElementFromPeriodRequest } from '@/shared/types/request/elementFromPeriodRequest.interface'
+import type { SyncStatus } from '@/features/changes/constants'
 
 const STORAGE_KEY = 'integration-studio.migration.streamId'
 
-interface MigrationStreamState {
+interface SyncStreamState {
   streamId: string | null
-  status: MigrationStatus | null
+  status: SyncStatus | null
   processedCount: number
   items: EnrichedSearchResultItem[]
   errorMessage: string | null
@@ -55,7 +56,7 @@ function parseEvent(type: string, data: string): StreamEvent | null {
   }
 }
 
-export const useMigrationStreamStore = create<MigrationStreamState>((set, get) => {
+export const useMigrationStreamStore = create<SyncStreamState>((set, get) => {
   const closeEventSource = () => {
     const current = get().eventSource
     if (current) {

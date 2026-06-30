@@ -32,7 +32,7 @@ class RabbitMqPublisher(private val config: RabbitMqConfig, private val json: Js
     fun publish(element: PolynomElement, runId: UUID) {
         val message = MigrationEventMessage(
             migrationRunId = runId.toString(),
-            name           = element.name,
+            name           = element.designation,
             typeId         = element.typeId,
             objectId       = element.objectId,
             properties     = element.properties,

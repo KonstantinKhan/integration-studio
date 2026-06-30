@@ -44,6 +44,8 @@ import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flatMapMerge
 import kotlinx.coroutines.flow.flow
+import kotlinx.datetime.LocalDateTime
+import kotlinx.datetime.toLocalDateTime
 
 /**
  * Application-сервис для работы с Polynom API.
@@ -218,11 +220,25 @@ class PolynomApplicationService(
         } ?: emptyList()
 
         val element = PolynomElement(
-            name = when (val value = properties.find { it.name == "Наименование" }?.value) {
+            designation = when (val value = properties.find { it.name == "Обозначение" }?.value) {
                 is PropertyValueSimple.StringValSimple -> value.data
                 else -> throw NotImplementedError()
             },
-            properties = properties.filter { it.name != "Наименование" },
+            classifierCode = when (val value = properties.find { it.name == "Код классификатора" }?.value) {
+                is PropertyValueSimple.StringValSimple -> value.data.toLong()
+                else -> throw NotImplementedError()
+            },
+            changeDate = when (val value = properties.find { it.name == "Дата последнего изменения" }?.value) {
+                is PropertyValueSimple.DateTimeValSimple -> LocalDateTime.parse(value.data)
+                else -> throw NotImplementedError()
+            },
+            properties = properties.filter {
+                !listOf(
+                    "Обозначение",
+                    "Код классификатора",
+                    "Дата последнего изменения"
+                ).contains(it.name)
+            },
             typeId = response.propertyOwner.typeId,
             objectId = response.propertyOwner.objectId,
         )
@@ -327,7 +343,7 @@ class PolynomApplicationService(
                     sessionId,
                     OwnerRequest(IIdentifiableObject(item.objectId, item.typeId))
                 )
-               element
+                element
             }
         }?.awaitAll() ?: emptyList()
     }

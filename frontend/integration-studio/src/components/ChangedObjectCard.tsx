@@ -19,7 +19,7 @@ const ChangedObjectCard = ({ item }: { item: EnrichedSearchResultItem }) => {
       style={{ backgroundColor: '#f4f1ea', borderColor: '#d2b48c' }}
     >
       <h3 className="text-lg font-bold text-stone-800 mb-3">
-        {item.name ?? `Объект ${item.objectId}`}
+        {item.designation ?? `Объект ${item.objectId}`}
       </h3>
       {item.properties.length === 0 ? (
         <p className="text-sm text-stone-500">Нет свойств</p>
