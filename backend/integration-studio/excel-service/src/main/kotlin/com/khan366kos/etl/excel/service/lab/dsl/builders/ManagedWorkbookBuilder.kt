@@ -1,9 +1,9 @@
-package com.khan366kos.etl.excel.service.dsl.builders
+package com.khan366kos.etl.excel.service.lab.dsl.builders
 
-import com.khan366kos.etl.excel.service.ManagedWorkbook
-import com.khan366kos.etl.excel.service.ManagedWorkbookResult
-import com.khan366kos.etl.excel.service.dsl.function.ManagedWorkbookDsl
-import com.khan366kos.etl.excel.service.types.ManagedWorkbookAction
+import com.khan366kos.etl.excel.service.lab.ManagedWorkbook
+import com.khan366kos.etl.excel.service.lab.ManagedWorkbookResult
+import com.khan366kos.etl.excel.service.lab.dsl.function.ManagedWorkbookDsl
+import com.khan366kos.etl.excel.service.lab.types.ManagedWorkbookAction
 import kotlin.use
 
 @ManagedWorkbookDsl

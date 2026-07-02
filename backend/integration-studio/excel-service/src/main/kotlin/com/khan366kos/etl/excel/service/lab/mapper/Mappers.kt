@@ -1,11 +1,11 @@
-package com.khan366kos.etl.excel.service.mapper
+package com.khan366kos.etl.excel.service.lab.mapper
 
 import com.khan366kos.domain.excel.models.EtlSheet
 import com.khan366kos.domain.excel.models.EtlWorkbook
 import com.khan366kos.domain.excel.models.simple.EtlTableHeader
 import com.khan366kos.domain.excel.models.simple.EtlSheetTitle
-import com.khan366kos.etl.excel.service.entriesSize
-import com.khan366kos.etl.excel.service.headers
+import com.khan366kos.etl.excel.service.lab.entriesSize
+import com.khan366kos.etl.excel.service.lab.headers
 import org.apache.poi.ss.usermodel.Sheet
 import org.apache.poi.xssf.usermodel.XSSFWorkbook
 

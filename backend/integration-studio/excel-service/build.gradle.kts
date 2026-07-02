@@ -12,12 +12,12 @@ dependencies {
     implementation(libs.logback.classic)
     implementation(libs.log4j.to.slf4j)
 
-    implementation(projects.integrationStudioDomain)
-
     testImplementation(libs.kotest.framework.engine)
     testImplementation(libs.kotest.runner.junit5)
     testImplementation(libs.kotest.assertion.core)
     testImplementation(libs.kotest.property)
+
+    implementation(projects.integrationStudioDomain)
 }
 
 tasks.test {

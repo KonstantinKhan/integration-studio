@@ -1,6 +1,6 @@
-package com.khan366kos.etl.excel.service
+package com.khan366kos.etl.excel.service.lab
 
-import com.khan366kos.etl.excel.service.mapper.toEtl
+import com.khan366kos.etl.excel.service.lab.mapper.toEtl
 import com.khan366kos.domain.excel.models.EtlWorkbook
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
@@ -36,13 +36,13 @@ class ManagedWorkbook private constructor(
     internal suspend fun etlSheets() = sheets().map { sheet -> sheet.toEtl() }
 
     companion object {
-        internal suspend fun open(path: String): com.khan366kos.etl.excel.service.ManagedWorkbookResult {
+        internal suspend fun open(path: String): ManagedWorkbookResult {
             val inputStream: InputStream = withContext(Dispatchers.IO) {
                 Files.newInputStream(Paths.get(path))
             }
             return try {
                 val xssfWorkbook = XSSFWorkbook(inputStream)
-                val managedWorkbook = com.khan366kos.etl.excel.service.ManagedWorkbook(xssfWorkbook, inputStream)
+                val managedWorkbook = ManagedWorkbook(xssfWorkbook, inputStream)
                 val etlWorkbook = xssfWorkbook.toEtl()
 
                 ManagedWorkbookResult.Success(
