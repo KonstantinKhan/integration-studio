@@ -1,12 +1,13 @@
 package com.khan366kos.integration.studio.mapping
 
-import com.khan366kos.domain.models.business.Catalog
 import com.khan366kos.domain.polynom.Node
 import com.khan366kos.domain.polynom.PolynomElement
 import com.khan366kos.domain.polynom.PropertyResult
 import com.khan366kos.domain.polynom.PropertyValueSimple
-import com.khan366kos.domain.polynom.models.Reference
+import com.khan366kos.domain.polynom.models.ClassifierTreeNode
+import com.khan366kos.domain.polynom.models.Concept
 import com.khan366kos.integration.studio.bff.dto.models.CatalogBffDto
+import com.khan366kos.integration.studio.bff.dto.models.ConceptBffDto
 import com.khan366kos.integration.studio.bff.dto.models.PropertyValueBffDto
 import com.khan366kos.integration.studio.bff.dto.response.NodeResponseBffDto
 import com.khan366kos.integration.studio.bff.dto.models.PolynomElementBffDto
@@ -44,14 +45,20 @@ fun PropertyValueSimple.toBffDto() = when (this) {
     else -> throw IllegalStateException("Unknown PropertyValue BffDto")
 }
 
-fun Reference.toBffDto() = CreateReferenceResponse(
+fun ClassifierTreeNode.Reference.toBffDto() = CreateReferenceResponse(
     name = name.asString(),
     typeId = typeId.asInt(),
     objectId = objectId.asInt()
 )
 
-fun Catalog.toBffDto() = CatalogBffDto(
+fun ClassifierTreeNode.Catalog.toBffDto() = CatalogBffDto(
     name = name.asString(),
     typeId = typeId.asInt(),
     objectId = objectId.asInt()
+)
+
+fun Concept.toBffDto() = ConceptBffDto(
+    name = name.asString(),
+    objectId = objectId.asInt(),
+    typeId = typeId.asInt(),
 )

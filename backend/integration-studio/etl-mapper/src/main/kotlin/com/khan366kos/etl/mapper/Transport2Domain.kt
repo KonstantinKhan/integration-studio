@@ -12,7 +12,7 @@ import com.khan366kos.domain.models.business.elementGroup.simple.ElementGroupNam
 import com.khan366kos.domain.models.business.elementGroup.simple.ElementGroupPath
 import com.khan366kos.domain.models.definitions.StorageDefinition
 import com.khan366kos.domain.models.simple.*
-import com.khan366kos.domain.polynom.models.Reference
+import com.khan366kos.domain.polynom.models.ClassifierTreeNode
 import com.khan366kos.integration.studio.transport.models.AuthorizationRequestTransport
 import com.khan366kos.integration.studio.transport.models.ElementCatalogTransport
 import com.khan366kos.integration.studio.transport.models.ElementGroupTransport
@@ -83,11 +83,9 @@ fun ViewpointCatalogTransport.toViewpointCatalog(): ViewpointCatalog =
         }
     )
 
-fun IReference.toDomain(): Reference =
-    Reference(
-        id = ReferenceId(id ?: ""),
+fun IReference.toDomain(): ClassifierTreeNode.Reference =
+    ClassifierTreeNode.Reference(
         name = ElementName(name ?: ""),
-        description = Description(description ?: ""),
         objectId = ObjectId(objectId),
         typeId = TypeId(typeId),
     )

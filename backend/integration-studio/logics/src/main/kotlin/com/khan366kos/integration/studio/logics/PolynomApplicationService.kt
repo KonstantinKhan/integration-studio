@@ -1,6 +1,5 @@
 package com.khan366kos.integration.studio.logics
 
-import com.khan366kos.domain.models.business.Catalog
 import com.khan366kos.domain.models.business.Element
 import com.khan366kos.domain.models.business.elementGroup.ElementGroup
 import com.khan366kos.domain.polynom.Identifier
@@ -9,7 +8,8 @@ import com.khan366kos.domain.polynom.PolynomElement
 import com.khan366kos.domain.polynom.Property
 import com.khan366kos.domain.polynom.PropertyResult
 import com.khan366kos.domain.polynom.PropertyValueSimple
-import com.khan366kos.domain.polynom.models.Reference
+import com.khan366kos.domain.polynom.models.ClassifierTreeNode
+import com.khan366kos.domain.polynom.models.Concept
 import com.khan366kos.domain.polynom.toSimple
 import com.khan366kos.domain.requests.CreateElementRequest
 import com.khan366kos.domain.responses.ElementResponse
@@ -27,28 +27,30 @@ import com.khan366kos.integration.studio.transport.polynom.request.GroupRequestD
 import com.khan366kos.integration.studio.transport.polynom.request.IClassificationNodeChildrenRequest
 import com.khan366kos.integration.studio.transport.polynom.request.IClassificationTreeRequest
 import com.khan366kos.integration.studio.transport.polynom.request.OwnerRequest
-import com.khan366kos.integration.studio.transport.polynom.request.concept.IGetAllConceptsRequest
 import com.khan366kos.integration.studio.transport.polynom.request.search.IPropertySearchRequest
 import com.khan366kos.integration.studio.transport.polynom.response.AppointedConceptsDto
 import com.khan366kos.integration.studio.transport.polynom.response.IPropertyOwnerResponse
-import com.khan366kos.integration.studio.transport.polynom.response.concept.IConceptPaginatedList
 import com.khan366kos.integration.studio.transport.polynom.response.search.IPropertySearchResultObjectIPaginatedList
 import io.ktor.client.statement.HttpResponse
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.asFlow
 import kotlinx.coroutines.flow.flatMapMerge
 import kotlinx.coroutines.flow.flow
-import kotlinx.coroutines.flow.toList
+import kotlinx.coroutines.withContext
 import kotlinx.datetime.LocalDateTime
 import kotlin.collections.get
 
 class PolynomApplicationService(
     private val polynomApi: PolynomApi
 ) {
+    val catalogService = CatalogService(polynomApi)
+    val conceptService = ConceptService(polynomApi)
+    val groupService = GroupService(polynomApi)
+
     suspend fun storageDefinitions(): List<StorageDefinitionTransport> =
         polynomApi.storageDefinitions()
 
@@ -59,29 +61,28 @@ class PolynomApplicationService(
         return polynomApi.currentUserInfo(sessionId)
     }
 
-    suspend fun references(sessionId: String): List<Reference> =
+    suspend fun references(sessionId: String): List<ClassifierTreeNode.Reference> =
         polynomApi.references(sessionId).map { it.toDomain() }
 
-    suspend fun reference(sessionId: String, request: IIdentifiableObject): Reference {
-        return polynomApi.reference(sessionId, request)
-    }
+    suspend fun reference(sessionId: String, request: IIdentifiableObject): ClassifierTreeNode.Reference =
+        polynomApi.reference(sessionId, request).toDomain()
 
-    suspend fun referenceCreate(sessionId: String, name: String): Reference =
+
+    suspend fun referenceCreate(sessionId: String, name: String): ClassifierTreeNode.Reference =
         polynomApi.referenceCreate(sessionId, name).toDomain()
 
     suspend fun referenceDelete(sessionId: String, request: DeleteReferenceCommand): HttpResponse {
         return polynomApi.referenceDelete(sessionId, request)
     }
 
-    suspend fun catalogs(sessionId: String, typeId: Int, objectId: Int): List<Catalog> =
-        polynomApi.catalog.getByReference(sessionId, typeId, objectId ).map { it.toDomain() }
+    suspend fun catalogs(sessionId: String, typeId: Int, objectId: Int): List<ClassifierTreeNode.Catalog> =
+        polynomApi.catalogApi.getByReference(sessionId, typeId, objectId).map { it.toDomain() }
 
-    suspend fun catalog(sessionId: String, typeId: Int, objectId: Int): Catalog =
-        polynomApi.catalog.getById(sessionId, typeId, objectId).toDomain()
+    suspend fun catalog(sessionId: String, typeId: Int, objectId: Int): ClassifierTreeNode.Catalog =
+        polynomApi.catalogApi.getById(sessionId, typeId, objectId).toDomain()
 
     suspend fun groupsByCatalog(sessionId: String, request: IIdentifiableObject): List<ElementGroup> {
         return try {
-            println("try")
             polynomApi.groupsByCatalog(sessionId, request)
         } catch (e: Exception) {
             throw e
@@ -150,12 +151,10 @@ class PolynomApplicationService(
 
         val element = PolynomElement(
             designation = when (val value = properties.find {
-                println(it)
                 it.name == "Обозначение"
             }?.value) {
                 is PropertyValueSimple.StringValSimple -> value.data
                 else -> {
-                    println("it: $value")
                     throw NotImplementedError()
                 }
             },
@@ -201,7 +200,7 @@ class PolynomApplicationService(
     }
 
     @OptIn(ExperimentalCoroutinesApi::class)
-    suspend fun searchObjects(
+    fun searchObjects(
         sessionId: String,
         request: PolynomElementFromPeriodRequestBffDto
     ): Flow<PolynomElement> {
@@ -233,7 +232,7 @@ class PolynomApplicationService(
     }
 
     @OptIn(ExperimentalCoroutinesApi::class)
-    suspend fun searchObjectsEnriched(
+    fun searchObjectsEnriched(
         sessionId: String,
         request: PolynomElementFromPeriodRequestBffDto
     ): Flow<PolynomElement> {
@@ -300,18 +299,27 @@ class PolynomApplicationService(
         return result
     }
 
-    @OptIn(ExperimentalCoroutinesApi::class)
-    suspend fun concepts(sessionId: String, concepts: List<String>): List<IConceptPaginatedList> {
-        val res = concepts.asFlow()
-            .flatMapMerge(concurrency = 2) { str ->
-                flow {
-                    val request = IGetAllConceptsRequest(
-                        pageNumber = 1, pageSize = 10, filterString = str
-                    )
-                    val result = polynomApi.concept.getAll(sessionId, request)
-                    emit(result)
+//    @OptIn(ExperimentalCoroutinesApi::class)
+//    suspend fun concepts(sessionId: String, concepts: List<String>): List<Concept> =
+//        concepts.asFlow()
+//            .flatMapMerge(concurrency = 2) { str ->
+//                flow {
+//                    val request = IGetAllConceptsRequest(
+//                        pageNumber = 1, pageSize = 10, filterString = str
+//                    )
+//                    val result = polynomApi.conceptApi.getAll(sessionId, request)
+//                    emit(result)
+//                }
+//            }.toList()
+//            .flatMap { it.items.orEmpty() }
+//            .map { it.toDomain() }
+
+    suspend fun concepts(sessionId: String, codes: List<String>): List<Concept> =
+        withContext(Dispatchers.IO) {
+            codes.map { code ->
+                async {
+                    polynomApi.conceptApi.getByCode(sessionId, code).toDomain()
                 }
-            }.toList()
-        return res
-    }
+            }
+        }.awaitAll().toList()
 }

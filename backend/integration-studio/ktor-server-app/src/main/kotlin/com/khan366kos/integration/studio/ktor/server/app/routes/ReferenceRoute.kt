@@ -1,6 +1,5 @@
 package com.khan366kos.integration.studio.ktor.server.app.routes
 
-import com.khan366kos.integration.studio.ktor.server.app.config.AppConfig
 import com.khan366kos.integration.studio.ktor.server.app.plugins.userSession
 import com.khan366kos.integration.studio.bff.dto.command.CreateReferenceCommand
 import com.khan366kos.integration.studio.logics.PolynomApplicationService

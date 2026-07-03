@@ -34,17 +34,6 @@ data class EnvMissingResponse(
     val missing: List<String>
 )
 
-/**
- * DEV-ONLY. Активируется только при IS_DEV=true.
- *
- * Засевает тестовую сессию в SessionStore из env-переменных (login/password),
- * выполняя реальный signIn против Polynom. Удобно для тестов из Postman:
- * один пустой POST — cookie USER_SESSION в jar, дальше идут реальные
- * защищённые маршруты через SessionInterceptorPlugin.
- *
- * ВНИМАНИЕ: никогда не включать в проде. Эндпоинт принимает любые креды из env
- * и автоматически сеет сессию без других проверок.
- */
 fun Application.devSessionRoute(config: AppConfig) {
     if (System.getenv("IS_DEV") != "true") return
 

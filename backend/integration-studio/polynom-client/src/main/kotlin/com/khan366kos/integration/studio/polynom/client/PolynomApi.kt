@@ -1,13 +1,10 @@
 package com.khan366kos.integration.studio.polynom.client
 
-import com.khan366kos.domain.models.business.Catalog
 import com.khan366kos.domain.models.business.Element
-import com.khan366kos.domain.polynom.models.Reference
 import com.khan366kos.domain.models.business.elementGroup.ElementGroup
 import com.khan366kos.domain.requests.CreateElementRequest
 import com.khan366kos.domain.responses.ElementResponse
 import com.khan366kos.integration.studio.transport.polynom.response.IPropertyOwnerResponse
-import com.khan366kos.etl.mapper.toCatalog
 import com.khan366kos.etl.mapper.toElement
 import com.khan366kos.etl.mapper.toElementGroup
 import com.khan366kos.etl.mapper.toDomain
@@ -15,7 +12,6 @@ import com.khan366kos.integration.studio.polynom.client.auth.SessionStoreAuthPro
 import com.khan366kos.integration.studio.polynom.client.auth.TokenManager
 import com.khan366kos.integration.studio.transport.polynom.models.LoginRequest
 import com.khan366kos.integration.studio.transport.polynom.models.LoginResponse
-import com.khan366kos.integration.studio.transport.models.ElementCatalogTransport
 import com.khan366kos.integration.studio.transport.models.ElementGroupTransport
 import com.khan366kos.integration.studio.transport.models.ElementTransport
 import com.khan366kos.integration.studio.transport.models.IReference
@@ -24,13 +20,11 @@ import com.khan366kos.integration.studio.transport.models.StorageDefinitionTrans
 import com.khan366kos.integration.studio.transport.models.UserTransport
 import com.khan366kos.integration.studio.transport.polynom.command.DeleteReferenceCommand
 import com.khan366kos.integration.studio.transport.polynom.models.IIdentifiableObject
-import com.khan366kos.integration.studio.transport.polynom.models.catalog.IElementCatalog
 import com.khan366kos.integration.studio.transport.polynom.request.IClassificationNodeChildrenRequest
 import com.khan366kos.integration.studio.transport.polynom.request.IClassificationTreeRequest
 import com.khan366kos.integration.studio.transport.polynom.request.ICreateReferenceRequest
 import com.khan366kos.integration.studio.transport.polynom.request.search.IPropertySearchRequest
 import com.khan366kos.integration.studio.transport.polynom.request.OwnerRequest
-import com.khan366kos.integration.studio.transport.polynom.request.catalog.IGetByIdRequest
 import com.khan366kos.integration.studio.transport.polynom.response.AppointedConceptsDto
 import com.khan366kos.integration.studio.transport.polynom.response.IClassificationTreeNodeIPaginatedList
 import com.khan366kos.integration.studio.transport.polynom.response.search.IPropertySearchResultObjectIPaginatedList
@@ -53,10 +47,13 @@ class PolynomApi(
     baseUrl: String
 ) {
 
-    private val tokenManager: TokenManager = TokenManager(SessionStoreAuthProvider.createTokenRefreshApi(httpClient, baseUrl))
+    private val tokenManager: TokenManager =
+        TokenManager(SessionStoreAuthProvider.createTokenRefreshApi(httpClient, baseUrl))
 
-    val concept = Concept(httpClient, tokenManager, authProvider)
-    val catalog = Catalog(httpClient, tokenManager, authProvider)
+    val conceptApi = ConceptApi(httpClient, tokenManager, authProvider)
+    val catalogApi = CatalogApi(httpClient, tokenManager, authProvider)
+    val groupApi = GroupApi(httpClient, tokenManager, authProvider)
+
     suspend fun storageDefinitions(): List<StorageDefinitionTransport> =
         httpClient.get("login/storage-definitions").body()
 
@@ -75,18 +72,17 @@ class PolynomApi(
             authenticate(authProvider.getAuthContext(SessionId(sessionId)))
         }.body<List<IReference>>()
 
-    suspend fun reference(sessionId: String, request: IIdentifiableObject): Reference =
+    suspend fun reference(sessionId: String, request: IIdentifiableObject): IReference =
         httpClient.post("reference/get-by-id") {
             authenticate(authProvider.getAuthContext(SessionId(sessionId)))
             setBody(request)
-        }.body<IReference>()
-            .toDomain()
+        }.body()
 
     suspend fun referenceCreate(sessionId: String, name: String): IReference =
         httpClient.post("reference/create") {
             authenticate(authProvider.getAuthContext(SessionId(sessionId)))
             setBody(ICreateReferenceRequest(name = name))
-        }.body<IReference>()
+        }.body()
 
     suspend fun referenceDelete(sessionId: String, request: DeleteReferenceCommand): HttpResponse =
         httpClient.post("reference/delete") {
@@ -101,7 +97,6 @@ class PolynomApi(
                 setBody(request)
             }.body<List<ElementGroupTransport>>()
                 .map {
-                    println("element: $it")
                     it.toElementGroup()
                 }
         } catch (e: Exception) {

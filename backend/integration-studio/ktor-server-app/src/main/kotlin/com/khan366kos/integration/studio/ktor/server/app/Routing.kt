@@ -15,6 +15,7 @@ import com.khan366kos.etl.mapper.toEtlWorkbookTransport
 import com.khan366kos.integration.studio.ktor.server.app.routes.catalogs
 import com.khan366kos.integration.studio.transport.polynom.models.LoginRequest
 import com.khan366kos.integration.studio.ktor.server.app.routes.concept
+import com.khan366kos.integration.studio.ktor.server.app.routes.migration
 import com.khan366kos.integration.studio.ktor.server.app.routes.propertyOwner
 import com.khan366kos.integration.studio.ktor.server.app.routes.references
 import com.khan366kos.integration.studio.ktor.server.app.routes.search
@@ -208,7 +209,6 @@ fun Application.configureRouting(config: AppConfig) {
                         val groupObjectId = call.parameters["groupObjectId"]?.toInt()
 
                         if (groupTypeId == null && groupObjectId == null) {
-                            println("yes")
                             val groups = config.polynomApplicationService.groupsByCatalog(
                                 call.userSession.id,
                                 IIdentifiableObject(
@@ -216,7 +216,6 @@ fun Application.configureRouting(config: AppConfig) {
                                     catalogTypeId!!
                                 )
                             )
-                            println("groups: $groups")
                             call.respond(HttpStatusCode.OK, groups)
                         } else {
                             val groupContent = run {
@@ -331,6 +330,7 @@ fun Application.configureRouting(config: AppConfig) {
             references(config.polynomApplicationService)
             tree(config.polynomApplicationService)
             catalogs(config.polynomApplicationService)
+            migration(config.polynomApplicationService)
         }
     }
 }

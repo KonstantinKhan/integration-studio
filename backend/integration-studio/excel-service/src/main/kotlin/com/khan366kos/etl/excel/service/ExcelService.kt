@@ -1,6 +1,10 @@
 package com.khan366kos.etl.excel.service
 
-import com.khan366kos.domain.classifier.ClassifierGroup
+import com.khan366kos.domain.classifier.ClassifierGroupExcel
+import com.khan366kos.domain.models.simple.ElementName
+import com.khan366kos.domain.polynom.models.Level
+import com.khan366kos.domain.polynom.models.MaxValue
+import com.khan366kos.domain.polynom.models.MinValue
 import org.apache.poi.ss.usermodel.CellType
 import org.apache.poi.xssf.usermodel.XSSFWorkbook
 
@@ -11,8 +15,8 @@ class ExcelService(
     private val nameColumnIndex: Int = 5,
     private val codeDigitCount: Int = 18
 ) {
-    fun classifierGroups(path: String): List<ClassifierGroup> {
-        val groups = mutableListOf<ClassifierGroup>()
+    fun classifierGroups(path: String): List<ClassifierGroupExcel> {
+        val groups = mutableListOf<ClassifierGroupExcel>()
         val workbook = XSSFWorkbook(path)
         workbook.use { workbook ->
             val sheet = workbook.getSheetAt(0)
@@ -29,7 +33,14 @@ class ExcelService(
                 val maxValue = maxCell.stringCellValue.cleanLong()
                 val level = levelCell.numericCellValue.toInt()
                 val name = nameCell.stringCellValue.trim()
-                groups.add(ClassifierGroup(minValue, maxValue, level, name))
+                groups.add(
+                    ClassifierGroupExcel(
+                        MinValue(minValue),
+                        MaxValue(maxValue),
+                        Level(level),
+                        ElementName(name)
+                    )
+                )
             }
         }
         return groups

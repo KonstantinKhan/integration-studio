@@ -120,7 +120,7 @@ fun Application.module() {
         schedulerConfig = schedulerConfig,
     )
 
-    config.syncScheduler.start()
+//    config.syncScheduler.start()
 
     launch {
         while (isActive) {
