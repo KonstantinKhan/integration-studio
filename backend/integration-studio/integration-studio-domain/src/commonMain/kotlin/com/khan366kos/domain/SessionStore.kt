@@ -1,4 +1,4 @@
-package com.khan366kos.integration.studio.ktor.server.app.session
+package com.khan366kos.domain
 
 import com.khan366kos.domain.models.auth.UserCredentials
 

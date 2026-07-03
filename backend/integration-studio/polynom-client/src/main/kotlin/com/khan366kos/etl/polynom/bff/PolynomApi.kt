@@ -21,7 +21,6 @@ import com.khan366kos.integration.studio.transport.models.ElementGroupTransport
 import com.khan366kos.integration.studio.transport.models.ElementTransport
 import com.khan366kos.integration.studio.transport.models.IReference
 import com.khan366kos.integration.studio.transport.models.StorageDefinitionTransport
-import com.khan366kos.integration.studio.transport.models.ParentGroup
 import com.khan366kos.integration.studio.transport.models.UserTransport
 import com.khan366kos.integration.studio.transport.polynom.command.CreateReferenceCommand
 import com.khan366kos.integration.studio.transport.polynom.command.CreateReferenceResponse
@@ -51,6 +50,7 @@ class PolynomApi(
     private val httpClient: HttpClient,
     private val tokenManager: TokenManager
 ) {
+    val concept = Concept(httpClient, tokenManager)
     suspend fun storageDefinitions(): List<StorageDefinitionTransport> =
         httpClient.get("login/storage-definitions").body()
 
@@ -146,7 +146,7 @@ class PolynomApi(
             setBody(request)
         }.body()
 
-    suspend fun createElement(authContext: AuthContext, request: ParentGroup): String =
+    suspend fun createElement(authContext: AuthContext, request: com.khan366kos.integration.studio.transport.models.ParentGroup): String =
         httpClient.post("element/create") {
             authenticate(authContext)
             setBody(request)

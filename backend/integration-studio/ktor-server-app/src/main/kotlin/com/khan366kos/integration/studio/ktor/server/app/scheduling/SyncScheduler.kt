@@ -5,13 +5,13 @@ import com.khan366kos.domain.models.auth.simple.AccessToken
 import com.khan366kos.domain.models.auth.simple.Login
 import com.khan366kos.domain.models.auth.simple.RefreshToken
 import com.khan366kos.domain.models.auth.simple.StorageId
-import com.khan366kos.integration.studio.application.polynom.PolynomApplicationService
 import com.khan366kos.integration.studio.bff.transport.models.IdentifierBffDto
 import com.khan366kos.integration.studio.bff.transport.request.PolynomElementFromPeriodRequestBffDto
 import com.khan366kos.integration.studio.ktor.server.app.db.MigrationRepository
 import com.khan366kos.integration.studio.ktor.server.app.db.RunType
-import com.khan366kos.integration.studio.ktor.server.app.session.SessionStore
+import com.khan366kos.domain.SessionStore
 import com.khan366kos.integration.studio.ktor.server.app.streaming.SyncStreamRegistry
+import com.khan366kos.integration.studio.logics.PolynomApplicationService
 import com.khan366kos.integration.studio.transport.polynom.models.LoginRequest
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.delay

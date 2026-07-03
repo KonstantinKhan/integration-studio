@@ -2,7 +2,7 @@ package com.khan366kos.integration.studio.ktor.server.app.plugins
 
 import com.khan366kos.domain.models.auth.UserCredentials
 import com.khan366kos.integration.studio.ktor.server.app.UserSession
-import com.khan366kos.integration.studio.ktor.server.app.session.SessionStore
+import com.khan366kos.domain.SessionStore
 import io.ktor.http.HttpStatusCode
 import io.ktor.server.application.*
 import io.ktor.server.response.*

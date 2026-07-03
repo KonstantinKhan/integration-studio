@@ -2,8 +2,7 @@ package com.khan366kos.integration.studio.ktor.server.app.config
 
 import com.khan366kos.etl.polynom.bff.PolynomApi
 import com.khan366kos.etl.polynom.bff.auth.TokenManager
-import com.khan366kos.integration.studio.application.polynom.PolynomApplicationService
-import com.khan366kos.integration.studio.infrastructure.auth.SessionStoreAuthProvider
+import com.khan366kos.etl.polynom.bff.auth.SessionStoreAuthProvider
 import com.khan366kos.integration.studio.ktor.server.app.db.MigrationRepository
 import com.khan366kos.integration.studio.ktor.server.app.messaging.EmailConfig
 import com.khan366kos.integration.studio.ktor.server.app.messaging.EmailNotifier
@@ -11,8 +10,9 @@ import com.khan366kos.integration.studio.ktor.server.app.messaging.RabbitMqConfi
 import com.khan366kos.integration.studio.ktor.server.app.messaging.RabbitMqPublisher
 import com.khan366kos.integration.studio.ktor.server.app.scheduling.SyncScheduler
 import com.khan366kos.integration.studio.ktor.server.app.scheduling.SyncSchedulerConfig
-import com.khan366kos.integration.studio.ktor.server.app.session.SessionStore
+import com.khan366kos.domain.SessionStore
 import com.khan366kos.integration.studio.ktor.server.app.streaming.SyncStreamRegistry
+import com.khan366kos.integration.studio.logics.PolynomApplicationService
 import io.ktor.client.HttpClient
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers

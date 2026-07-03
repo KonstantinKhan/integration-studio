@@ -6,8 +6,6 @@ import kotlinx.serialization.Serializable
 
 @Serializable
 data class AppointedConceptsDto(
-    @SerialName("isReverseOrder")
     val isReverseOrder: Boolean,
-    @SerialName("appointedConcepts")
     val appointedConcepts: List<AppointedConceptDto>? = null
 )

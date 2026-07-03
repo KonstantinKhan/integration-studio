@@ -1,40 +1,41 @@
-package com.khan366kos.integration.studio.application.polynom
+package com.khan366kos.integration.studio.logics
 
-import com.khan366kos.domain.polynom.Identifier
-import com.khan366kos.domain.polynom.Node
 import com.khan366kos.domain.models.auth.SessionId
 import com.khan366kos.domain.models.business.Catalog
 import com.khan366kos.domain.models.business.Element
-import com.khan366kos.domain.polynom.models.Reference
 import com.khan366kos.domain.models.business.elementGroup.ElementGroup
+import com.khan366kos.domain.polynom.Identifier
+import com.khan366kos.domain.polynom.Node
 import com.khan366kos.domain.polynom.PolynomElement
-import com.khan366kos.domain.polynom.PropertyResult
 import com.khan366kos.domain.polynom.Property
+import com.khan366kos.domain.polynom.PropertyResult
 import com.khan366kos.domain.polynom.PropertyValueSimple
+import com.khan366kos.domain.polynom.models.Reference
 import com.khan366kos.domain.polynom.toSimple
 import com.khan366kos.domain.requests.CreateElementRequest
 import com.khan366kos.domain.responses.ElementResponse
-import com.khan366kos.integration.studio.transport.polynom.response.IPropertyOwnerResponse
 import com.khan366kos.etl.polynom.bff.PolynomApi
 import com.khan366kos.etl.polynom.bff.auth.AuthProvider
 import com.khan366kos.integration.studio.bff.transport.request.PolynomElementFromPeriodRequestBffDto
 import com.khan366kos.integration.studio.mapping.toDomain
 import com.khan366kos.integration.studio.mapping.toPolynomDto
-import com.khan366kos.integration.studio.transport.polynom.models.LoginRequest
-import com.khan366kos.integration.studio.transport.polynom.models.LoginResponse
-import com.khan366kos.integration.studio.transport.models.ParentGroup
 import com.khan366kos.integration.studio.transport.models.StorageDefinitionTransport
 import com.khan366kos.integration.studio.transport.models.UserTransport
 import com.khan366kos.integration.studio.transport.polynom.command.CreateReferenceCommand
 import com.khan366kos.integration.studio.transport.polynom.command.CreateReferenceResponse
 import com.khan366kos.integration.studio.transport.polynom.command.DeleteReferenceCommand
 import com.khan366kos.integration.studio.transport.polynom.models.IIdentifiableObject
+import com.khan366kos.integration.studio.transport.polynom.models.LoginRequest
+import com.khan366kos.integration.studio.transport.polynom.models.LoginResponse
 import com.khan366kos.integration.studio.transport.polynom.request.GroupRequestDto
 import com.khan366kos.integration.studio.transport.polynom.request.IClassificationNodeChildrenRequest
 import com.khan366kos.integration.studio.transport.polynom.request.IClassificationTreeRequest
-import com.khan366kos.integration.studio.transport.polynom.request.search.IPropertySearchRequest
 import com.khan366kos.integration.studio.transport.polynom.request.OwnerRequest
+import com.khan366kos.integration.studio.transport.polynom.request.concept.IGetAllConceptsRequest
+import com.khan366kos.integration.studio.transport.polynom.request.search.IPropertySearchRequest
 import com.khan366kos.integration.studio.transport.polynom.response.AppointedConceptsDto
+import com.khan366kos.integration.studio.transport.polynom.response.IPropertyOwnerResponse
+import com.khan366kos.integration.studio.transport.polynom.response.concept.IConceptPaginatedList
 import com.khan366kos.integration.studio.transport.polynom.response.search.IPropertySearchResultObjectIPaginatedList
 import io.ktor.client.statement.HttpResponse
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -42,17 +43,19 @@ import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.asFlow
 import kotlinx.coroutines.flow.flatMapMerge
 import kotlinx.coroutines.flow.flow
+import kotlinx.coroutines.flow.toList
 import kotlinx.datetime.LocalDateTime
-import kotlinx.datetime.toLocalDateTime
+import kotlin.collections.get
 
 /**
  * Application-сервис для работы с Polynom API.
- * 
+ *
  * Этот класс оркестрирует вызовы между AuthProvider и PolynomApi,
  * обеспечивая единую точку входа для использования Polynom API.
- * 
+ *
  * @param authProvider провайдер аутентификации для получения credentials
  * @param polynomApi HTTP-адаптер для вызовов Polynom API
  */
@@ -60,7 +63,6 @@ class PolynomApplicationService(
     private val authProvider: AuthProvider,
     private val polynomApi: PolynomApi
 ) {
-
     // ==================== Authentication ====================
 
     /**
@@ -74,7 +76,7 @@ class PolynomApplicationService(
 
     /**
      * Получает информацию о текущем пользователе.
-     * 
+     *
      * @param sessionId идентификатор сессии
      * @return информация о пользователе
      */
@@ -92,7 +94,7 @@ class PolynomApplicationService(
 
     /**
      * Получает справочник по идентификатору.
-     * 
+     *
      * @param sessionId идентификатор сессии
      * @param request идентификатор справочника
      * @return справочник
@@ -134,7 +136,7 @@ class PolynomApplicationService(
 
     /**
      * Получает группы элементов по группе.
-     * 
+     *
      * @param sessionId идентификатор сессии
      * @param request идентификатор группы
      * @return список групп
@@ -148,7 +150,7 @@ class PolynomApplicationService(
 
     /**
      * Создаёт новый элемент.
-     * 
+     *
      * @param sessionId идентификатор сессии
      * @param request команда на создание элемента
      * @return результат создания
@@ -160,7 +162,7 @@ class PolynomApplicationService(
 
     /**
      * Получает элементы по группе.
-     * 
+     *
      * @param sessionId идентификатор сессии
      * @param request идентификатор группы
      * @return список элементов
@@ -220,9 +222,15 @@ class PolynomApplicationService(
         } ?: emptyList()
 
         val element = PolynomElement(
-            designation = when (val value = properties.find { it.name == "Обозначение" }?.value) {
+            designation = when (val value = properties.find {
+                println(it)
+                it.name == "Обозначение"
+            }?.value) {
                 is PropertyValueSimple.StringValSimple -> value.data
-                else -> throw NotImplementedError()
+                else -> {
+                    println("it: $value")
+                    throw NotImplementedError()
+                }
             },
             classifierCode = when (val value = properties.find { it.name == "Код классификатора" }?.value) {
                 is PropertyValueSimple.StringValSimple -> value.data.toLong()
@@ -246,7 +254,7 @@ class PolynomApplicationService(
     }
 
 
-    suspend fun create(sessionId: String, request: ParentGroup): String {
+    suspend fun create(sessionId: String, request: com.khan366kos.integration.studio.transport.models.ParentGroup): String {
         val authContext = authProvider.getAuthContext(SessionId(sessionId))
         return polynomApi.createElement(authContext, request)
     }
@@ -371,5 +379,21 @@ class PolynomApplicationService(
         val response = polynomApi.getClassificationNodeChildren(authContext, request)
         val result = response.items.map { it.toDomain() }
         return result
+    }
+
+    @OptIn(ExperimentalCoroutinesApi::class)
+    suspend fun concepts(sessionId: String, concepts: List<String>): List<IConceptPaginatedList> {
+        val authContext = authProvider.getAuthContext(SessionId(sessionId))
+        val res = concepts.asFlow()
+            .flatMapMerge(concurrency = 2) { str ->
+                flow {
+                    val request = IGetAllConceptsRequest(
+                        pageNumber = 1, pageSize = 10, filterString = str
+                    )
+                    val result = polynomApi.concept.getAll(authContext, request)
+                    emit(result)
+                }
+            }.toList()
+        return res
     }
 }

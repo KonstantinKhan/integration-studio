@@ -1,10 +1,10 @@
 package com.khan366kos.integration.studio.ktor.server.app.routes
 
-import com.khan366kos.integration.studio.application.polynom.PolynomApplicationService
 import com.khan366kos.integration.studio.bff.transport.request.PolynomElementFromPeriodRequestBffDto
 import com.khan366kos.integration.studio.bff.transport.models.PolynomElementBffDto
 import com.khan366kos.integration.studio.ktor.server.app.config.AppConfig
 import com.khan366kos.integration.studio.ktor.server.app.plugins.userSession
+import com.khan366kos.integration.studio.logics.PolynomApplicationService
 import com.khan366kos.integration.studio.mapping.toBffDto
 import com.khan366kos.integration.studio.transport.polynom.request.search.IPropertySearchRequest
 import io.ktor.http.HttpStatusCode

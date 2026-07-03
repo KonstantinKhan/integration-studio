@@ -1,7 +1,7 @@
 package com.khan366kos.integration.studio.ktor.server.app.routes
 
-import com.khan366kos.integration.studio.application.polynom.PolynomApplicationService
 import com.khan366kos.integration.studio.ktor.server.app.plugins.userSession
+import com.khan366kos.integration.studio.logics.PolynomApplicationService
 import com.khan366kos.integration.studio.transport.polynom.request.OwnerRequest
 import io.ktor.http.HttpStatusCode
 import io.ktor.server.request.receive

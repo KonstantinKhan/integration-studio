@@ -5,8 +5,8 @@ import com.khan366kos.domain.exceptions.RootNodeException
 import com.khan366kos.domain.polynom.Identifier
 import com.khan366kos.domain.models.simple.ObjectId
 import com.khan366kos.domain.models.simple.TypeId
-import com.khan366kos.integration.studio.application.polynom.PolynomApplicationService
 import com.khan366kos.integration.studio.ktor.server.app.plugins.userSession
+import com.khan366kos.integration.studio.logics.PolynomApplicationService
 import com.khan366kos.integration.studio.mapping.toBffDto
 import io.ktor.http.HttpStatusCode
 import io.ktor.server.response.respond

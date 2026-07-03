@@ -35,7 +35,7 @@ data class IPropertySearchResultObject(
     val innerObjects: List<IClassifiableObject>? = null,
 
     @SerialName("multiClassificationPaths")
-    val multiClassificationPaths: List<INamedObject>? = null,
+    val multiClassificationPaths: List<List<INamedObject>>? = null,
 
     @SerialName("tableRow")
     val tableRow: INamedObject? = null

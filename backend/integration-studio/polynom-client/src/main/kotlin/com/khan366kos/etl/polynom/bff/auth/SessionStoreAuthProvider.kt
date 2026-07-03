@@ -1,12 +1,9 @@
-package com.khan366kos.integration.studio.infrastructure.auth
+package com.khan366kos.etl.polynom.bff.auth
 
+import com.khan366kos.domain.SessionStore
 import com.khan366kos.domain.models.auth.AuthContext
 import com.khan366kos.domain.models.auth.AuthenticationException
 import com.khan366kos.domain.models.auth.SessionId
-import com.khan366kos.etl.polynom.bff.auth.AuthProvider
-import com.khan366kos.etl.polynom.bff.auth.TokenManager
-import com.khan366kos.etl.polynom.bff.auth.TokenRefreshApi
-import com.khan366kos.integration.studio.ktor.server.app.session.SessionStore
 import io.ktor.client.HttpClient
 import io.ktor.client.call.body
 import io.ktor.client.request.header
@@ -15,11 +12,11 @@ import io.ktor.client.request.setBody
 import io.ktor.http.HttpHeaders
 
 /**
- * Реализация [AuthProvider], использующая [SessionStore] для хранения сессий.
- * 
+ * Реализация [AuthProvider], использующая [com.khan366kos.integration.studio.ktor.server.app.session.SessionStore] для хранения сессий.
+ *
  * Этот класс связывает domain-слой (AuthProvider) с инфраструктурой (SessionStore),
  * обеспечивая получение и обновление учётных данных пользователя.
- * 
+ *
  * @param sessionStore хранилище сессий для получения/сохранения credentials
  * @param tokenManager менеджер токенов для обновления access/refresh токенов
  * @param httpClient HTTP-клиент для вызова API обновления токенов
@@ -31,24 +28,24 @@ class SessionStoreAuthProvider(
     private val httpClient: HttpClient,
     private val baseUrl: String
 ) : AuthProvider {
-    
+
     /**
      * Получает контекст аутентификации из SessionStore.
-     * 
+     *
      * @param sessionId идентификатор сессии
      * @return AuthContext с credentials из хранилища
-     * @throws AuthenticationException.SessionNotFound если сессия не найдена
+     * @throws com.khan366kos.domain.models.auth.AuthenticationException.SessionNotFound если сессия не найдена
      */
     override suspend fun getAuthContext(sessionId: SessionId): AuthContext {
         val credentials = sessionStore.retrieve(sessionId.value)
             ?: throw AuthenticationException.SessionNotFound(sessionId.value)
-        
+
         return AuthContext(sessionId, credentials)
     }
-    
+
     /**
      * Обновляет учётные данные сессии через TokenManager.
-     * 
+     *
      * @param sessionId идентификатор сессии
      * @return обновлённый AuthContext
      * @throws AuthenticationException.SessionNotFound если сессия не найдена
@@ -56,22 +53,22 @@ class SessionStoreAuthProvider(
      */
     override suspend fun refreshAuth(sessionId: SessionId): AuthContext {
         val currentCredentials = getAuthContext(sessionId).credentials
-        
+
         val refreshedCredentials = tokenManager.authenticate(
             sessionId = sessionId.value,
             userCredentials = currentCredentials
         )
-        
+
         // Сохраняем обновлённые credentials обратно в SessionStore
         sessionStore.updateCredentials(sessionId.value, refreshedCredentials)
-        
+
         return AuthContext(sessionId, refreshedCredentials)
     }
-    
+
     companion object {
         /**
          * Создаёт TokenRefreshApi реализацию для использования с Ktor HttpClient.
-         * 
+         *
          * @param httpClient HTTP-клиент для вызова refresh endpoint
          * @param baseUrl базовый URL API (например, "https://example.com/api/v1")
          * @return TokenRefreshApi для обновления токенов

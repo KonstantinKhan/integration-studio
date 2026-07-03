@@ -37,6 +37,7 @@ dependencies {
     implementation(projects.etlMapper)
     implementation(projects.polynomClient)
     implementation(projects.integrationStudioMapping)
+    implementation(projects.logics)
 
     implementation(projects.excelService)
 
