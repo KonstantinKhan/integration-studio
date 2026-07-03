@@ -1,6 +1,5 @@
 package com.khan366kos.integration.studio.logics
 
-import com.khan366kos.domain.models.auth.SessionId
 import com.khan366kos.domain.models.business.Catalog
 import com.khan366kos.domain.models.business.Element
 import com.khan366kos.domain.models.business.elementGroup.ElementGroup
@@ -14,15 +13,12 @@ import com.khan366kos.domain.polynom.models.Reference
 import com.khan366kos.domain.polynom.toSimple
 import com.khan366kos.domain.requests.CreateElementRequest
 import com.khan366kos.domain.responses.ElementResponse
-import com.khan366kos.etl.polynom.bff.PolynomApi
-import com.khan366kos.etl.polynom.bff.auth.AuthProvider
-import com.khan366kos.integration.studio.bff.transport.request.PolynomElementFromPeriodRequestBffDto
+import com.khan366kos.integration.studio.polynom.client.PolynomApi
+import com.khan366kos.integration.studio.bff.dto.request.PolynomElementFromPeriodRequestBffDto
 import com.khan366kos.integration.studio.mapping.toDomain
 import com.khan366kos.integration.studio.mapping.toPolynomDto
 import com.khan366kos.integration.studio.transport.models.StorageDefinitionTransport
 import com.khan366kos.integration.studio.transport.models.UserTransport
-import com.khan366kos.integration.studio.transport.polynom.command.CreateReferenceCommand
-import com.khan366kos.integration.studio.transport.polynom.command.CreateReferenceResponse
 import com.khan366kos.integration.studio.transport.polynom.command.DeleteReferenceCommand
 import com.khan366kos.integration.studio.transport.polynom.models.IIdentifiableObject
 import com.khan366kos.integration.studio.transport.polynom.models.LoginRequest
@@ -50,131 +46,62 @@ import kotlinx.coroutines.flow.toList
 import kotlinx.datetime.LocalDateTime
 import kotlin.collections.get
 
-/**
- * Application-сервис для работы с Polynom API.
- *
- * Этот класс оркестрирует вызовы между AuthProvider и PolynomApi,
- * обеспечивая единую точку входа для использования Polynom API.
- *
- * @param authProvider провайдер аутентификации для получения credentials
- * @param polynomApi HTTP-адаптер для вызовов Polynom API
- */
 class PolynomApplicationService(
-    private val authProvider: AuthProvider,
     private val polynomApi: PolynomApi
 ) {
-    // ==================== Authentication ====================
-
-    /**
-     * Получает список определений хранилищ (не требует аутентификации).
-     */
     suspend fun storageDefinitions(): List<StorageDefinitionTransport> =
         polynomApi.storageDefinitions()
 
     suspend fun signIn(loginRequest: LoginRequest): LoginResponse =
         polynomApi.signIn(loginRequest)
 
-    /**
-     * Получает информацию о текущем пользователе.
-     *
-     * @param sessionId идентификатор сессии
-     * @return информация о пользователе
-     */
     suspend fun currentUserInfo(sessionId: String): UserTransport {
-        val authContext = authProvider.getAuthContext(SessionId(sessionId))
-        return polynomApi.currentUserInfo(authContext)
+        return polynomApi.currentUserInfo(sessionId)
     }
 
-    // ==================== References ====================
+    suspend fun references(sessionId: String): List<Reference> =
+        polynomApi.references(sessionId).map { it.toDomain() }
 
-    suspend fun references(sessionId: String): List<Reference> {
-        val authContext = authProvider.getAuthContext(SessionId(sessionId))
-        return polynomApi.references(authContext)
-    }
-
-    /**
-     * Получает справочник по идентификатору.
-     *
-     * @param sessionId идентификатор сессии
-     * @param request идентификатор справочника
-     * @return справочник
-     */
     suspend fun reference(sessionId: String, request: IIdentifiableObject): Reference {
-        val authContext = authProvider.getAuthContext(SessionId(sessionId))
-        return polynomApi.reference(authContext, request)
+        return polynomApi.reference(sessionId, request)
     }
 
-    suspend fun referenceCreate(sessionId: String, request: CreateReferenceCommand): CreateReferenceResponse {
-        val authContext = authProvider.getAuthContext(SessionId(sessionId))
-        return polynomApi.referenceCreate(authContext, request)
-    }
+    suspend fun referenceCreate(sessionId: String, name: String): Reference =
+        polynomApi.referenceCreate(sessionId, name).toDomain()
 
     suspend fun referenceDelete(sessionId: String, request: DeleteReferenceCommand): HttpResponse {
-        val authContext = authProvider.getAuthContext(SessionId(sessionId))
-        return polynomApi.referenceDelete(authContext, request)
+        return polynomApi.referenceDelete(sessionId, request)
     }
 
-    suspend fun catalogs(sessionId: String, request: IIdentifiableObject): List<Catalog> {
-        val authContext = authProvider.getAuthContext(SessionId(sessionId))
-        return polynomApi.catalogs(authContext, request)
-    }
+    suspend fun catalogs(sessionId: String, typeId: Int, objectId: Int): List<Catalog> =
+        polynomApi.catalog.getByReference(sessionId, typeId, objectId ).map { it.toDomain() }
 
-    suspend fun catalog(sessionId: String, request: IIdentifiableObject): Catalog {
-        val authContext = authProvider.getAuthContext(SessionId(sessionId))
-        return polynomApi.catalog(authContext, request)
-    }
+    suspend fun catalog(sessionId: String, typeId: Int, objectId: Int): Catalog =
+        polynomApi.catalog.getById(sessionId, typeId, objectId).toDomain()
 
     suspend fun groupsByCatalog(sessionId: String, request: IIdentifiableObject): List<ElementGroup> {
-        val authContext = authProvider.getAuthContext(SessionId(sessionId))
         return try {
             println("try")
-            polynomApi.groupsByCatalog(authContext, request)
+            polynomApi.groupsByCatalog(sessionId, request)
         } catch (e: Exception) {
             throw e
         }
     }
 
-    /**
-     * Получает группы элементов по группе.
-     *
-     * @param sessionId идентификатор сессии
-     * @param request идентификатор группы
-     * @return список групп
-     */
     suspend fun groupsByGroup(sessionId: String, request: IIdentifiableObject): List<ElementGroup> {
-        val authContext = authProvider.getAuthContext(SessionId(sessionId))
-        return polynomApi.groupsByGroup(authContext, request)
+        return polynomApi.groupsByGroup(sessionId, request)
     }
 
-    // ==================== Elements ====================
-
-    /**
-     * Создаёт новый элемент.
-     *
-     * @param sessionId идентификатор сессии
-     * @param request команда на создание элемента
-     * @return результат создания
-     */
     suspend fun element(sessionId: String, request: CreateElementRequest): ElementResponse {
-        val authContext = authProvider.getAuthContext(SessionId(sessionId))
-        return polynomApi.element(authContext, request)
+        return polynomApi.element(sessionId, request)
     }
 
-    /**
-     * Получает элементы по группе.
-     *
-     * @param sessionId идентификатор сессии
-     * @param request идентификатор группы
-     * @return список элементов
-     */
     suspend fun elements(sessionId: String, request: IIdentifiableObject): List<Element> {
-        val authContext = authProvider.getAuthContext(SessionId(sessionId))
-        return polynomApi.elements(authContext, request)
+        return polynomApi.elements(sessionId, request)
     }
 
     suspend fun getProperties(sessionId: String, request: OwnerRequest): IPropertyOwnerResponse {
-        val authContext = authProvider.getAuthContext(SessionId(sessionId))
-        return polynomApi.getProperties(authContext, request)
+        return polynomApi.getProperties(sessionId, request)
     }
 
     suspend fun polynomElement(sessionId: String, request: OwnerRequest): PolynomElement {
@@ -254,22 +181,22 @@ class PolynomApplicationService(
     }
 
 
-    suspend fun create(sessionId: String, request: com.khan366kos.integration.studio.transport.models.ParentGroup): String {
-        val authContext = authProvider.getAuthContext(SessionId(sessionId))
-        return polynomApi.createElement(authContext, request)
+    suspend fun create(
+        sessionId: String,
+        request: com.khan366kos.integration.studio.transport.models.ParentGroup
+    ): String {
+        return polynomApi.createElement(sessionId, request)
     }
 
     suspend fun conceptGetByConceptAppointer(sessionId: String, request: GroupRequestDto): AppointedConceptsDto {
-        val authContext = authProvider.getAuthContext(SessionId(sessionId))
-        return polynomApi.conceptGetByConceptAppointer(authContext, request.group)
+        return polynomApi.conceptGetByConceptAppointer(sessionId, request.group)
     }
 
     suspend fun executePropertySearch(
         sessionId: String,
         request: IPropertySearchRequest
     ): IPropertySearchResultObjectIPaginatedList {
-        val authContext = authProvider.getAuthContext(SessionId(sessionId))
-        val result = polynomApi.executePropertySearch(authContext, request)
+        val result = polynomApi.executePropertySearch(sessionId, request)
         return result
     }
 
@@ -278,7 +205,6 @@ class PolynomApplicationService(
         sessionId: String,
         request: PolynomElementFromPeriodRequestBffDto
     ): Flow<PolynomElement> {
-        val authContext = authProvider.getAuthContext(SessionId(sessionId))
 
         return flow {
             var page = 1
@@ -287,7 +213,7 @@ class PolynomApplicationService(
             val polynomRequest = request.toPolynomDto()
 
             while (hasNextPage) {
-                val response = polynomApi.executePropertySearch(authContext, polynomRequest.copy(pageNumber = page))
+                val response = polynomApi.executePropertySearch(sessionId, polynomRequest.copy(pageNumber = page))
                 response.items?.forEach {
                     totalItems++
                     emit(it)
@@ -306,23 +232,18 @@ class PolynomApplicationService(
         }
     }
 
-    /**
-     * Вариант [searchObjects], эмитящий на выходе обогащённый объект
-     * (с полями объекта + его свойствами). Используется SSE-стримингом миграции.
-     */
     @OptIn(ExperimentalCoroutinesApi::class)
     suspend fun searchObjectsEnriched(
         sessionId: String,
         request: PolynomElementFromPeriodRequestBffDto
     ): Flow<PolynomElement> {
-        val authContext = authProvider.getAuthContext(SessionId(sessionId))
         val requestPolynom = request.toPolynomDto()
         return flow {
             var page = 1
             var hasNextPage = true
 
             while (hasNextPage) {
-                val response = polynomApi.executePropertySearch(authContext, requestPolynom.copy(pageNumber = page))
+                val response = polynomApi.executePropertySearch(sessionId, requestPolynom.copy(pageNumber = page))
                 response.items?.forEach { emit(it) }
                 hasNextPage = response.hasNextPage
                 page++
@@ -359,8 +280,7 @@ class PolynomApplicationService(
     suspend fun getClassification(
         sessionId: String,
     ): List<Node> {
-        val authContext = authProvider.getAuthContext(SessionId(sessionId))
-        val response = polynomApi.getClassification(authContext, IClassificationTreeRequest.Root)
+        val response = polynomApi.getClassification(sessionId, IClassificationTreeRequest.Root)
         val result = response.items.map { it.toDomain() }
         return result
     }
@@ -369,28 +289,26 @@ class PolynomApplicationService(
         sessionId: String,
         identifier: Identifier
     ): List<Node> {
-        val authContext = authProvider.getAuthContext(SessionId(sessionId))
         val request = IClassificationNodeChildrenRequest(
             pageNumber = 1, pageSize = 25, parentNodeObject = IIdentifiableObject(
                 typeId = identifier.typeId.asInt(),
                 objectId = identifier.objectId.asInt(),
             )
         )
-        val response = polynomApi.getClassificationNodeChildren(authContext, request)
+        val response = polynomApi.getClassificationNodeChildren(sessionId, request)
         val result = response.items.map { it.toDomain() }
         return result
     }
 
     @OptIn(ExperimentalCoroutinesApi::class)
     suspend fun concepts(sessionId: String, concepts: List<String>): List<IConceptPaginatedList> {
-        val authContext = authProvider.getAuthContext(SessionId(sessionId))
         val res = concepts.asFlow()
             .flatMapMerge(concurrency = 2) { str ->
                 flow {
                     val request = IGetAllConceptsRequest(
                         pageNumber = 1, pageSize = 10, filterString = str
                     )
-                    val result = polynomApi.concept.getAll(authContext, request)
+                    val result = polynomApi.concept.getAll(sessionId, request)
                     emit(result)
                 }
             }.toList()

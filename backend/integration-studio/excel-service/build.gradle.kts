@@ -17,7 +17,7 @@ dependencies {
     testImplementation(libs.kotest.assertion.core)
     testImplementation(libs.kotest.property)
 
-    implementation(projects.integrationStudioDomain)
+    implementation(projects.domain)
 }
 
 tasks.test {

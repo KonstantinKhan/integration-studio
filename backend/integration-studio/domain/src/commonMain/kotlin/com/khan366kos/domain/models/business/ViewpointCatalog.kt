@@ -1,0 +1,17 @@
+package com.khan366kos.domain.models.business
+
+import com.khan366kos.domain.models.simple.*
+
+data class ViewpointCatalog(
+    val id: ReferenceId,
+    val classId: ReferenceId,
+    val name: ElementName,
+    val objectId: ObjectId,
+    val typeId: TypeId,
+    val iconCode: IconCode,
+    val iconColor: IconColor,
+    val writeAccess: WriteAccess,
+    val path: List<PathElement>,
+    val count: Int,
+    val reference: Identifier?
+)

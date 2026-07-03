@@ -1,7 +1,7 @@
 package com.khan366kos.integration.studio.ktor.server.app.routes
 
-import com.khan366kos.integration.studio.bff.transport.request.PolynomElementFromPeriodRequestBffDto
-import com.khan366kos.integration.studio.bff.transport.models.PolynomElementBffDto
+import com.khan366kos.integration.studio.bff.dto.request.PolynomElementFromPeriodRequestBffDto
+import com.khan366kos.integration.studio.bff.dto.models.PolynomElementBffDto
 import com.khan366kos.integration.studio.ktor.server.app.config.AppConfig
 import com.khan366kos.integration.studio.ktor.server.app.plugins.userSession
 import com.khan366kos.integration.studio.logics.PolynomApplicationService

@@ -12,6 +12,7 @@ import com.khan366kos.integration.studio.ktor.server.app.config.AppConfig
 import com.khan366kos.integration.studio.ktor.server.app.plugins.SessionInterceptorPlugin
 import com.khan366kos.integration.studio.ktor.server.app.plugins.userSession
 import com.khan366kos.etl.mapper.toEtlWorkbookTransport
+import com.khan366kos.integration.studio.ktor.server.app.routes.catalogs
 import com.khan366kos.integration.studio.transport.polynom.models.LoginRequest
 import com.khan366kos.integration.studio.ktor.server.app.routes.concept
 import com.khan366kos.integration.studio.ktor.server.app.routes.propertyOwner
@@ -197,42 +198,7 @@ fun Application.configureRouting(config: AppConfig) {
             install(SessionInterceptorPlugin) {
                 sessionStore = config.sessionStore
             }
-            route("catalogs") {
-                get {
-                    try {
-                        val referenceTypeId = call.parameters["referenceTypeId"]?.toInt()
-                        val referenceObjectId = call.parameters["referenceObjectId"]?.toInt()
-                        val typeId = call.parameters["typeId"]?.toInt()
-                        val objectId = call.parameters["objectId"]?.toInt()
 
-                        if (typeId == null && objectId == null) {
-                            val catalogs = config.polynomApplicationService.catalogs(
-                                call.userSession.id,
-                                IIdentifiableObject(
-                                    referenceObjectId!!,
-                                    referenceTypeId!!
-                                )
-                            )
-                            call.respond(HttpStatusCode.OK, catalogs)
-                        } else {
-                            val catalog = config.polynomApplicationService.catalog(
-                                call.userSession.id,
-                                IIdentifiableObject(
-                                    objectId!!,
-                                    typeId!!
-                                )
-                            )
-                            call.respond(HttpStatusCode.OK, catalog)
-                        }
-
-                    } catch (e: Exception) {
-                        call.respond(
-                            HttpStatusCode.InternalServerError,
-                            mapOf("error" to "Ошибка получения каталогов: ${e.message}")
-                        )
-                    }
-                }
-            }
             route("groups") {
                 get {
                     try {
@@ -362,8 +328,9 @@ fun Application.configureRouting(config: AppConfig) {
             search(config.polynomApplicationService, config)
             searchStream(config)
             syncSummary(config.migrationRepository, config.schedulerConfig)
-            references(config)
+            references(config.polynomApplicationService)
             tree(config.polynomApplicationService)
+            catalogs(config.polynomApplicationService)
         }
     }
 }

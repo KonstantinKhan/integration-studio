@@ -133,7 +133,7 @@ export default function ReferencePage({
           <div className="space-y-3">
             {catalogs.map((catalog) => (
               <div
-                key={catalog.id}
+                key={catalog.objectId}
                 className="p-4 rounded-xl border-2 shadow-sm hover:shadow-xl transition-all duration-300 hover:scale-105 cursor-pointer"
                 style={{ backgroundColor: '#f4f1ea', borderColor: '#d2b48c' }}
                 onClick={() => router.push(`/polynom/reference/${slug}/catalog/${catalog.typeId}-${catalog.objectId}`)}

@@ -6,11 +6,6 @@ plugins {
 dependencies {
     implementation(libs.kotlinx.coroutines.core)
 
-    implementation(projects.integrationStudioTransportKmp)
-    implementation(projects.integrationStudioDomain)
-    implementation(projects.etlMapper)
-    implementation(projects.integrationStudioMapping)
-
     implementation(libs.ktor.client.core)
     implementation(libs.ktor.client.cio)
     implementation(libs.ktor.client.content.negotiation)
@@ -20,6 +15,11 @@ dependencies {
 
     implementation(libs.logging)
 
+    implementation(projects.polynomDtoKmp)
+    implementation(projects.domain)
+    implementation(projects.etlMapper)
+    implementation(projects.mapping)
+    implementation(projects.bffDto)
 }
 
 tasks.test {

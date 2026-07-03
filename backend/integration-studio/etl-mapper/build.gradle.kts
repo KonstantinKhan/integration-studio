@@ -7,8 +7,10 @@ kotlin {
 }
 
 dependencies {
-    implementation(projects.integrationStudioTransportKmp)
-    implementation(projects.integrationStudioDomain)
+    implementation(projects.polynomDtoKmp)
+    implementation(projects.bffDto)
+    implementation(projects.domain)
+
     testImplementation(kotlin("test"))
 }
 

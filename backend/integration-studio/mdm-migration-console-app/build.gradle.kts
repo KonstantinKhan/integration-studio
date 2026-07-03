@@ -3,7 +3,7 @@ plugins {
 }
 
 dependencies {
-    implementation(projects.integrationStudioDomain)
+    implementation(projects.domain)
     implementation(projects.excelService)
     implementation(projects.logics)
 

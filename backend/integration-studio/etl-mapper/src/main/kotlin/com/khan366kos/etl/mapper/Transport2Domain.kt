@@ -58,21 +58,9 @@ fun NamedObjectDto.toPathElement(): PathElement =
 
 fun ElementCatalogTransport.toCatalog(): Catalog =
     Catalog(
-        id = ReferenceId(id ?: ""),
-        classId = ReferenceId(classId ?: ""),
         name = ElementName(name ?: ""),
         objectId = ObjectId(objectId),
         typeId = TypeId(typeId),
-        iconCode = IconCode(iconCode),
-        iconColor = IconColor(iconColor ?: 0),
-        writeAccess = WriteAccess(writeAccess),
-        path = path?.map { it.toPathElement() } ?: emptyList(),
-        count = count,
-        reference = Identifier(
-            objectId = ObjectId(reference.objectId),
-            typeId = TypeId(reference.typeId)
-        ),
-        isEntry = isEntry ?: false
     )
 
 fun ViewpointCatalogTransport.toViewpointCatalog(): ViewpointCatalog =
@@ -95,19 +83,13 @@ fun ViewpointCatalogTransport.toViewpointCatalog(): ViewpointCatalog =
         }
     )
 
-fun IReference.toReference(): Reference =
+fun IReference.toDomain(): Reference =
     Reference(
         id = ReferenceId(id ?: ""),
         name = ElementName(name ?: ""),
         description = Description(description ?: ""),
         objectId = ObjectId(objectId),
         typeId = TypeId(typeId),
-        iconCode = IconCode(iconCode),
-        iconColor = IconColor(iconColor ?: 0),
-        writeAccess = WriteAccess(writeAccess),
-        path = path?.map { it.toPathElement() } ?: emptyList(),
-        documentCatalog = documentCatalog?.toCatalog(),
-        viewpointCatalog = viewpointCatalog?.toViewpointCatalog()
     )
 
 fun ElementGroupTransport.toElementGroup(): ElementGroup =

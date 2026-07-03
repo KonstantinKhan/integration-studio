@@ -31,12 +31,12 @@ dependencies {
 
     implementation(libs.logback.classic)
 
-    implementation(projects.integrationStudioTransportKmp)
-    implementation(projects.integrationStudioDomain)
-    implementation(projects.integrationStudioBffTransport)
+    implementation(projects.polynomDtoKmp)
+    implementation(projects.domain)
+    implementation(projects.bffDto)
     implementation(projects.etlMapper)
     implementation(projects.polynomClient)
-    implementation(projects.integrationStudioMapping)
+    implementation(projects.mapping)
     implementation(projects.logics)
 
     implementation(projects.excelService)

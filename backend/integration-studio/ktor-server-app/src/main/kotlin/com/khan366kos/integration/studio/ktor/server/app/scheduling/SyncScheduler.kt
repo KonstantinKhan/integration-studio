@@ -5,8 +5,8 @@ import com.khan366kos.domain.models.auth.simple.AccessToken
 import com.khan366kos.domain.models.auth.simple.Login
 import com.khan366kos.domain.models.auth.simple.RefreshToken
 import com.khan366kos.domain.models.auth.simple.StorageId
-import com.khan366kos.integration.studio.bff.transport.models.IdentifierBffDto
-import com.khan366kos.integration.studio.bff.transport.request.PolynomElementFromPeriodRequestBffDto
+import com.khan366kos.integration.studio.bff.dto.models.IdentifierBffDto
+import com.khan366kos.integration.studio.bff.dto.request.PolynomElementFromPeriodRequestBffDto
 import com.khan366kos.integration.studio.ktor.server.app.db.MigrationRepository
 import com.khan366kos.integration.studio.ktor.server.app.db.RunType
 import com.khan366kos.domain.SessionStore

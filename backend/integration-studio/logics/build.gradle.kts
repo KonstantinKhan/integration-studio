@@ -7,11 +7,10 @@ dependencies {
     implementation(libs.kotlinx.datetime)
     implementation(libs.kotlinx.coroutines.core)
 
-    implementation(projects.integrationStudioDomain)
-    implementation(projects.integrationStudioTransportKmp)
-    implementation(projects.integrationStudioBffTransport)
-    implementation(projects.integrationStudioMapping)
-    implementation(projects.etlMapper)
+    implementation(projects.bffDto)
+    implementation(projects.domain)
+    implementation(projects.polynomDtoKmp)
+    implementation(projects.mapping)
     implementation(projects.polynomClient)
 
     testImplementation(kotlin("test"))
