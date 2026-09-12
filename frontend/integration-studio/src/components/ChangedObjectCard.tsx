@@ -4,11 +4,11 @@ import type { PropertyValue } from '@/shared/types/propertyResult.interface'
 function renderValue(v: PropertyValue): { text: string; muted?: boolean } {
   switch (v.type) {
     case 'boolean':
-      return { text: v.value ? 'Да' : 'Нет' }
+      return { text: v.data ? 'Да' : 'Нет' }
     case 'unknown':
       return { text: 'нет значения', muted: true }
     default:
-      return { text: v.value }
+      return { text: v.data }
   }
 }
 

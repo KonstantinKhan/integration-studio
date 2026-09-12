@@ -5,6 +5,7 @@ import com.khan366kos.integration.studio.ktor.server.app.UserSession
 import com.khan366kos.domain.SessionStore
 import io.ktor.http.HttpStatusCode
 import io.ktor.server.application.*
+import io.ktor.server.request.path
 import io.ktor.server.response.*
 import io.ktor.server.sessions.*
 import io.ktor.util.AttributeKey
@@ -28,7 +29,11 @@ val SessionInterceptorPlugin = createRouteScopedPlugin(
 ) {
     val sessionStore = pluginConfig.sessionStore
 
+    val publicPaths = setOf("connections")
+
     onCall { call ->
+        if (call.request.path().trim('/') in publicPaths) return@onCall
+
         val session = call.sessions.get<UserSession>()
         if (session == null) {
             call.respond(HttpStatusCode.Unauthorized, mapOf("error" to "Сессия не найдена"))

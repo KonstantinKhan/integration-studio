@@ -33,6 +33,7 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 import kotlinx.serialization.json.Json
+import java.net.URI
 import java.util.concurrent.atomic.AtomicLong
 import kotlin.time.Duration.Companion.milliseconds
 
@@ -102,6 +103,21 @@ fun Application.module() {
             ?.getString()?.toInt() ?: 0,
     )
 
+    val polynomBaseUrl = environment.config.property("polynom.base-url").getString()
+    val polynomUri = URI(polynomBaseUrl)
+    require(polynomUri.scheme in setOf("http", "https")) {
+        "polynom.base-url must use http or https scheme, got: $polynomBaseUrl"
+    }
+    require(!polynomUri.host.isNullOrBlank()) {
+        "polynom.base-url must contain a host, got: $polynomBaseUrl"
+    }
+    val polynomPort = when {
+        polynomUri.port > 0 -> polynomUri.port
+        polynomUri.scheme == "https" -> 443
+        else -> 80
+    }
+    val polynomBasePath = polynomUri.path.trimEnd('/') + "/"
+
     val sessionStore = InMemorySessionStore()
     val httpClient = HttpClient(CIO) {
         engine {
@@ -124,10 +140,10 @@ fun Application.module() {
         defaultRequest {
             contentType(ContentType.Application.Json)
             url {
-                protocol = URLProtocol.HTTP
-                host = "172.23.14.181"
-                port = 5100
-                path("/api/v1/")
+                protocol = if (polynomUri.scheme == "https") URLProtocol.HTTPS else URLProtocol.HTTP
+                host = polynomUri.host
+                port = polynomPort
+                path(polynomBasePath)
             }
         }
     }
@@ -135,7 +151,7 @@ fun Application.module() {
     val config = AppConfig.create(
         sessionStore = sessionStore,
         httpClient = httpClient,
-        baseUrl = "http://172.23.14.181:5100/api/v1",
+        baseUrl = polynomBaseUrl,
         rabbitMqConfig = rabbitMqConfig,
         migrationRepository = migrationRepository,
         emailConfig = emailConfig,

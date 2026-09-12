@@ -7,3 +7,9 @@ export function authorize(data: IAuth): Promise<unknown> {
     body: JSON.stringify(data),
   })
 }
+
+export function logout(): Promise<unknown> {
+  return apiClient('/logout', {
+    method: 'POST',
+  })
+}

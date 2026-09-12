@@ -1,7 +1,8 @@
 'use client'
 
 import { useRouter } from 'next/navigation'
-import { Map, ArrowLeftRight, RefreshCw } from 'lucide-react'
+import { Map, ArrowLeftRight, RefreshCw, LogOut } from 'lucide-react'
+import { logout } from '@/api/auth.api'
 
 interface NavItem {
   title: string
@@ -35,12 +36,31 @@ const NAV_ITEMS: NavItem[] = [
 const Dashboard = () => {
   const router = useRouter()
 
+  const handleLogout = async () => {
+    try {
+      await logout()
+    } catch {}
+    window.location.assign('/')
+  }
+
   return (
     <div className="min-h-screen bg-linear-to-br from-stone-100 via-amber-50 to-yellow-50 p-8">
       <div className="max-w-5xl mx-auto">
-        <h2 className="text-2xl font-bold text-center mb-8 text-stone-800">
-          Панель управления
-        </h2>
+        <div className="flex items-center justify-between mb-8">
+          <h2 className="text-2xl font-bold text-stone-800">Работа с Polynom</h2>
+          <button
+            type="button"
+            onClick={handleLogout}
+            className="flex items-center gap-2 px-4 py-2 rounded-lg border-2 text-sm font-medium text-stone-700 transition hover:shadow-md"
+            style={{
+              backgroundColor: '#fdf6ee',
+              borderColor: '#d2b48c',
+            }}
+          >
+            <LogOut size={18} />
+            Выйти
+          </button>
+        </div>
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
           {NAV_ITEMS.map((item) => {

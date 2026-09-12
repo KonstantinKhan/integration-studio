@@ -10,14 +10,10 @@ import com.khan366kos.etl.mapper.toElementGroup
 import com.khan366kos.etl.mapper.toDomain
 import com.khan366kos.integration.studio.polynom.client.auth.SessionStoreAuthProvider
 import com.khan366kos.integration.studio.polynom.client.auth.TokenManager
-import com.khan366kos.integration.studio.transport.polynom.models.LoginRequest
-import com.khan366kos.integration.studio.transport.polynom.models.LoginResponse
 import com.khan366kos.integration.studio.transport.models.ElementGroupTransport
 import com.khan366kos.integration.studio.transport.models.ElementTransport
 import com.khan366kos.integration.studio.transport.models.IReference
 import com.khan366kos.integration.studio.transport.models.ParentGroup
-import com.khan366kos.integration.studio.transport.models.StorageDefinitionTransport
-import com.khan366kos.integration.studio.transport.models.UserTransport
 import com.khan366kos.integration.studio.transport.polynom.command.DeleteReferenceCommand
 import com.khan366kos.integration.studio.transport.polynom.models.IIdentifiableObject
 import com.khan366kos.integration.studio.transport.polynom.request.IClassificationNodeChildrenRequest
@@ -34,38 +30,21 @@ import io.ktor.client.request.HttpRequestBuilder
 import io.ktor.client.request.header
 import io.ktor.client.request.post
 import io.ktor.client.request.setBody
-import io.ktor.client.request.get
 import io.ktor.client.statement.HttpResponse
 import io.ktor.client.statement.bodyAsText
 import io.ktor.http.ContentType
 import io.ktor.http.HttpHeaders
 import io.ktor.http.contentType
 
-class PolynomApi(
+class PolynomClient(
     private val httpClient: HttpClient,
     private val authProvider: SessionStoreAuthProvider,
-    baseUrl: String
+    private val tokenManager: TokenManager
 ) {
-
-    private val tokenManager: TokenManager =
-        TokenManager(SessionStoreAuthProvider.createTokenRefreshApi(httpClient, baseUrl))
-
+    val loginApi = LoginApi(httpClient, tokenManager, authProvider)
     val conceptApi = ConceptApi(httpClient, tokenManager, authProvider)
     val catalogApi = CatalogApi(httpClient, tokenManager, authProvider)
     val groupApi = GroupApi(httpClient, tokenManager, authProvider)
-
-    suspend fun storageDefinitions(): List<StorageDefinitionTransport> =
-        httpClient.get("login/storage-definitions").body()
-
-    suspend fun signIn(loginRequest: LoginRequest): LoginResponse = httpClient.post("login/sign-in") {
-        contentType(ContentType.Application.Json)
-        setBody(loginRequest)
-    }.body()
-
-    suspend fun currentUserInfo(sessionId: String): UserTransport =
-        httpClient.get("login/current-user-info") {
-            authenticate(authProvider.getAuthContext(SessionId(sessionId)))
-        }.body()
 
     suspend fun references(sessionId: String): List<IReference> =
         httpClient.post("reference/get-all") {

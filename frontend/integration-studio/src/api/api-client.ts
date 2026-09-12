@@ -27,7 +27,10 @@ export async function apiClient<T>(
 
   if (!response.ok) {
     const errorData = await response.json().catch(() => ({}))
-    throw new ApiError(response.status, errorData.message ?? 'Request failed')
+    throw new ApiError(
+      response.status,
+      errorData.message ?? errorData.error ?? 'Request failed',
+    )
   }
 
   // Handle empty responses (e.g., 204 No Content or empty 200 OK)

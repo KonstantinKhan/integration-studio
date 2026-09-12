@@ -13,11 +13,11 @@ import com.khan366kos.domain.polynom.models.Concept
 import com.khan366kos.domain.polynom.toSimple
 import com.khan366kos.domain.requests.CreateElementRequest
 import com.khan366kos.domain.responses.ElementResponse
-import com.khan366kos.integration.studio.polynom.client.PolynomApi
+import com.khan366kos.domain.models.definitions.StorageDefinition
+import com.khan366kos.integration.studio.polynom.client.PolynomClient
 import com.khan366kos.integration.studio.bff.dto.request.PolynomElementFromPeriodRequestBffDto
 import com.khan366kos.integration.studio.mapping.toDomain
 import com.khan366kos.integration.studio.mapping.toPolynomDto
-import com.khan366kos.integration.studio.transport.models.StorageDefinitionTransport
 import com.khan366kos.integration.studio.transport.models.UserTransport
 import com.khan366kos.integration.studio.transport.polynom.command.DeleteReferenceCommand
 import com.khan366kos.integration.studio.transport.polynom.models.IIdentifiableObject
@@ -45,62 +45,62 @@ import kotlinx.datetime.LocalDateTime
 import kotlin.collections.get
 
 class PolynomApplicationService(
-    private val polynomApi: PolynomApi
+    private val polynomClient: PolynomClient
 ) {
-    val referenceService = ReferenceService(polynomApi)
-    val catalogService = CatalogService(polynomApi)
-    val conceptService = ConceptService(polynomApi)
-    val groupService = GroupService(polynomApi)
+    val referenceService = ReferenceService(polynomClient)
+    val catalogService = CatalogService(polynomClient)
+    val conceptService = ConceptService(polynomClient)
+    val groupService = GroupService(polynomClient)
 
-    suspend fun storageDefinitions(): List<StorageDefinitionTransport> =
-        polynomApi.storageDefinitions()
+    suspend fun storageDefinitions(): List<StorageDefinition> =
+        polynomClient.loginApi.storageDefinitions().map { it.toDomain() }
 
     suspend fun signIn(loginRequest: LoginRequest): LoginResponse =
-        polynomApi.signIn(loginRequest)
+        polynomClient.loginApi.signIn(loginRequest)
 
     suspend fun currentUserInfo(sessionId: String): UserTransport {
-        return polynomApi.currentUserInfo(sessionId)
+        return polynomClient.loginApi.currentUserInfo(sessionId)
     }
 
     suspend fun references(sessionId: String): List<ClassifierTreeNode.Reference> =
-        polynomApi.references(sessionId).map { it.toDomain() }
+        polynomClient.references(sessionId).map { it.toDomain() }
 
     suspend fun reference(sessionId: String, request: IIdentifiableObject): ClassifierTreeNode.Reference =
-        polynomApi.reference(sessionId, request).toDomain()
+        polynomClient.reference(sessionId, request).toDomain()
 
 
     suspend fun referenceDelete(sessionId: String, request: DeleteReferenceCommand): HttpResponse {
-        return polynomApi.referenceDelete(sessionId, request)
+        return polynomClient.referenceDelete(sessionId, request)
     }
 
     suspend fun catalogs(sessionId: String, typeId: Int, objectId: Int): List<ClassifierTreeNode.Catalog> =
-        polynomApi.catalogApi.getByReference(sessionId, typeId, objectId).map { it.toDomain() }
+        polynomClient.catalogApi.getByReference(sessionId, typeId, objectId).map { it.toDomain() }
 
     suspend fun catalog(sessionId: String, typeId: Int, objectId: Int): ClassifierTreeNode.Catalog =
-        polynomApi.catalogApi.getById(sessionId, typeId, objectId).toDomain()
+        polynomClient.catalogApi.getById(sessionId, typeId, objectId).toDomain()
 
     suspend fun groupsByCatalog(sessionId: String, request: IIdentifiableObject): List<ElementGroup> {
         return try {
-            polynomApi.groupsByCatalog(sessionId, request)
+            polynomClient.groupsByCatalog(sessionId, request)
         } catch (e: Exception) {
             throw e
         }
     }
 
     suspend fun groupsByGroup(sessionId: String, request: IIdentifiableObject): List<ElementGroup> {
-        return polynomApi.groupsByGroup(sessionId, request)
+        return polynomClient.groupsByGroup(sessionId, request)
     }
 
     suspend fun element(sessionId: String, request: CreateElementRequest): ElementResponse {
-        return polynomApi.element(sessionId, request)
+        return polynomClient.element(sessionId, request)
     }
 
     suspend fun elements(sessionId: String, request: IIdentifiableObject): List<Element> {
-        return polynomApi.elements(sessionId, request)
+        return polynomClient.elements(sessionId, request)
     }
 
     suspend fun getProperties(sessionId: String, request: OwnerRequest): IPropertyOwnerResponse {
-        return polynomApi.getProperties(sessionId, request)
+        return polynomClient.getProperties(sessionId, request)
     }
 
     suspend fun polynomElement(sessionId: String, request: OwnerRequest): PolynomElement {
@@ -182,18 +182,18 @@ class PolynomApplicationService(
         sessionId: String,
         request: com.khan366kos.integration.studio.transport.models.ParentGroup
     ): String {
-        return polynomApi.createElement(sessionId, request)
+        return polynomClient.createElement(sessionId, request)
     }
 
     suspend fun conceptGetByConceptAppointer(sessionId: String, request: GroupRequestDto): AppointedConceptsDto {
-        return polynomApi.conceptGetByConceptAppointer(sessionId, request.group)
+        return polynomClient.conceptGetByConceptAppointer(sessionId, request.group)
     }
 
     suspend fun executePropertySearch(
         sessionId: String,
         request: IPropertySearchRequest
     ): IPropertySearchResultObjectIPaginatedList {
-        val result = polynomApi.executePropertySearch(sessionId, request)
+        val result = polynomClient.executePropertySearch(sessionId, request)
         return result
     }
 
@@ -210,7 +210,7 @@ class PolynomApplicationService(
             val polynomRequest = request.toPolynomDto()
 
             while (hasNextPage) {
-                val response = polynomApi.executePropertySearch(sessionId, polynomRequest.copy(pageNumber = page))
+                val response = polynomClient.executePropertySearch(sessionId, polynomRequest.copy(pageNumber = page))
                 response.items?.forEach {
                     totalItems++
                     emit(it)
@@ -240,7 +240,7 @@ class PolynomApplicationService(
             var hasNextPage = true
 
             while (hasNextPage) {
-                val response = polynomApi.executePropertySearch(sessionId, requestPolynom.copy(pageNumber = page))
+                val response = polynomClient.executePropertySearch(sessionId, requestPolynom.copy(pageNumber = page))
                 response.items?.forEach { emit(it) }
                 hasNextPage = response.hasNextPage
                 page++
@@ -277,7 +277,7 @@ class PolynomApplicationService(
     suspend fun getClassification(
         sessionId: String,
     ): List<Node> {
-        val response = polynomApi.getClassification(sessionId, IClassificationTreeRequest.Root)
+        val response = polynomClient.getClassification(sessionId, IClassificationTreeRequest.Root)
         val result = response.items.map { it.toDomain() }
         return result
     }
@@ -292,7 +292,7 @@ class PolynomApplicationService(
                 objectId = identifier.objectId.asInt(),
             )
         )
-        val response = polynomApi.getClassificationNodeChildren(sessionId, request)
+        val response = polynomClient.getClassificationNodeChildren(sessionId, request)
         val result = response.items.map { it.toDomain() }
         return result
     }
@@ -305,7 +305,7 @@ class PolynomApplicationService(
 //                    val request = IGetAllConceptsRequest(
 //                        pageNumber = 1, pageSize = 10, filterString = str
 //                    )
-//                    val result = polynomApi.conceptApi.getAll(sessionId, request)
+//                    val result = polynomClient.conceptApi.getAll(sessionId, request)
 //                    emit(result)
 //                }
 //            }.toList()
@@ -316,7 +316,7 @@ class PolynomApplicationService(
         withContext(Dispatchers.IO) {
             codes.map { code ->
                 async {
-                    polynomApi.conceptApi.getByCode(sessionId, code).toDomain()
+                    polynomClient.conceptApi.getByCode(sessionId, code).toDomain()
                 }
             }
         }.awaitAll().toList()

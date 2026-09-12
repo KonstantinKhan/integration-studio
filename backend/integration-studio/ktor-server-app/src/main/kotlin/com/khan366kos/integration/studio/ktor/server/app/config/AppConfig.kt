@@ -1,6 +1,6 @@
 package com.khan366kos.integration.studio.ktor.server.app.config
 
-import com.khan366kos.integration.studio.polynom.client.PolynomApi
+import com.khan366kos.integration.studio.polynom.client.PolynomClient
 import com.khan366kos.integration.studio.polynom.client.auth.TokenManager
 import com.khan366kos.integration.studio.polynom.client.auth.SessionStoreAuthProvider
 import com.khan366kos.integration.studio.ktor.server.app.db.MigrationRepository
@@ -45,9 +45,9 @@ class AppConfig(
             val backgroundScope = CoroutineScope(Dispatchers.IO + SupervisorJob())
             val tokenRefreshApi = SessionStoreAuthProvider.createTokenRefreshApi(httpClient, baseUrl)
             val tokenManager = TokenManager(tokenRefreshApi)
-            val authProvider = SessionStoreAuthProvider(sessionStore, tokenManager, httpClient, baseUrl)
-            val polynomApi = PolynomApi(httpClient, authProvider, baseUrl)
-            val polynomApplicationService = PolynomApplicationService(polynomApi)
+            val authProvider = SessionStoreAuthProvider(sessionStore, tokenManager, httpClient)
+            val polynomClient = PolynomClient(httpClient, authProvider, tokenManager)
+            val polynomApplicationService = PolynomApplicationService(polynomClient)
 
             val json = Json {
                 ignoreUnknownKeys = true

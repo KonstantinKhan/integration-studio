@@ -2,6 +2,7 @@ package com.khan366kos.integration.studio.polynom.client.auth
 
 import com.khan366kos.domain.SessionStore
 import com.khan366kos.integration.studio.polynom.client.AuthContext
+import com.khan366kos.integration.studio.polynom.client.config.AuthConfig
 import com.khan366kos.domain.models.auth.AuthenticationException
 import com.khan366kos.integration.studio.polynom.client.SessionId
 import io.ktor.client.HttpClient
@@ -14,8 +15,7 @@ import io.ktor.http.HttpHeaders
 class SessionStoreAuthProvider(
     private val sessionStore: SessionStore,
     private val tokenManager: TokenManager,
-    private val httpClient: HttpClient,
-    private val baseUrl: String
+    httpClient: HttpClient
 ) : AuthProvider {
 
     override suspend fun getAuthContext(sessionId: SessionId): AuthContext {
@@ -43,7 +43,7 @@ class SessionStoreAuthProvider(
             httpClient: HttpClient,
             baseUrl: String
         ): TokenRefreshApi = TokenRefreshApi { accessToken, refreshToken ->
-            val response = httpClient.patch("$baseUrl/login/update-token") {
+            val response = httpClient.patch(baseUrl.trimEnd('/') + AuthConfig.LOGIN_ENDPOINT) {
                 header(HttpHeaders.Authorization, "Bearer ${accessToken.value}")
                 header(HttpHeaders.ContentType, "text/plain")
                 setBody(refreshToken.value)

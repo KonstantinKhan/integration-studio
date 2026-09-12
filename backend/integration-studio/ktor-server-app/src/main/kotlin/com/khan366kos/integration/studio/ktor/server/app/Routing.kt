@@ -10,6 +10,7 @@ import com.khan366kos.integration.studio.ktor.server.app.config.AppConfig
 import com.khan366kos.integration.studio.ktor.server.app.plugins.SessionInterceptorPlugin
 import com.khan366kos.integration.studio.ktor.server.app.plugins.userSession
 import com.khan366kos.integration.studio.ktor.server.app.routes.catalogs
+import com.khan366kos.integration.studio.ktor.server.app.routes.connections
 import com.khan366kos.integration.studio.transport.polynom.models.LoginRequest
 import com.khan366kos.integration.studio.ktor.server.app.routes.concept
 import com.khan366kos.integration.studio.ktor.server.app.routes.migration
@@ -27,6 +28,7 @@ import io.ktor.server.application.*
 import io.ktor.server.request.*
 import io.ktor.server.response.*
 import io.ktor.server.routing.*
+import io.ktor.server.sessions.clear
 import io.ktor.server.sessions.get
 import io.ktor.server.sessions.sessions
 import io.ktor.server.sessions.set
@@ -129,6 +131,15 @@ fun Application.configureRouting(config: AppConfig) {
             } else {
                 call.respond(HttpStatusCode.Unauthorized, SessionCheckResponse(authenticated = false))
             }
+        }
+
+        post("/logout") {
+            val session = call.sessions.get<UserSession>()
+            if (session != null) {
+                config.sessionStore.remove(session.id)
+            }
+            call.sessions.clear<UserSession>()
+            call.respond(HttpStatusCode.OK, mapOf("message" to "Вы вышли из системы"))
         }
 
 //        post("/upload") {
@@ -325,6 +336,7 @@ fun Application.configureRouting(config: AppConfig) {
             tree(config.polynomApplicationService)
             catalogs(config.polynomApplicationService)
             migration(config.polynomApplicationService, environment.config.property("excel.path").getString())
+            connections(config.environment)
         }
     }
 }

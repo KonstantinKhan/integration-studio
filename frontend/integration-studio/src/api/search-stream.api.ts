@@ -1,8 +1,8 @@
 import { apiClient, ApiError } from './api-client'
 import { API_BASE_URL } from '@/config/api'
 import type {
-  IPropertySearchRequest,
-} from '@/shared/types/propertySearchRequest.interface'
+  ElementFromPeriodRequest,
+} from '@/shared/types/request/elementFromPeriodRequest.interface'
 import type {
   StartStreamResponse,
   StreamStatusResponse,
@@ -15,7 +15,7 @@ import type { SyncSummaryResponse } from '@/shared/types/sync-summary.interface'
  * в этом случае резолвим как обычный ответ.
  */
 export async function startMigrationStream(
-  request: IPropertySearchRequest,
+  request: ElementFromPeriodRequest,
 ): Promise<StartStreamResponse> {
   const response = await fetch(`${API_BASE_URL}/search/streams/start`, {
     method: 'POST',

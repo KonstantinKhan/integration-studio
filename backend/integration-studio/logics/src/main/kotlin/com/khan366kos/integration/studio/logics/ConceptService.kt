@@ -1,9 +1,9 @@
 package com.khan366kos.integration.studio.logics
 
-import com.khan366kos.integration.studio.polynom.client.PolynomApi
+import com.khan366kos.integration.studio.polynom.client.PolynomClient
 
 class ConceptService(
-    private val polynomApi: PolynomApi
+    private val polynomClient: PolynomClient
 ) {
     suspend fun addConceptToCatalog(
         sessionId: String,
@@ -12,7 +12,7 @@ class ConceptService(
         typeIdConcept: Int,
         objectIdConcept: Int
     ) {
-        polynomApi.conceptApi.addAppointedConcept(
+        polynomClient.conceptApi.addAppointedConcept(
             sessionId,
             objectIdAppointed,
             typeIdAppointed,

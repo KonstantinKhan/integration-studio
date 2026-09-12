@@ -1,5 +1,6 @@
 package com.khan366kos.integration.studio.mapping
 
+import com.khan366kos.domain.models.definitions.StorageDefinition
 import com.khan366kos.domain.models.simple.ElementName
 import com.khan366kos.domain.polynom.Node
 import com.khan366kos.domain.models.simple.ObjectId
@@ -12,6 +13,7 @@ import com.khan366kos.integration.studio.transport.polynom.models.IClassificatio
 import com.khan366kos.integration.studio.transport.polynom.models.catalog.IElementCatalog
 import com.khan366kos.integration.studio.transport.polynom.models.concept.IConcept
 import com.khan366kos.integration.studio.transport.polynom.models.group.IElementGroup
+import com.khan366kos.integration.studio.transport.polynom.models.login.IStorageDefinition
 
 fun AppointedConceptDto.toDomain(): Concept = Concept(
     name = concept.name?.let { ElementName(it) } ?: ElementName.NONE,
@@ -41,6 +43,11 @@ fun IConcept.toDomain() = Concept(
     name = name?.let { ElementName(it) } ?: ElementName.NONE,
     objectId = ObjectId(objectId),
     typeId = TypeId(typeId)
+)
+
+fun IStorageDefinition.toDomain() = StorageDefinition(
+    storageId = storageId,
+    displayName = displayName
 )
 
 fun IElementGroup.toDomain() = ClassifierTreeNode.Group(
