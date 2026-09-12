@@ -22,7 +22,7 @@ fun Route.references(service: PolynomApplicationService) = route("references") {
     post("/create") {
         try {
             val request = call.receive<CreateReferenceCommand>()
-            val reference = service.referenceCreate(call.userSession.id, request.name)
+            val reference = service.referenceService.referenceCreate(call.userSession.id, request.name)
             reference.toBffDto()
             call.respond(HttpStatusCode.Created, reference)
         } catch (e: Error) {

@@ -14,6 +14,7 @@ import com.khan366kos.domain.SessionStore
 import com.khan366kos.integration.studio.ktor.server.app.streaming.SyncStreamRegistry
 import com.khan366kos.integration.studio.logics.PolynomApplicationService
 import io.ktor.client.HttpClient
+import io.ktor.server.application.ApplicationEnvironment
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
@@ -27,6 +28,7 @@ class AppConfig(
     val syncScheduler: SyncScheduler,
     val migrationRepository: MigrationRepository,
     val schedulerConfig: SyncSchedulerConfig,
+    val environment: ApplicationEnvironment,
 ) {
 
     companion object {
@@ -38,6 +40,7 @@ class AppConfig(
             migrationRepository: MigrationRepository,
             emailConfig: EmailConfig,
             schedulerConfig: SyncSchedulerConfig,
+            environment: ApplicationEnvironment
         ): AppConfig {
             val backgroundScope = CoroutineScope(Dispatchers.IO + SupervisorJob())
             val tokenRefreshApi = SessionStoreAuthProvider.createTokenRefreshApi(httpClient, baseUrl)
@@ -79,6 +82,7 @@ class AppConfig(
                 syncScheduler = syncScheduler,
                 migrationRepository = migrationRepository,
                 schedulerConfig = schedulerConfig,
+                environment = environment,
             )
         }
     }

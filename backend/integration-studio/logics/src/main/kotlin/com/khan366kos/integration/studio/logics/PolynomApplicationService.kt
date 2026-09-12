@@ -47,6 +47,7 @@ import kotlin.collections.get
 class PolynomApplicationService(
     private val polynomApi: PolynomApi
 ) {
+    val referenceService = ReferenceService(polynomApi)
     val catalogService = CatalogService(polynomApi)
     val conceptService = ConceptService(polynomApi)
     val groupService = GroupService(polynomApi)
@@ -67,9 +68,6 @@ class PolynomApplicationService(
     suspend fun reference(sessionId: String, request: IIdentifiableObject): ClassifierTreeNode.Reference =
         polynomApi.reference(sessionId, request).toDomain()
 
-
-    suspend fun referenceCreate(sessionId: String, name: String): ClassifierTreeNode.Reference =
-        polynomApi.referenceCreate(sessionId, name).toDomain()
 
     suspend fun referenceDelete(sessionId: String, request: DeleteReferenceCommand): HttpResponse {
         return polynomApi.referenceDelete(sessionId, request)

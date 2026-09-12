@@ -12,8 +12,10 @@ import com.khan366kos.integration.studio.ktor.server.app.session.InMemorySession
 import io.ktor.client.HttpClient
 import io.ktor.client.engine.cio.CIO
 import io.ktor.client.engine.cio.endpoint
+import io.ktor.client.plugins.api.createClientPlugin
 import io.ktor.client.plugins.contentnegotiation.ContentNegotiation
 import io.ktor.client.plugins.defaultRequest
+import io.ktor.client.statement.request
 import io.ktor.http.ContentType
 import io.ktor.http.HttpStatusCode
 import io.ktor.http.URLProtocol
@@ -26,19 +28,36 @@ import io.ktor.server.plugins.statuspages.StatusPages
 import io.ktor.server.response.respondText
 import io.ktor.server.sessions.*
 import io.ktor.server.sse.SSE
+import io.ktor.util.AttributeKey
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 import kotlinx.serialization.json.Json
+import java.util.concurrent.atomic.AtomicLong
 import kotlin.time.Duration.Companion.milliseconds
 
 fun main(args: Array<String>) {
     EngineMain.main(args)
 }
 
+private val RequestStartKey = AttributeKey<Long>("RequestStartNs")
+
+val HttpTimingLogger = createClientPlugin("HttpTimingLogger") {
+    val callCounter = AtomicLong(0)
+    onRequest { request, _ ->
+        request.attributes.put(RequestStartKey, System.nanoTime())
+    }
+    onResponse { call ->
+        val start = call.request.attributes[RequestStartKey]
+        val ms = (System.nanoTime() - start) / 1_000_000
+        val n = callCounter.incrementAndGet()
+        println("[HTTP] #$n ${call.request.method.value} ${call.request.url.encodedPath} -> ${call.status.value} ${ms}ms")
+    }
+}
+
 fun Application.module() {
-    val dbUrl      = environment.config.property("database.url").getString()
-    val dbUser     = environment.config.property("database.user").getString()
+    val dbUrl = environment.config.property("database.url").getString()
+    val dbUser = environment.config.property("database.user").getString()
     val dbPassword = environment.config.property("database.password").getString()
     val dbPoolSize = environment.config.propertyOrNull("database.pool-size")?.getString()?.toInt() ?: 10
 
@@ -51,34 +70,36 @@ fun Application.module() {
     val migrationRepository = MigrationRepository(dbJson)
 
     val rabbitMqConfig = RabbitMqConfig(
-        host       = environment.config.property("rabbitmq.host").getString(),
-        port       = environment.config.property("rabbitmq.port").getString().toInt(),
-        vhost      = environment.config.property("rabbitmq.vhost").getString(),
-        user       = environment.config.property("rabbitmq.user").getString(),
-        password   = environment.config.property("rabbitmq.password").getString(),
-        exchange   = environment.config.property("rabbitmq.exchange").getString(),
+        host = environment.config.property("rabbitmq.host").getString(),
+        port = environment.config.property("rabbitmq.port").getString().toInt(),
+        vhost = environment.config.property("rabbitmq.vhost").getString(),
+        user = environment.config.property("rabbitmq.user").getString(),
+        password = environment.config.property("rabbitmq.password").getString(),
+        exchange = environment.config.property("rabbitmq.exchange").getString(),
         routingKey = environment.config.property("rabbitmq.routing-key").getString(),
     )
 
     val emailConfig = EmailConfig(
-        enabled  = environment.config.propertyOrNull("email.enabled")?.getString()?.toBoolean() ?: false,
+        enabled = environment.config.propertyOrNull("email.enabled")?.getString()?.toBoolean() ?: false,
         smtpHost = environment.config.propertyOrNull("email.smtp-host")?.getString() ?: "",
         smtpPort = environment.config.propertyOrNull("email.smtp-port")?.getString()?.toInt() ?: 587,
-        smtpTls  = environment.config.propertyOrNull("email.smtp-tls")?.getString()?.toBoolean() ?: true,
-        from     = environment.config.propertyOrNull("email.from")?.getString() ?: "",
+        smtpTls = environment.config.propertyOrNull("email.smtp-tls")?.getString()?.toBoolean() ?: true,
+        from = environment.config.propertyOrNull("email.from")?.getString() ?: "",
         password = environment.config.propertyOrNull("email.password")?.getString() ?: "",
-        to       = environment.config.propertyOrNull("email.to")?.getString() ?: "",
+        to = environment.config.propertyOrNull("email.to")?.getString() ?: "",
     )
 
     val schedulerConfig = SyncSchedulerConfig(
-        enabled         = environment.config.propertyOrNull("sync-scheduler.enabled")?.getString()?.toBoolean() ?: false,
-        intervalMinutes = environment.config.propertyOrNull("sync-scheduler.interval-minutes")?.getString()?.toLong() ?: 15L,
-        scopeTypeId     = environment.config.propertyOrNull("sync-scheduler.scope-type-id")?.getString()?.toInt() ?: 0,
-        scopeObjectId   = environment.config.propertyOrNull("sync-scheduler.scope-object-id")?.getString()?.toInt() ?: 0,
-        serviceUser     = environment.config.propertyOrNull("sync-scheduler.service-user")?.getString() ?: "",
+        enabled = environment.config.propertyOrNull("sync-scheduler.enabled")?.getString()?.toBoolean() ?: false,
+        intervalMinutes = environment.config.propertyOrNull("sync-scheduler.interval-minutes")?.getString()?.toLong()
+            ?: 15L,
+        scopeTypeId = environment.config.propertyOrNull("sync-scheduler.scope-type-id")?.getString()?.toInt() ?: 0,
+        scopeObjectId = environment.config.propertyOrNull("sync-scheduler.scope-object-id")?.getString()?.toInt() ?: 0,
+        serviceUser = environment.config.propertyOrNull("sync-scheduler.service-user")?.getString() ?: "",
         servicePassword = environment.config.propertyOrNull("sync-scheduler.service-password")?.getString() ?: "",
         serviceStorageId = environment.config.propertyOrNull("sync-scheduler.service-storage-id")?.getString() ?: "",
-        externalApiTimezoneOffsetMinutes = environment.config.propertyOrNull("sync-scheduler.external-api-timezone-offset-minutes")?.getString()?.toInt() ?: 0,
+        externalApiTimezoneOffsetMinutes = environment.config.propertyOrNull("sync-scheduler.external-api-timezone-offset-minutes")
+            ?.getString()?.toInt() ?: 0,
     )
 
     val sessionStore = InMemorySessionStore()
@@ -99,6 +120,7 @@ fun Application.module() {
                 coerceInputValues = true
             })
         }
+        install(HttpTimingLogger)
         defaultRequest {
             contentType(ContentType.Application.Json)
             url {
@@ -118,6 +140,7 @@ fun Application.module() {
         migrationRepository = migrationRepository,
         emailConfig = emailConfig,
         schedulerConfig = schedulerConfig,
+        environment = environment
     )
 
 //    config.syncScheduler.start()
@@ -134,7 +157,6 @@ fun Application.module() {
     install(Sessions) {
         cookie<UserSession>("USER_SESSION") {
             cookie.path = "/"
-            cookie.domain = "localhost"
             cookie.extensions["SameSite"] = "lax"
             cookie.httpOnly = true
             cookie.secure = false
@@ -151,6 +173,8 @@ fun Application.module() {
             call.respondText(text = "500: $cause", status = HttpStatusCode.InternalServerError)
         }
     }
+
+    println("is dev: ${environment.config.property("ktor.deployment.is-dev").getString()}")
 
     install(SSE)
     configureHTTP()

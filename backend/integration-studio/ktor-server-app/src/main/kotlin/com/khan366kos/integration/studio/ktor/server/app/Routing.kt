@@ -6,12 +6,9 @@ import com.khan366kos.domain.models.auth.simple.RefreshToken
 import com.khan366kos.domain.models.auth.simple.StorageId
 import com.khan366kos.domain.models.business.GroupContent
 import com.khan366kos.integration.studio.transport.models.AuthorizationRequestTransport
-import com.khan366kos.etl.excel.service.lab.ManagedWorkbookResult
-import com.khan366kos.etl.excel.service.lab.dsl.function.useManagedWorkbook
 import com.khan366kos.integration.studio.ktor.server.app.config.AppConfig
 import com.khan366kos.integration.studio.ktor.server.app.plugins.SessionInterceptorPlugin
 import com.khan366kos.integration.studio.ktor.server.app.plugins.userSession
-import com.khan366kos.etl.mapper.toEtlWorkbookTransport
 import com.khan366kos.integration.studio.ktor.server.app.routes.catalogs
 import com.khan366kos.integration.studio.transport.polynom.models.LoginRequest
 import com.khan366kos.integration.studio.ktor.server.app.routes.concept
@@ -26,7 +23,6 @@ import com.khan366kos.integration.studio.transport.models.ParentGroup
 import com.khan366kos.integration.studio.transport.polynom.models.IIdentifiableObject
 import com.khan366kos.integration.studio.transport.polynom.request.OwnerRequest
 import io.ktor.http.*
-import io.ktor.http.content.*
 import io.ktor.server.application.*
 import io.ktor.server.request.*
 import io.ktor.server.response.*
@@ -41,8 +37,6 @@ import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.toList
 import kotlinx.serialization.Serializable
 import kotlin.system.measureTimeMillis
-import java.io.File
-import java.nio.file.Files
 import java.util.UUID
 
 @Serializable
@@ -137,59 +131,59 @@ fun Application.configureRouting(config: AppConfig) {
             }
         }
 
-        post("/upload") {
-            val multipartData = call.receiveMultipart()
-            var fileName: String? = null
-            var tempFile: File? = null
-
-            try {
-                multipartData.forEachPart { part ->
-                    when (part) {
-                        is PartData.FileItem -> {
-                            fileName = part.originalFileName ?: "uploaded.xlsx"
-                            tempFile = Files.createTempFile("upload_", "_${fileName}").toFile()
-
-                            @Suppress("DEPRECATION")
-                            part.streamProvider().use { input ->
-                                tempFile!!.writeBytes(input.readBytes())
-                            }
-                        }
-
-                        else -> {}
-                    }
-                    part.dispose()
-                }
-
-                if (tempFile == null) {
-                    call.respond(HttpStatusCode.BadRequest, mapOf("error" to "Файл не найден"))
-                    return@post
-                }
-
-                val result = useManagedWorkbook {
-                    path = tempFile.absolutePath
-                }
-
-                when (result) {
-                    is ManagedWorkbookResult.Success -> {
-                        call.respond(result.etlWorkbook.toEtlWorkbookTransport())
-                    }
-
-                    is ManagedWorkbookResult.Failure -> {
-                        call.respond(
-                            HttpStatusCode.UnprocessableEntity,
-                            mapOf("error" to "Ошибка обработки файла: ${result.exception.message}")
-                        )
-                    }
-                }
-            } catch (e: Exception) {
-                call.respond(
-                    HttpStatusCode.InternalServerError,
-                    mapOf("error" to "Ошибка сервера: ${e.message}")
-                )
-            } finally {
-                tempFile?.delete()
-            }
-        }
+//        post("/upload") {
+//            val multipartData = call.receiveMultipart()
+//            var fileName: String? = null
+//            var tempFile: File? = null
+//
+//            try {
+//                multipartData.forEachPart { part ->
+//                    when (part) {
+//                        is PartData.FileItem -> {
+//                            fileName = part.originalFileName ?: "uploaded.xlsx"
+//                            tempFile = Files.createTempFile("upload_", "_${fileName}").toFile()
+//
+//                            @Suppress("DEPRECATION")
+//                            part.streamProvider().use { input ->
+//                                tempFile!!.writeBytes(input.readBytes())
+//                            }
+//                        }
+//
+//                        else -> {}
+//                    }
+//                    part.dispose()
+//                }
+//
+//                if (tempFile == null) {
+//                    call.respond(HttpStatusCode.BadRequest, mapOf("error" to "Файл не найден"))
+//                    return@post
+//                }
+//
+//                val result = useManagedWorkbook {
+//                    path = tempFile.absolutePath
+//                }
+//
+//                when (result) {
+//                    is ManagedWorkbookResult.Success -> {
+//                        call.respond(result.etlWorkbook.toEtlWorkbookTransport())
+//                    }
+//
+//                    is ManagedWorkbookResult.Failure -> {
+//                        call.respond(
+//                            HttpStatusCode.UnprocessableEntity,
+//                            mapOf("error" to "Ошибка обработки файла: ${result.exception.message}")
+//                        )
+//                    }
+//                }
+//            } catch (e: Exception) {
+//                call.respond(
+//                    HttpStatusCode.InternalServerError,
+//                    mapOf("error" to "Ошибка сервера: ${e.message}")
+//                )
+//            } finally {
+//                tempFile?.delete()
+//            }
+//        }
 
         get("/") {
             call.respondText("Hello World!")
@@ -330,7 +324,7 @@ fun Application.configureRouting(config: AppConfig) {
             references(config.polynomApplicationService)
             tree(config.polynomApplicationService)
             catalogs(config.polynomApplicationService)
-            migration(config.polynomApplicationService)
+            migration(config.polynomApplicationService, environment.config.property("excel.path").getString())
         }
     }
 }

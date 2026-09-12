@@ -11,6 +11,7 @@ import com.khan366kos.integration.studio.transport.models.IReference
 import com.khan366kos.integration.studio.transport.polynom.models.IClassificationTreeNode
 import com.khan366kos.integration.studio.transport.polynom.models.catalog.IElementCatalog
 import com.khan366kos.integration.studio.transport.polynom.models.concept.IConcept
+import com.khan366kos.integration.studio.transport.polynom.models.group.IElementGroup
 
 fun AppointedConceptDto.toDomain(): Concept = Concept(
     name = concept.name?.let { ElementName(it) } ?: ElementName.NONE,
@@ -40,4 +41,10 @@ fun IConcept.toDomain() = Concept(
     name = name?.let { ElementName(it) } ?: ElementName.NONE,
     objectId = ObjectId(objectId),
     typeId = TypeId(typeId)
+)
+
+fun IElementGroup.toDomain() = ClassifierTreeNode.Group(
+    objectId = ObjectId(objectId),
+    typeId = TypeId(typeId),
+    name = name?.let { ElementName(it) } ?: ElementName.NONE,
 )

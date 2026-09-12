@@ -1,10 +1,10 @@
 [versions]
-kotlin = "2.3.0"
-kotlinx-coroutines = "1.10.2"
+kotlin = "2.4.20"
+kotlinx-coroutines = "1.11.0"
 kotlinx-datetime = "0.8.0"
 
-ktor = "3.4.0"
-logback = "1.5.27"
+ktor = "3.5.2"
+logback = "1.6.3"
 poi = "5.5.1"
 kotest = "6.0.7"
 log4j-api = "2.25.3"

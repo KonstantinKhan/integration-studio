@@ -13,6 +13,7 @@ class TokenManager(
     private val tokenRefreshApi: TokenRefreshApi
 ) {
     private val sessionMutexes = ConcurrentHashMap<String, Mutex>()
+    private val refreshCount = java.util.concurrent.atomic.AtomicLong(0)
 
     fun needsRefresh(userCredentials: UserCredentials): Boolean {
         if (userCredentials.isInvalidAccessToken()) return true
@@ -66,10 +67,14 @@ class TokenManager(
     private suspend fun performAuthentication(
         userCredentials: UserCredentials
     ): UserCredentials {
+        val startNs = System.nanoTime()
         val response = tokenRefreshApi.refreshToken(
             accessToken = userCredentials.accessToken,
             refreshToken = userCredentials.refreshToken
         )
+        val ms = (System.nanoTime() - startNs) / 1_000_000
+        val n = refreshCount.incrementAndGet()
+        println("[AUTH] refresh #$n for ${userCredentials.login} ${ms}ms")
 
         val now = System.currentTimeMillis()
         val expiresAt = now + (response.expiresIn * 1000L)

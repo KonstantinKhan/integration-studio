@@ -37,6 +37,7 @@ out/
 .vscode/
 
 /.kotlin
+.kotlin
 
 ### Frontend ###
 frontend/integration-studio/node_modules/

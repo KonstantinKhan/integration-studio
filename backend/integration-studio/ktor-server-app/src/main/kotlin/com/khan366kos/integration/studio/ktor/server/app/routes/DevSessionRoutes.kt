@@ -35,16 +35,17 @@ data class EnvMissingResponse(
 )
 
 fun Application.devSessionRoute(config: AppConfig) {
-    if (System.getenv("IS_DEV") != "true") return
+    val isDev = config.environment.config.property("ktor.deployment.is-dev").getString()
+    if (isDev != "true") return
 
     log.warn("DEV session seeding enabled — DO NOT USE IN PRODUCTION")
 
     routing {
         route("/dev") {
             post("/seed-session") {
-                val login = System.getenv("TEST_LOGIN")
-                val password = System.getenv("TEST_PASSWORD")
-                val storageId = System.getenv("TEST_STORAGE_ID")
+                val login = config.environment.config.property("ktor.deployment.test-login").getString()
+                val password = config.environment.config.property("ktor.deployment.test-password").getString()
+                val storageId = config.environment.config.property("ktor.deployment.test-storage-id").getString()
 
                 val missing = buildList {
                     if (login.isNullOrBlank()) add("TEST_LOGIN")

@@ -67,11 +67,11 @@ sealed class ClassifierTreeNode(
     }
 
     data class Group(
-        override val minValue: MinValue,
-        override val maxValue: MaxValue,
+        override val minValue: MinValue = MinValue.NONE,
+        override val maxValue: MaxValue = MaxValue.NONE,
         override val objectId: ObjectId,
         override val typeId: TypeId,
-        override val level: Level,
+        override val level: Level = Level.NONE,
         override val name: ElementName,
         val groups: MutableList<Group> = mutableListOf()
     ) : ClassifierTreeNode(minValue, maxValue, objectId, typeId, level, name) {
