@@ -2,9 +2,10 @@
 
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
-import { Boxes, Plug, Puzzle } from 'lucide-react'
+import { Boxes, Database, Plug, Puzzle } from 'lucide-react'
 import { useConnections } from '@/hooks/useConnections'
 import { useSession } from '@/hooks/useSession'
+import { useLoodsmanSession } from '@/hooks/useLoodsmanSession'
 import type { ConnectionStatus } from '@/types/connections'
 
 const STATUS_DOT: Record<ConnectionStatus['status'], string> = {
@@ -39,6 +40,10 @@ const Home = () => {
     isError: connectionsError,
   } = useConnections()
   const { data: session, isLoading: sessionLoading } = useSession()
+  const {
+    data: loodsmanSession,
+    isLoading: loodsmanSessionLoading,
+  } = useLoodsmanSession()
 
   const polynom = connections?.find((conn) => conn.id === 'polynom')
   const polynomDown = polynom?.status === 'unreachable'
@@ -48,6 +53,19 @@ const Home = () => {
       router.push('/dashboard')
     } else {
       router.push('/polynom/auth')
+    }
+  }
+
+  const loodsman = connections?.find((conn) => conn.id === 'loodsman')
+  const loodsmanReady = !connectionsLoading && !!connections
+  const loodsmanDown =
+    loodsmanReady && (!loodsman || loodsman.status === 'unreachable')
+
+  const handleLoodsman = () => {
+    if (loodsmanSession?.authenticated) {
+      router.push('/loodsman')
+    } else {
+      router.push('/loodsman/auth')
     }
   }
 
@@ -153,6 +171,57 @@ const Home = () => {
                   style={buttonStyle}
                 >
                   {session?.authenticated ? 'Открыть' : 'Подключить'}
+                </button>
+              )}
+            </div>
+          </div>
+
+          <div
+            className="relative text-left p-6 rounded-xl border-2 shadow-md flex flex-col"
+            style={cardStyle}
+          >
+            <div
+              className="flex items-center justify-center w-12 h-12 rounded-lg mb-4"
+              style={iconBoxStyle}
+            >
+              <Database size={24} className="text-stone-700" />
+            </div>
+            <h2 className="text-lg font-semibold text-stone-800 mb-1">Loodsman</h2>
+            <p className="text-sm text-stone-600 mb-4">
+              Навигация по дереву данных Loodsman
+            </p>
+            <div className="mt-auto">
+              {loodsmanDown ? (
+                <>
+                  <button
+                    type="button"
+                    disabled
+                    className="w-full py-2 rounded-lg text-white font-medium border-2 disabled:cursor-not-allowed disabled:opacity-60"
+                    style={buttonStyle}
+                  >
+                    ...
+                  </button>
+                  <p className="text-xs text-red-700 mt-2 text-center">
+                    Loodsman недоступен
+                  </p>
+                </>
+              ) : loodsmanSessionLoading ? (
+                <button
+                  type="button"
+                  disabled
+                  className="w-full py-2 rounded-lg text-white font-medium border-2 disabled:cursor-not-allowed disabled:opacity-60"
+                  style={buttonStyle}
+                >
+                  ...
+                </button>
+              ) : (
+                <button
+                  type="button"
+                  onClick={handleLoodsman}
+                  className="w-full py-2 rounded-lg text-white font-medium border-2 hover:opacity-90 transition cursor-pointer"
+                  style={buttonStyle}
+                >
+                  {loodsmanSession?.authenticated ? 'Открыть' : 'Подключить'}
                 </button>
               )}
             </div>

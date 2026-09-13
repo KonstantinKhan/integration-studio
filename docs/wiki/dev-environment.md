@@ -52,4 +52,4 @@ rm -rf frontend/integration-studio/.next
 ## Полезное
 
 - Git: rename через WSL может падать с Permission denied, пока Windows держит дескриптор — тогда `cp -a` + `rm -rf`; при коммите rename определится сам
-- Переменные окружения фронта: `NEXT_PUBLIC_API_URL` (бэк, default `http://localhost:8080`); бэка — see `application.conf` (env-override у каждого ключа, напр. `POLYNOM_BASE_URL`, `DB_*`, `RABBITMQ_*`)
+- Переменные окружения фронта: `NEXT_PUBLIC_API_URL` (бэк, default `http://localhost:8080`); бэка — see `application.conf` (env-override у каждого ключа, напр. `POLYNOM_BASE_URL`, `LOODSMAN_BASE_URL`, `DB_*`, `RABBITMQ_*`)

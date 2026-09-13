@@ -39,6 +39,14 @@ fun Route.connections(environment: ApplicationEnvironment): Route = route("/conn
             else -> 80
         }
 
+        val loodsmanUri = URI(config.property("loodsman.base-url").getString())
+        val loodsmanHost = loodsmanUri.host ?: ""
+        val loodsmanPort = when {
+            loodsmanUri.port > 0 -> loodsmanUri.port
+            loodsmanUri.scheme == "https" -> 443
+            else -> 80
+        }
+
         val dbAddress = config.property("database.url").getString()
             .removePrefix("jdbc:postgresql://")
             .substringBefore("/")
@@ -54,12 +62,14 @@ fun Route.connections(environment: ApplicationEnvironment): Route = route("/conn
 
         val connections = coroutineScope {
             val polynomCheck = async { checkTcp(polynomHost, polynomPort) }
+            val loodsmanCheck = async { checkTcp(loodsmanHost, loodsmanPort) }
             val postgresCheck = async { checkTcp(dbHost, dbPort) }
             val rabbitmqCheck = async { checkTcp(rabbitHost, rabbitPort) }
             val smtpCheck = if (smtpEnabled && smtpHost.isNotBlank()) async { checkTcp(smtpHost, smtpPort) } else null
 
             buildList {
                 add(polynomCheck.await().toDto("polynom", "Polynom API", polynomHost, polynomPort))
+                add(loodsmanCheck.await().toDto("loodsman", "Loodsman API", loodsmanHost, loodsmanPort))
                 add(postgresCheck.await().toDto("postgres", "PostgreSQL", dbHost, dbPort))
                 add(rabbitmqCheck.await().toDto("rabbitmq", "RabbitMQ", rabbitHost, rabbitPort))
                 if (smtpCheck != null) {

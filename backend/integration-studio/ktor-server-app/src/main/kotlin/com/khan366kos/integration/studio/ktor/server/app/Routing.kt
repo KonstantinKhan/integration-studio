@@ -20,6 +20,9 @@ import com.khan366kos.integration.studio.ktor.server.app.routes.search
 import com.khan366kos.integration.studio.ktor.server.app.routes.searchStream
 import com.khan366kos.integration.studio.ktor.server.app.routes.syncSummary
 import com.khan366kos.integration.studio.ktor.server.app.routes.tree
+import com.khan366kos.integration.studio.loodsman.client.LoodsmanUnauthorizedException
+import com.khan366kos.integration.studio.loodsman.session.LoodsmanSession
+import com.khan366kos.integration.studio.transport.loodsman.models.LoginInputDto
 import com.khan366kos.integration.studio.transport.models.ParentGroup
 import com.khan366kos.integration.studio.transport.polynom.models.IIdentifiableObject
 import com.khan366kos.integration.studio.transport.polynom.request.OwnerRequest
@@ -56,6 +59,39 @@ data class TestConcurrentResponse(
     val requestsPerSec: Double,
     val avgMsPerRequest: Double,
     val results: List<String>
+)
+
+@Serializable
+data class LoodsmanAuthorizeRequest(
+    val dbName: String,
+    val username: String,
+    val password: String
+)
+
+@Serializable
+data class LoodsmanAuthorizeResponse(
+    val authenticated: Boolean,
+    val sessionId: String,
+    val username: String? = null,
+    val dbName: String? = null
+)
+
+@Serializable
+data class TreeRootItemBffDto(
+    val id: Int?,
+    val idType: Int?,
+    val hasLink: Boolean?,
+    val product: String? = null,
+    val version: String? = null,
+    val idState: Int? = null,
+    val idLock: Int? = null,
+    val accessLevel: Int? = null,
+    val label: Int? = null,
+    val labelName: String? = null,
+    val idLink: Int? = null,
+    val idLinkType: Int? = null,
+    val minQuantity: Double? = null,
+    val maxQuantity: Double? = null
 )
 
 @OptIn(ExperimentalCoroutinesApi::class)
@@ -136,7 +172,16 @@ fun Application.configureRouting(config: AppConfig) {
         post("/logout") {
             val session = call.sessions.get<UserSession>()
             if (session != null) {
+                val loodsmanSession = config.loodsmanSessionStore.retrieve(session.id)
                 config.sessionStore.remove(session.id)
+                config.loodsmanSessionStore.remove(session.id)
+                if (loodsmanSession != null) {
+                    try {
+                        config.loodsmanClient.authApi.logout(loodsmanSession.sessionId, loodsmanSession.dbName)
+                    } catch (e: Exception) {
+                        application.log.warn("Loodsman remote logout failed: ${e.message}")
+                    }
+                }
             }
             call.sessions.clear<UserSession>()
             call.respond(HttpStatusCode.OK, mapOf("message" to "Вы вышли из системы"))
@@ -337,6 +382,158 @@ fun Application.configureRouting(config: AppConfig) {
             catalogs(config.polynomApplicationService)
             migration(config.polynomApplicationService, environment.config.property("excel.path").getString())
             connections(config.environment)
+            loodsman(config)
+        }
+    }
+}
+
+fun Route.loodsman(config: AppConfig): Route = route("loodsman") {
+    get("/databases") {
+        try {
+            val databases = config.loodsmanClient.authApi.databases()
+            call.respond(HttpStatusCode.OK, databases.map { mapOf("name" to it.name) })
+        } catch (e: Exception) {
+            call.application.log.error("Error fetching loodsman databases: ${e.message}", e)
+            call.respond(
+                HttpStatusCode.InternalServerError,
+                mapOf("error" to "Ошибка получения списка баз данных: ${e.message}")
+            )
+        }
+    }
+
+    post("/authorize") {
+        try {
+            val authRequest = call.receive<LoodsmanAuthorizeRequest>()
+
+            val response = config.loodsmanClient.authApi.login(
+                LoginInputDto(
+                    dbName = authRequest.dbName,
+                    username = authRequest.username,
+                    password = authRequest.password,
+                    rememberMe = null
+                )
+            )
+
+            val remoteSessionId = response.sessionId
+            if (remoteSessionId == null) {
+                call.respond(
+                    HttpStatusCode.Unauthorized,
+                    mapOf("error" to "Ошибка авторизации в Loodsman: сессия не создана")
+                )
+                return@post
+            }
+
+            val bffSessionId = UUID.randomUUID().toString()
+            val dbName = response.dbName ?: authRequest.dbName
+            config.loodsmanSessionStore.store(
+                bffSessionId,
+                LoodsmanSession(
+                    sessionId = remoteSessionId,
+                    dbName = dbName,
+                    userId = response.userId,
+                    username = authRequest.username
+                )
+            )
+            call.sessions.set(UserSession(id = bffSessionId, username = authRequest.username))
+
+            call.respond(
+                HttpStatusCode.OK,
+                LoodsmanAuthorizeResponse(
+                    authenticated = true,
+                    sessionId = bffSessionId,
+                    username = authRequest.username,
+                    dbName = dbName
+                )
+            )
+        } catch (e: Exception) {
+            call.application.log.error("Loodsman authorization error: ${e.message}", e)
+            call.respond(
+                HttpStatusCode.InternalServerError,
+                mapOf("error" to "Ошибка авторизации: ${e.message}")
+            )
+        }
+    }
+
+    get("/check-session") {
+        val session = call.sessions.get<UserSession>()
+        val loodsmanSession = session?.let { config.loodsmanSessionStore.retrieve(it.id) }
+        if (session != null && loodsmanSession != null) {
+            call.respond(
+                SessionCheckResponse(
+                    authenticated = true,
+                    sessionId = session.id,
+                    username = session.username
+                )
+            )
+        } else {
+            call.respond(HttpStatusCode.Unauthorized, SessionCheckResponse(authenticated = false))
+        }
+    }
+
+    post("/logout") {
+        val session = call.sessions.get<UserSession>()
+        if (session != null) {
+            val loodsmanSession = config.loodsmanSessionStore.retrieve(session.id)
+            if (loodsmanSession != null) {
+                try {
+                    config.loodsmanClient.authApi.logout(loodsmanSession.sessionId, loodsmanSession.dbName)
+                } catch (e: Exception) {
+                    call.application.log.warn("Loodsman remote logout failed: ${e.message}")
+                }
+            }
+            config.loodsmanSessionStore.remove(session.id)
+        }
+        call.sessions.clear<UserSession>()
+        call.respond(HttpStatusCode.OK, mapOf("message" to "Вы вышли из системы"))
+    }
+
+    get("/tree/root") {
+        val session = call.sessions.get<UserSession>()
+        val loodsmanSession = session?.let { config.loodsmanSessionStore.retrieve(it.id) }
+        if (loodsmanSession == null) {
+            call.respond(HttpStatusCode.Unauthorized, mapOf("error" to "Сессия не найдена"))
+            return@get
+        }
+
+        try {
+            val tree = config.loodsmanClient.pdmApi.getTree(
+                sessionId = loodsmanSession.sessionId,
+                dbName = loodsmanSession.dbName
+            )
+            call.respond(
+                HttpStatusCode.OK,
+                tree.map { node ->
+                    TreeRootItemBffDto(
+                        id = node.id,
+                        idType = node.idType,
+                        hasLink = node.hasLink,
+                        product = node.product,
+                        version = node.version,
+                        idState = node.idState,
+                        idLock = node.idLock,
+                        accessLevel = node.accessLevel,
+                        label = node.label,
+                        labelName = node.labelName,
+                        idLink = node.idLink,
+                        idLinkType = node.idLinkType,
+                        minQuantity = node.minQuantity,
+                        maxQuantity = node.maxQuantity
+                    )
+                }
+            )
+        } catch (e: LoodsmanUnauthorizedException) {
+            session?.let { config.loodsmanSessionStore.remove(it.id) }
+            call.application.log.warn("Loodsman session rejected for tree fetch: ${e.message}")
+            call.respond(
+                HttpStatusCode.Unauthorized,
+                mapOf("error" to "Ошибка получения дерева: сессия Loodsman недействительна")
+            )
+        } catch (e: Exception) {
+            call.application.log.error("Error fetching loodsman tree: ${e.message}", e)
+            call.respond(
+                HttpStatusCode.InternalServerError,
+                mapOf("error" to "Ошибка получения дерева: ${e.message}")
+            )
         }
     }
 }

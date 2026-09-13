@@ -18,6 +18,14 @@
 /dashboard «Работа с Polynom»: Навигация | Миграция (скоро) | Синхронизация | Выйти
 ```
 
+Loodsman-ветка (зеркало того же паттерна):
+
+```
+карточка Loodsman на / (статус из /connections)
+ └─ /loodsman/auth: шаг 1 — выбор БД (GET /loodsman/databases) → шаг 2 — логин/пароль → POST /loodsman/authorize → /loodsman
+/loodsman «Работа с Loodsman»: корень навигации (Pdm/get-tree) | Выйти
+```
+
 Принципы: стартовая доступна при любом состоянии сети/Polynom (все запросы фоновые, через react-query); авторизация закреплена за сервисом — паттерн `/polynom/auth`, следующий сервис получит свой `/<service>/auth`.
 
 ## Маршруты и guard
@@ -35,6 +43,8 @@
 | `authenticated: false` | `router.replace('/polynom/auth')` (только когда запрос завершился: `!isFetching`) |
 | `authenticated: true` | children |
 
+`RequireLoodsmanSession` — точная копия для Loodsman: `useLoodsmanSession` (`GET /loodsman/check-session`, ключ `['loodsman-session']`), редирект `/loodsman/auth`; layout `app/loodsman/(protected)/layout.tsx` ([Loodsman](loodsman.md)).
+
 ## useSession
 
 - `GET /check-session`; 401 → `{authenticated: false}` (не ошибка); прочие сетевые сбои → isError
@@ -51,9 +61,11 @@
 ## Logout
 
 - Бэк: `POST /logout` — `sessionStore.remove(id)` + `call.sessions.clear<UserSession>()` (reified! не `clear(UserSession)`), идемпотентен (200 без сессии)
+- **Общая cookie `USER_SESSION` между сервисами**: `POST /logout` теперь чистит и `loodsmanSessionStore` (+ remote loodsman-logout в try/catch). `POST /loodsman/logout` — идемпотентен, зеркальная логика ([Loodsman](loodsman.md))
 - Фронт (`Dashboard.handleLogout`): `await logout()` (ошибки гасим — разлогин идемпотентен), затем `window.location.assign('/')` — полная перезагрузка детерминированно сбрасывает react-query кэш, zustand и убирает гонку guard-редиректа (старый вариант с `router.push` + `queryClient.clear()` страдал гонкой: живой guard успевал отрефетчить `/check-session`, получить 401 и перебить навигацию)
 
 ## Whitelist (кто не требует сессии)
 
 - Вне `route("/")` (плагин SessionInterceptor вообще не применяется): `/storage-definitions`, `/authorize`, `/check-session`, `/logout`
 - Внутри плагина есть bypass по точному совпадению сегмента: `"connections"` (`trim('/')` — покрывает и trailing slash; подпути/чужие пути не матчится)
+- Loodsman: весь префикс `loodsman` — bypass плагина (публичные маршруты + `tree/root`, который проверяет loodsman-сессию сам: плагин смотрит только polynom-креды)

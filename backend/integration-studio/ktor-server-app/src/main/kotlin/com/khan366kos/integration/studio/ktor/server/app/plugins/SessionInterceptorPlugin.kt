@@ -30,9 +30,12 @@ val SessionInterceptorPlugin = createRouteScopedPlugin(
     val sessionStore = pluginConfig.sessionStore
 
     val publicPaths = setOf("connections")
+    val publicPathPrefixes = setOf("loodsman")
 
     onCall { call ->
-        if (call.request.path().trim('/') in publicPaths) return@onCall
+        val path = call.request.path().trim('/')
+        if (path in publicPaths) return@onCall
+        if (publicPathPrefixes.any { path == it || path.startsWith("$it/") }) return@onCall
 
         val session = call.sessions.get<UserSession>()
         if (session == null) {

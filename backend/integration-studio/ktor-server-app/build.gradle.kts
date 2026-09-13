@@ -36,6 +36,9 @@ dependencies {
     implementation(projects.bffDto)
     implementation(projects.etlMapper)
     implementation(projects.polynomClient)
+    implementation(projects.loodsmanDtoKmp)
+    implementation(projects.loodsmanSessionStore)
+    implementation(projects.loodsmanClient)
     implementation(projects.mapping)
     implementation(projects.logics)
 

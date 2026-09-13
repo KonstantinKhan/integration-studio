@@ -10,6 +10,9 @@
 polynom {
   base-url = "http://localhost:5100/api/v1"   # env POLYNOM_BASE_URL
 }
+loodsman {
+  base-url = "http://localhost:8076/api/v4"   # env LOODSMAN_BASE_URL
+}
 database   { url = "jdbc:postgresql://127.0.0.1:5432/...", user, password, pool-size }
 rabbitmq   { host, port, vhost, user, password, exchange, routing-key }
 email      { enabled=false, smtp-host, smtp-port, smtp-tls, from, password, to }
@@ -30,6 +33,7 @@ sync-scheduler { enabled=false, interval-minutes, service-user, ... }
 - `PolynomClient(httpClient, authProvider, tokenManager)` — фасад: `loginApi`, `conceptApi`, `catalogApi`, `groupApi` + собственные методы (references, groups, elements, properties, search, tree)
 - `LoginApi` — все `login/*` эндпоинты: `storageDefinitions()` (`List<IStorageDefinition>`), `signIn(LoginRequest)`, `currentUserInfo(sessionId)`
 - Собственный **единственный** `TokenManager` создаётся в `AppConfig.create` и шарится между `authProvider` и `PolynomClient` (раньше дублировался — устранено)
+- Loodsman: второй `HttpClient` со своим `defaultRequest` (из `loodsman.base-url`) + `LoodsmanClient` + `InMemoryLoodsmanSessionStore`, всё собирается там же в `AppConfig.create` ([Loodsman](loodsman.md))
 
 ## Токены и refresh
 

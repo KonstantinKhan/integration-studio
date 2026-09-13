@@ -13,6 +13,7 @@
 | [Фронтенд](frontend.md) | Структура app router, api-client, хуки, стор, стили |
 | [Окружение и сборка](dev-environment.md) | WSL + Windows, JDK, команды сборки, типовые флейки |
 | [Процесс работы и инсайты](workflows-and-insights.md) | Оркестрация агентов, паттерн «фича→ревью→фикс», решения |
+| [Loodsman](loodsman.md) | Второй API: модули, session-header auth, маршруты /loodsman/* |
 
 ## Ключевые маршруты
 
@@ -25,6 +26,8 @@
 | `/polynom/auth` | Подключение к Polynom: хранилище → авторизация | публичная |
 | `/dashboard` | «Работа с Polynom»: навигация/миграция/синхронизация + Выйти | сессия |
 | `/polynom`, `/polynom/changes`, `/polynom/reference/**` | Рабочие разделы Polynom | сессия |
+| `/loodsman/auth` | Подключение к Loodsman: база → авторизация | публичная |
+| `/loodsman` | «Работа с Loodsman»: корень навигации + Выйти | сессия |
 
 **Бэкенд (Ktor BFF, :8080)**
 
@@ -36,10 +39,12 @@
 | `POST /logout` | Выход (идемпотентный) | по куке |
 | `GET /connections` | Статусы подключений (TCP) | публичный |
 | `/*` (business) | concept, references, search, tree, streams… | сессия |
+| `/loodsman/*` | databases, authorize, check-session, logout, tree/root | см. [Loodsman](loodsman.md) |
 
 ## Быстрые факты
 
 - Адреса всех внешних сервисов — только в `application.conf` бэка ([Конфигурация](configuration.md))
 - Доступность сервисов проверяется с хоста Kotlin BFF, не с Next-сервера ([Инсайты](workflows-and-insights.md))
 - Каждому сервису — свой маршрут авторизации (`/polynom/auth`, далее по образцу) ([Auth flow](auth-flow.md))
+- Loodsman: токенов нет — заголовки `web-loodsman-session` + `x-loodsman-db-name` на каждый запрос ([Loodsman](loodsman.md))
 - Валидация изменений — обе сборки: `gradlew build` + `npm run build` ([Окружение](dev-environment.md))

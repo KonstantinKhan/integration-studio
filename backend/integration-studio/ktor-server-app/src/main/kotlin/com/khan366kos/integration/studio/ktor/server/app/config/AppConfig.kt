@@ -12,6 +12,9 @@ import com.khan366kos.integration.studio.ktor.server.app.scheduling.SyncSchedule
 import com.khan366kos.integration.studio.ktor.server.app.scheduling.SyncSchedulerConfig
 import com.khan366kos.domain.SessionStore
 import com.khan366kos.integration.studio.ktor.server.app.streaming.SyncStreamRegistry
+import com.khan366kos.integration.studio.loodsman.client.LoodsmanClient
+import com.khan366kos.integration.studio.loodsman.session.InMemoryLoodsmanSessionStore
+import com.khan366kos.integration.studio.loodsman.session.LoodsmanSessionStore
 import com.khan366kos.integration.studio.logics.PolynomApplicationService
 import io.ktor.client.HttpClient
 import io.ktor.server.application.ApplicationEnvironment
@@ -29,6 +32,8 @@ class AppConfig(
     val migrationRepository: MigrationRepository,
     val schedulerConfig: SyncSchedulerConfig,
     val environment: ApplicationEnvironment,
+    val loodsmanClient: LoodsmanClient,
+    val loodsmanSessionStore: LoodsmanSessionStore,
 ) {
 
     companion object {
@@ -36,6 +41,7 @@ class AppConfig(
             sessionStore: SessionStore,
             httpClient: HttpClient,
             baseUrl: String,
+            loodsmanHttpClient: HttpClient,
             rabbitMqConfig: RabbitMqConfig,
             migrationRepository: MigrationRepository,
             emailConfig: EmailConfig,
@@ -48,6 +54,8 @@ class AppConfig(
             val authProvider = SessionStoreAuthProvider(sessionStore, tokenManager, httpClient)
             val polynomClient = PolynomClient(httpClient, authProvider, tokenManager)
             val polynomApplicationService = PolynomApplicationService(polynomClient)
+            val loodsmanClient = LoodsmanClient(loodsmanHttpClient)
+            val loodsmanSessionStore = InMemoryLoodsmanSessionStore()
 
             val json = Json {
                 ignoreUnknownKeys = true
@@ -83,6 +91,8 @@ class AppConfig(
                 migrationRepository = migrationRepository,
                 schedulerConfig = schedulerConfig,
                 environment = environment,
+                loodsmanClient = loodsmanClient,
+                loodsmanSessionStore = loodsmanSessionStore,
             )
         }
     }

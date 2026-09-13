@@ -118,6 +118,21 @@ fun Application.module() {
     }
     val polynomBasePath = polynomUri.path.trimEnd('/') + "/"
 
+    val loodsmanBaseUrl = environment.config.property("loodsman.base-url").getString()
+    val loodsmanUri = URI(loodsmanBaseUrl)
+    require(loodsmanUri.scheme in setOf("http", "https")) {
+        "loodsman.base-url must use http or https scheme, got: $loodsmanBaseUrl"
+    }
+    require(!loodsmanUri.host.isNullOrBlank()) {
+        "loodsman.base-url must contain a host, got: $loodsmanBaseUrl"
+    }
+    val loodsmanPort = when {
+        loodsmanUri.port > 0 -> loodsmanUri.port
+        loodsmanUri.scheme == "https" -> 443
+        else -> 80
+    }
+    val loodsmanBasePath = loodsmanUri.path.trimEnd('/') + "/"
+
     val sessionStore = InMemorySessionStore()
     val httpClient = HttpClient(CIO) {
         engine {
@@ -148,10 +163,40 @@ fun Application.module() {
         }
     }
 
+    val loodsmanHttpClient = HttpClient(CIO) {
+        engine {
+            maxConnectionsCount = 20
+            endpoint {
+                connectTimeout = 30_000
+                socketTimeout = 60_000
+                keepAliveTime = 60_000
+            }
+            requestTimeout = 60_000
+        }
+        install(ContentNegotiation) {
+            json(Json {
+                ignoreUnknownKeys = true
+                isLenient = true
+                coerceInputValues = true
+            })
+        }
+        install(HttpTimingLogger)
+        defaultRequest {
+            contentType(ContentType.Application.Json)
+            url {
+                protocol = if (loodsmanUri.scheme == "https") URLProtocol.HTTPS else URLProtocol.HTTP
+                host = loodsmanUri.host
+                port = loodsmanPort
+                path(loodsmanBasePath)
+            }
+        }
+    }
+
     val config = AppConfig.create(
         sessionStore = sessionStore,
         httpClient = httpClient,
         baseUrl = polynomBaseUrl,
+        loodsmanHttpClient = loodsmanHttpClient,
         rabbitMqConfig = rabbitMqConfig,
         migrationRepository = migrationRepository,
         emailConfig = emailConfig,
@@ -165,6 +210,9 @@ fun Application.module() {
         while (isActive) {
             delay(60_000.milliseconds)
             config.sessionStore.cleanup(
+                expirationThresholdMs = 7 * 24 * 60 * 60 * 1000L
+            )
+            config.loodsmanSessionStore.cleanup(
                 expirationThresholdMs = 7 * 24 * 60 * 60 * 1000L
             )
         }
