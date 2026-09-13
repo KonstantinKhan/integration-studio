@@ -5,4 +5,5 @@ import io.ktor.client.HttpClient
 class LoodsmanClient(httpClient: HttpClient) {
     val authApi = AuthApi(httpClient)
     val pdmApi = PdmApi(httpClient)
+    val objectInfoApi = ObjectInfoApi(httpClient)
 }

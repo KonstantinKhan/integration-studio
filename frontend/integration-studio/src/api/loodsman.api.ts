@@ -2,6 +2,7 @@ import { apiClient } from './api-client'
 import type { ILoodsmanDatabase } from '@/shared/types/loodsmanDatabase.interface'
 import type { ILoodsmanAuth } from '@/shared/types/loodsmanAuth.interface'
 import type { ILoodsmanTreeNode } from '@/shared/types/loodsmanTreeNode.interface'
+import type { ILoodsmanObjectInfo } from '@/shared/types/loodsmanObjectInfo.interface'
 
 export function fetchLoodsmanDatabases(): Promise<ILoodsmanDatabase[]> {
   return apiClient<ILoodsmanDatabase[]>('/loodsman/databases', {
@@ -28,4 +29,15 @@ export function fetchLoodsmanTreeRoot(): Promise<ILoodsmanTreeNode[]> {
   return apiClient<ILoodsmanTreeNode[]>('/loodsman/tree/root', {
     signal: AbortSignal.timeout(10_000),
   })
+}
+
+export function fetchLoodsmanObjectInfo(
+  idVersion: number,
+): Promise<ILoodsmanObjectInfo> {
+  return apiClient<ILoodsmanObjectInfo>(
+    `/loodsman/object-info?idVersion=${idVersion}`,
+    {
+      signal: AbortSignal.timeout(30_000),
+    },
+  )
 }

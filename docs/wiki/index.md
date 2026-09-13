@@ -27,7 +27,7 @@
 | `/dashboard` | «Работа с Polynom»: навигация/миграция/синхронизация + Выйти | сессия |
 | `/polynom`, `/polynom/changes`, `/polynom/reference/**` | Рабочие разделы Polynom | сессия |
 | `/loodsman/auth` | Подключение к Loodsman: база → авторизация | публичная |
-| `/loodsman` | «Работа с Loodsman»: корень навигации + Выйти | сессия |
+| `/loodsman` | «Работа с Loodsman»: поиск объекта по идентификатору (карточка) + корень навигации + Выйти | сессия |
 
 **Бэкенд (Ktor BFF, :8080)**
 
@@ -39,7 +39,7 @@
 | `POST /logout` | Выход (идемпотентный) | по куке |
 | `GET /connections` | Статусы подключений (TCP) | публичный |
 | `/*` (business) | concept, references, search, tree, streams… | сессия |
-| `/loodsman/*` | databases, authorize, check-session, logout, tree/root | см. [Loodsman](loodsman.md) |
+| `/loodsman/*` | databases, authorize, check-session, logout, tree/root, object-info | см. [Loodsman](loodsman.md) |
 
 ## Быстрые факты
 

@@ -58,3 +58,5 @@ frontend/integration-studio/.yarn/*
 !frontend/integration-studio/.yarn/plugins
 !frontend/integration-studio/.yarn/releases
 !frontend/integration-studio/.yarn/versions
+### Obsidian ###
+docs/wiki/.obsidian/

@@ -36,6 +36,9 @@ import io.ktor.server.sessions.get
 import io.ktor.server.sessions.sessions
 import io.ktor.server.sessions.set
 import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.async
+import kotlinx.coroutines.awaitAll
+import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.flow.asFlow
 import kotlinx.coroutines.flow.flatMapMerge
 import kotlinx.coroutines.flow.flow
@@ -92,6 +95,54 @@ data class TreeRootItemBffDto(
     val idLinkType: Int? = null,
     val minQuantity: Double? = null,
     val maxQuantity: Double? = null
+)
+
+@Serializable
+data class LoodsmanObjectPropertiesBffDto(
+    val type: String?,
+    val product: String?,
+    val version: String?,
+    val state: String?
+)
+
+@Serializable
+data class LoodsmanObjectVersionBffDto(
+    val idVersion: Int = 0,
+    val version: String?,
+    val state: String?,
+    val dateOfCreate: String?
+)
+
+@Serializable
+data class LoodsmanAttributeBffDto(
+    val name: String?,
+    val value: String?
+)
+
+@Serializable
+data class LoodsmanLinkQuantityBffDto(
+    val value: Double?,
+    val min: Double?,
+    val max: Double?
+)
+
+@Serializable
+data class LoodsmanLinkBffDto(
+    val linkId: Int = 0,
+    val product: String?,
+    val version: String?,
+    val type: String?,
+    val quantity: LoodsmanLinkQuantityBffDto,
+    val attributes: List<LoodsmanAttributeBffDto>
+)
+
+@Serializable
+data class LoodsmanObjectInfoBffDto(
+    val idVersion: Int = 0,
+    val properties: LoodsmanObjectPropertiesBffDto,
+    val versions: List<LoodsmanObjectVersionBffDto>,
+    val attributes: List<LoodsmanAttributeBffDto>,
+    val links: List<LoodsmanLinkBffDto>
 )
 
 @OptIn(ExperimentalCoroutinesApi::class)
@@ -533,6 +584,137 @@ fun Route.loodsman(config: AppConfig): Route = route("loodsman") {
             call.respond(
                 HttpStatusCode.InternalServerError,
                 mapOf("error" to "Ошибка получения дерева: ${e.message}")
+            )
+        }
+    }
+
+    get("/object-info") {
+        val session = call.sessions.get<UserSession>()
+        val loodsmanSession = session?.let { config.loodsmanSessionStore.retrieve(it.id) }
+        if (loodsmanSession == null) {
+            call.respond(HttpStatusCode.Unauthorized, mapOf("error" to "Сессия не найдена"))
+            return@get
+        }
+
+        val idVersion = call.parameters["idVersion"]?.toIntOrNull()
+        if (idVersion == null) {
+            call.respond(
+                HttpStatusCode.BadRequest,
+                mapOf("error" to "Некорректный параметр idVersion: ожидается целое число")
+            )
+            return@get
+        }
+
+        try {
+            val propObjects = config.loodsmanClient.objectInfoApi.getPropObjects(
+                sessionId = loodsmanSession.sessionId,
+                dbName = loodsmanSession.dbName,
+                objectList = idVersion.toString()
+            )
+            val prop = propObjects.firstOrNull()
+            if (prop == null) {
+                call.respond(
+                    HttpStatusCode.NotFound,
+                    mapOf("error" to "Объект с идентификатором ${idVersion} не найден")
+                )
+                return@get
+            }
+            val versions = if (prop.type != null || prop.product != null) {
+                config.loodsmanClient.objectInfoApi.getVersionList(
+                    sessionId = loodsmanSession.sessionId,
+                    dbName = loodsmanSession.dbName,
+                    typeName = prop.type,
+                    productName = prop.product
+                )
+            } else {
+                emptyList()
+            }
+            val attributes = config.loodsmanClient.objectInfoApi.getInfoAboutVersionMode3(
+                sessionId = loodsmanSession.sessionId,
+                dbName = loodsmanSession.dbName,
+                idVersion = idVersion
+            )
+            val lObjs = config.loodsmanClient.objectInfoApi.getLObjs(
+                sessionId = loodsmanSession.sessionId,
+                dbName = loodsmanSession.dbName,
+                versionId = idVersion,
+                inverse = false
+            )
+            val typeByVersionId = if (lObjs.isNotEmpty()) {
+                val versionIds = lObjs.map { it.versionId }.distinct()
+                coroutineScope {
+                    versionIds.chunked(100).map { chunk ->
+                        async {
+                            config.loodsmanClient.objectInfoApi.getPropObjects(
+                                sessionId = loodsmanSession.sessionId,
+                                dbName = loodsmanSession.dbName,
+                                objectList = chunk.joinToString(",")
+                            ).associate { it.idVersion to it.type }
+                        }
+                    }.awaitAll()
+                }.reduce { acc, map -> acc + map }
+            } else {
+                emptyMap()
+            }
+            val links = coroutineScope {
+                lObjs.map { linkedObject ->
+                    async {
+                        val linkAttributes = config.loodsmanClient.objectInfoApi.getLinkAttributes(
+                            sessionId = loodsmanSession.sessionId,
+                            dbName = loodsmanSession.dbName,
+                            linkId = linkedObject.linkId
+                        )
+                        val quantity = if (linkedObject.minQuantity != null && linkedObject.minQuantity == linkedObject.maxQuantity) {
+                            LoodsmanLinkQuantityBffDto(value = linkedObject.minQuantity, min = null, max = null)
+                        } else {
+                            LoodsmanLinkQuantityBffDto(value = null, min = linkedObject.minQuantity, max = linkedObject.maxQuantity)
+                        }
+                        LoodsmanLinkBffDto(
+                            linkId = linkedObject.linkId,
+                            product = linkedObject.product,
+                            version = linkedObject.version,
+                            type = typeByVersionId[linkedObject.versionId],
+                            quantity = quantity,
+                            attributes = linkAttributes.map { LoodsmanAttributeBffDto(name = it.name, value = it.value) }
+                        )
+                    }
+                }.awaitAll()
+            }
+
+            call.respond(
+                HttpStatusCode.OK,
+                LoodsmanObjectInfoBffDto(
+                    idVersion = idVersion,
+                    properties = LoodsmanObjectPropertiesBffDto(
+                        type = prop.type,
+                        product = prop.product,
+                        version = prop.version,
+                        state = prop.state
+                    ),
+                    versions = versions.map {
+                        LoodsmanObjectVersionBffDto(
+                            idVersion = it.idVersion,
+                            version = it.version,
+                            state = it.state,
+                            dateOfCreate = it.dateOfCreate
+                        )
+                    },
+                    attributes = attributes.map { LoodsmanAttributeBffDto(name = it.name, value = it.value) },
+                    links = links
+                )
+            )
+        } catch (e: LoodsmanUnauthorizedException) {
+            session?.let { config.loodsmanSessionStore.remove(it.id) }
+            call.application.log.warn("Loodsman session rejected for object info fetch: ${e.message}")
+            call.respond(
+                HttpStatusCode.Unauthorized,
+                mapOf("error" to "Ошибка получения информации об объекте: сессия Loodsman недействительна")
+            )
+        } catch (e: Exception) {
+            call.application.log.error("Error fetching loodsman object info: ${e.message}", e)
+            call.respond(
+                HttpStatusCode.InternalServerError,
+                mapOf("error" to "Ошибка получения информации об объекте: ${e.message}")
             )
         }
     }
