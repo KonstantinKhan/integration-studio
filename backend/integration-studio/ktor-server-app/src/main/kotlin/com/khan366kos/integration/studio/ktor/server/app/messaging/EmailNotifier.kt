@@ -11,9 +11,19 @@ import jakarta.mail.internet.MimeMessage
 import org.slf4j.LoggerFactory
 import java.util.Properties
 import java.util.UUID
+import java.util.concurrent.atomic.AtomicReference
 
-class EmailNotifier(private val config: EmailConfig) {
+class EmailNotifier(initialConfig: EmailConfig) {
     private val log = LoggerFactory.getLogger(EmailNotifier::class.java)
+    private val configRef = AtomicReference(initialConfig)
+
+    /** Hot-swaps the config after settings were changed via UI. */
+    fun updateConfig(config: EmailConfig) {
+        configRef.set(config)
+    }
+
+    private val config: EmailConfig
+        get() = configRef.get()
 
     fun sendSyncError(runId: UUID, runType: String, error: SyncError) {
         if (!config.enabled) return

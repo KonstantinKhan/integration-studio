@@ -52,6 +52,8 @@ dependencies {
     implementation(libs.hikari)
     implementation(libs.amqp.client)
     implementation(libs.jakarta.mail)
+    implementation(libs.flyway.core)
+    implementation(libs.flyway.database.postgresql)
 
     testImplementation("io.ktor:ktor-server-test-host")
 }

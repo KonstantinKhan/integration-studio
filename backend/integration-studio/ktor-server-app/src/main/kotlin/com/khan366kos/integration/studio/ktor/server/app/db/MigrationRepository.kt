@@ -1,7 +1,10 @@
 package com.khan366kos.integration.studio.ktor.server.app.db
 
 import com.khan366kos.domain.polynom.PolynomElement
+import com.khan366kos.integration.studio.ktor.server.app.connection.DatabaseManager
+import com.khan366kos.integration.studio.ktor.server.app.errors.ServiceUnavailableException
 import kotlinx.serialization.json.Json
+import org.jetbrains.exposed.sql.Database
 import org.jetbrains.exposed.sql.SortOrder
 import org.jetbrains.exposed.sql.and
 import org.jetbrains.exposed.sql.insert
@@ -21,7 +24,16 @@ data class MigrationRunRow(
     val toDate: OffsetDateTime?,
 )
 
-class MigrationRepository(private val json: Json) {
+class MigrationRepository(
+    private val json: Json,
+    private val databaseManager: DatabaseManager,
+) {
+
+    private suspend fun <T> dbTransaction(block: suspend org.jetbrains.exposed.sql.Transaction.() -> T): T =
+        newSuspendedTransaction(db = requireDatabase(), statement = block)
+
+    private fun requireDatabase(): Database =
+        databaseManager.current ?: throw ServiceUnavailableException("postgres")
 
     suspend fun createRun(
         id: UUID,
@@ -31,7 +43,7 @@ class MigrationRepository(private val json: Json) {
         toDate: OffsetDateTime?,
         initiatedBy: String? = null,
     ) {
-        newSuspendedTransaction {
+        dbTransaction {
             MigrationRunsTable.insert { row ->
                 row[MigrationRunsTable.id]        = id
                 row[MigrationRunsTable.startedAt] = startedAt
@@ -48,7 +60,7 @@ class MigrationRepository(private val json: Json) {
     suspend fun insertEvent(runId: UUID, element: PolynomElement): UUID {
         val eventId = UUID.randomUUID()
         val now = OffsetDateTime.now()
-        newSuspendedTransaction {
+        dbTransaction {
             MigrationEventsTable.insert { row ->
                 row[MigrationEventsTable.id]              = eventId
                 row[MigrationEventsTable.runId]           = runId
@@ -65,7 +77,7 @@ class MigrationRepository(private val json: Json) {
     }
 
     suspend fun updateEventStatus(id: UUID, newStatus: String) {
-        newSuspendedTransaction {
+        dbTransaction {
             MigrationEventsTable.update({ MigrationEventsTable.id eq id }) { row ->
                 row[MigrationEventsTable.status]          = newStatus
                 row[MigrationEventsTable.statusUpdatedAt] = OffsetDateTime.now()
@@ -74,7 +86,7 @@ class MigrationRepository(private val json: Json) {
     }
 
     suspend fun updateRunStatus(id: UUID, newStatus: String, total: Int) {
-        newSuspendedTransaction {
+        dbTransaction {
             MigrationRunsTable.update({ MigrationRunsTable.id eq id }) { row ->
                 row[MigrationRunsTable.status]     = newStatus
                 row[MigrationRunsTable.totalCount] = total
@@ -83,7 +95,7 @@ class MigrationRepository(private val json: Json) {
     }
 
     suspend fun updateRunSendingStarted(id: UUID, at: OffsetDateTime) {
-        newSuspendedTransaction {
+        dbTransaction {
             MigrationRunsTable.update({ MigrationRunsTable.id eq id }) { row ->
                 row[MigrationRunsTable.sendingStartedAt] = at
             }
@@ -91,7 +103,7 @@ class MigrationRepository(private val json: Json) {
     }
 
     suspend fun updateRunErrorType(id: UUID, errorType: String) {
-        newSuspendedTransaction {
+        dbTransaction {
             MigrationRunsTable.update({ MigrationRunsTable.id eq id }) { row ->
                 row[MigrationRunsTable.errorType] = errorType
             }
@@ -99,7 +111,7 @@ class MigrationRepository(private val json: Json) {
     }
 
     suspend fun getLastSuccessfulRun(type: String): MigrationRunRow? =
-        newSuspendedTransaction {
+        dbTransaction {
             MigrationRunsTable
                 .selectAll()
                 .where {
@@ -113,7 +125,7 @@ class MigrationRepository(private val json: Json) {
         }
 
     suspend fun countFailedRunsBetween(from: OffsetDateTime, to: OffsetDateTime): Int =
-        newSuspendedTransaction {
+        dbTransaction {
             val minTs = if (from.isBefore(to)) from else to
             val maxTs = if (from.isBefore(to)) to else from
             MigrationRunsTable

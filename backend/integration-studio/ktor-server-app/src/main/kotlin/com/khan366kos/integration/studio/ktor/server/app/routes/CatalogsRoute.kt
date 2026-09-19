@@ -1,7 +1,7 @@
 package com.khan366kos.integration.studio.ktor.server.app.routes
 
+import com.khan366kos.integration.studio.ktor.server.app.config.AppConfig
 import com.khan366kos.integration.studio.ktor.server.app.plugins.userSession
-import com.khan366kos.integration.studio.logics.PolynomApplicationService
 import com.khan366kos.integration.studio.mapping.toBffDto
 import io.ktor.http.HttpStatusCode
 import io.ktor.server.response.respond
@@ -10,8 +10,9 @@ import io.ktor.server.routing.get
 import io.ktor.server.routing.route
 import kotlin.text.toInt
 
-fun Route.catalogs(service: PolynomApplicationService): Route = route("catalogs") {
+fun Route.catalogs(config: AppConfig): Route = route("catalogs") {
     get {
+        val service = config.polynomApplicationService
         try {
             val referenceTypeId = call.parameters["referenceTypeId"]?.toInt()
             val referenceObjectId = call.parameters["referenceObjectId"]?.toInt()

@@ -1,5 +1,8 @@
 package com.khan366kos.integration.studio.ktor.server.app.scheduling
 
+import kotlinx.serialization.Serializable
+
+@Serializable
 data class SyncSchedulerConfig(
     val enabled: Boolean,
     val intervalMinutes: Long,

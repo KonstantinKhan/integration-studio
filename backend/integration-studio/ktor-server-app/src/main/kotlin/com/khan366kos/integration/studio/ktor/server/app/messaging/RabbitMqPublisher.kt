@@ -1,35 +1,28 @@
 package com.khan366kos.integration.studio.ktor.server.app.messaging
 
 import com.khan366kos.domain.polynom.PolynomElement
+import com.khan366kos.integration.studio.ktor.server.app.connection.RabbitManager
+import com.khan366kos.integration.studio.ktor.server.app.errors.ServiceUnavailableException
 import com.khan366kos.integration.studio.ktor.server.app.messaging.model.MigrationEventMessage
 import com.rabbitmq.client.AMQP
-import com.rabbitmq.client.Connection
-import com.rabbitmq.client.ConnectionFactory
 import kotlinx.serialization.json.Json
-import java.io.Closeable
-import java.util.UUID
 
-class RabbitMqPublisher(private val config: RabbitMqConfig, private val json: Json) : Closeable {
+/**
+ * Publishes migration events. The connection is owned by [RabbitManager] and
+ * may not be established yet — in that case publishing fails fast with
+ * [ServiceUnavailableException] (mapped to HTTP 503).
+ */
+class RabbitMqPublisher(
+    private val rabbitManager: RabbitManager,
+    private val json: Json,
+) {
 
-    private val connection: Connection
+    fun publish(element: PolynomElement, runId: java.util.UUID) {
+        val settings = rabbitManager.currentSettings
+            ?: throw ServiceUnavailableException("rabbitmq")
+        val connection = rabbitManager.current?.takeIf { it.isOpen }
+            ?: throw ServiceUnavailableException("rabbitmq")
 
-    init {
-        val factory = ConnectionFactory().apply {
-            host        = config.host
-            port        = config.port
-            virtualHost = config.vhost
-            username    = config.user
-            password    = config.password
-        }
-        connection = factory.newConnection()
-        // Declare durable topic exchange once on startup.
-        // Idempotent — safe to call even if exchange already exists with same params.
-        connection.createChannel().use { ch ->
-            ch.exchangeDeclare(config.exchange, "topic", /* durable */ true)
-        }
-    }
-
-    fun publish(element: PolynomElement, runId: UUID) {
         val message = MigrationEventMessage(
             migrationRunId = runId.toString(),
             name           = element.designation,
@@ -47,14 +40,14 @@ class RabbitMqPublisher(private val config: RabbitMqConfig, private val json: Js
             .deliveryMode(2)
             .build()
 
-        connection.createChannel().use { channel ->
-            channel.confirmSelect()
-            channel.basicPublish(config.exchange, config.routingKey, props, body)
-            channel.waitForConfirmsOrDie(5_000)
+        try {
+            connection.createChannel().use { channel ->
+                channel.confirmSelect()
+                channel.basicPublish(settings.exchange, settings.routingKey, props, body)
+                channel.waitForConfirmsOrDie(5_000)
+            }
+        } catch (e: Exception) {
+            throw ServiceUnavailableException("rabbitmq", "Publish failed: ${e.message}")
         }
-    }
-
-    override fun close() {
-        if (connection.isOpen) connection.close()
     }
 }

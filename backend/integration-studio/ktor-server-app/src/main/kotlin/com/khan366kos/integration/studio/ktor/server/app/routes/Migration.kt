@@ -2,6 +2,7 @@ package com.khan366kos.integration.studio.ktor.server.app.routes
 
 import com.khan366kos.domain.polynom.models.ClassifierTreeNode
 import com.khan366kos.etl.excel.service.ExcelService
+import com.khan366kos.integration.studio.ktor.server.app.config.AppConfig
 import com.khan366kos.integration.studio.ktor.server.app.plugins.userSession
 import com.khan366kos.integration.studio.logics.ClassifierTreeBuilder
 import com.khan366kos.integration.studio.logics.PolynomApplicationService
@@ -52,9 +53,10 @@ private suspend fun createGroupBranch(
 }
 
 @OptIn(ExperimentalCoroutinesApi::class)
-fun Route.migration(service: PolynomApplicationService, path: String): Route = route("migration") {
+fun Route.migration(config: AppConfig, path: String): Route = route("migration") {
     post {
         val sessionId = call.userSession.id
+        val service = config.polynomApplicationService
         val excelService = ExcelService()
         val treeBuilder = ClassifierTreeBuilder()
         val data = excelService.classifierGroups(path)

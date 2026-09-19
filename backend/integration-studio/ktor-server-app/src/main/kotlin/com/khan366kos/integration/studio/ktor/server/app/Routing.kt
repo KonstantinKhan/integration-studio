@@ -423,16 +423,16 @@ fun Application.configureRouting(config: AppConfig) {
                     }
                 }
             }
-            concept(config.polynomApplicationService)
-            propertyOwner(config.polynomApplicationService)
-            search(config.polynomApplicationService, config)
+            concept(config)
+            propertyOwner(config)
+            search(config)
             searchStream(config)
             syncSummary(config.migrationRepository, config.schedulerConfig)
-            references(config.polynomApplicationService)
-            tree(config.polynomApplicationService)
-            catalogs(config.polynomApplicationService)
-            migration(config.polynomApplicationService, environment.config.property("excel.path").getString())
-            connections(config.environment)
+            references(config)
+            tree(config)
+            catalogs(config)
+            migration(config, environment.config.property("excel.path").getString())
+            connections(config)
             loodsman(config)
         }
     }

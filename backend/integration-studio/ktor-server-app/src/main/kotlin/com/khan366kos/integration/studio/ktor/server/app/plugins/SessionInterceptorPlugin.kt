@@ -29,7 +29,7 @@ val SessionInterceptorPlugin = createRouteScopedPlugin(
 ) {
     val sessionStore = pluginConfig.sessionStore
 
-    val publicPaths = setOf("connections")
+    val publicPaths = setOf("connections", "connections/auth")
     val publicPathPrefixes = setOf("loodsman")
 
     onCall { call ->

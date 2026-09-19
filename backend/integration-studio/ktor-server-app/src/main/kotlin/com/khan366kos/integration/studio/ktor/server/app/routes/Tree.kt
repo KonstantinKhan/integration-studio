@@ -5,8 +5,8 @@ import com.khan366kos.domain.exceptions.RootNodeException
 import com.khan366kos.domain.polynom.Identifier
 import com.khan366kos.domain.models.simple.ObjectId
 import com.khan366kos.domain.models.simple.TypeId
+import com.khan366kos.integration.studio.ktor.server.app.config.AppConfig
 import com.khan366kos.integration.studio.ktor.server.app.plugins.userSession
-import com.khan366kos.integration.studio.logics.PolynomApplicationService
 import com.khan366kos.integration.studio.mapping.toBffDto
 import io.ktor.http.HttpStatusCode
 import io.ktor.server.response.respond
@@ -14,8 +14,9 @@ import io.ktor.server.routing.Route
 import io.ktor.server.routing.get
 import io.ktor.server.routing.route
 
-fun Route.tree(service: PolynomApplicationService): Route = route("tree") {
+fun Route.tree(config: AppConfig): Route = route("tree") {
     get("/root") {
+        val service = config.polynomApplicationService
         val response = service.getClassification(call.userSession.id)
         val result =
             if (response.size == 1) response.first()
@@ -26,6 +27,7 @@ fun Route.tree(service: PolynomApplicationService): Route = route("tree") {
         val typeId = call.parameters["typeId"]?.toIntOrNull()
         val objectId = call.parameters["objectId"]?.toIntOrNull()
         if (typeId != null && objectId != null) {
+            val service = config.polynomApplicationService
             val response =
                 service.nodes(call.userSession.id, Identifier(TypeId(typeId), ObjectId(objectId))).map { it.toBffDto() }
             call.respond(HttpStatusCode.OK, response)

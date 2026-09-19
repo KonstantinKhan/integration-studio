@@ -1,8 +1,8 @@
 package com.khan366kos.integration.studio.ktor.server.app.routes
 
 import com.khan366kos.integration.studio.ktor.server.app.plugins.userSession
+import com.khan366kos.integration.studio.ktor.server.app.config.AppConfig
 import com.khan366kos.integration.studio.bff.dto.command.CreateReferenceCommand
-import com.khan366kos.integration.studio.logics.PolynomApplicationService
 import com.khan366kos.integration.studio.mapping.toBffDto
 import com.khan366kos.integration.studio.transport.polynom.command.DeleteReferenceCommand
 import com.khan366kos.integration.studio.transport.polynom.models.IIdentifiableObject
@@ -17,9 +17,10 @@ import io.ktor.server.routing.post
 import io.ktor.server.routing.route
 import kotlin.text.toInt
 
-fun Route.references(service: PolynomApplicationService) = route("references") {
+fun Route.references(config: AppConfig) = route("references") {
 
     post("/create") {
+        val service = config.polynomApplicationService
         try {
             val request = call.receive<CreateReferenceCommand>()
             val reference = service.referenceService.referenceCreate(call.userSession.id, request.name)
@@ -30,6 +31,7 @@ fun Route.references(service: PolynomApplicationService) = route("references") {
         }
     }
     post("/delete") {
+        val service = config.polynomApplicationService
         try {
             val request = call.receive<DeleteReferenceCommand>()
             val response = service.referenceDelete(call.userSession.id, request)
@@ -40,6 +42,7 @@ fun Route.references(service: PolynomApplicationService) = route("references") {
         }
     }
     get {
+        val service = config.polynomApplicationService
         try {
             val typeId = call.parameters["typeId"]?.toInt()
             val objectId = call.parameters["objectId"]?.toInt()

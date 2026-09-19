@@ -2,26 +2,23 @@ package com.khan366kos.integration.studio.ktor.server.app
 
 import com.khan366kos.domain.exceptions.RootNodeException
 import com.khan366kos.integration.studio.ktor.server.app.config.AppConfig
-import com.khan366kos.integration.studio.ktor.server.app.db.DatabaseFactory
-import com.khan366kos.integration.studio.ktor.server.app.db.MigrationRepository
+import com.khan366kos.integration.studio.ktor.server.app.config.AppSettings
+import com.khan366kos.integration.studio.ktor.server.app.config.AppSettingsStore
+import com.khan366kos.integration.studio.ktor.server.app.config.DatabaseSettings
+import com.khan366kos.integration.studio.ktor.server.app.config.LoodsmanSettings
+import com.khan366kos.integration.studio.ktor.server.app.config.PolynomSettings
+import com.khan366kos.integration.studio.ktor.server.app.connection.DatabaseManager
+import com.khan366kos.integration.studio.ktor.server.app.connection.RabbitManager
+import com.khan366kos.integration.studio.ktor.server.app.errors.ServiceUnavailableException
 import com.khan366kos.integration.studio.ktor.server.app.messaging.EmailConfig
 import com.khan366kos.integration.studio.ktor.server.app.messaging.RabbitMqConfig
 import com.khan366kos.integration.studio.ktor.server.app.routes.devSessionRoute
+import com.khan366kos.integration.studio.ktor.server.app.routes.connections
 import com.khan366kos.integration.studio.ktor.server.app.scheduling.SyncSchedulerConfig
 import com.khan366kos.integration.studio.ktor.server.app.session.InMemorySessionStore
-import io.ktor.client.HttpClient
-import io.ktor.client.engine.cio.CIO
-import io.ktor.client.engine.cio.endpoint
 import io.ktor.client.plugins.api.createClientPlugin
-import io.ktor.client.plugins.contentnegotiation.ContentNegotiation
-import io.ktor.client.plugins.defaultRequest
 import io.ktor.client.statement.request
-import io.ktor.http.ContentType
 import io.ktor.http.HttpStatusCode
-import io.ktor.http.URLProtocol
-import io.ktor.http.contentType
-import io.ktor.http.path
-import io.ktor.serialization.kotlinx.json.json
 import io.ktor.server.application.*
 import io.ktor.server.netty.EngineMain
 import io.ktor.server.plugins.statuspages.StatusPages
@@ -32,8 +29,7 @@ import io.ktor.util.AttributeKey
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
-import kotlinx.serialization.json.Json
-import java.net.URI
+import org.slf4j.LoggerFactory
 import java.util.concurrent.atomic.AtomicLong
 import kotlin.time.Duration.Companion.milliseconds
 
@@ -57,151 +53,76 @@ val HttpTimingLogger = createClientPlugin("HttpTimingLogger") {
 }
 
 fun Application.module() {
-    val dbUrl = environment.config.property("database.url").getString()
-    val dbUser = environment.config.property("database.user").getString()
-    val dbPassword = environment.config.property("database.password").getString()
-    val dbPoolSize = environment.config.propertyOrNull("database.pool-size")?.getString()?.toInt() ?: 10
+    val log = LoggerFactory.getLogger("Application")
 
-    val dbJson = Json {
-        ignoreUnknownKeys = true
-        encodeDefaults = false
-        classDiscriminator = "type"
-    }
-    DatabaseFactory.init(dbUrl, dbUser, dbPassword, dbPoolSize)
-    val migrationRepository = MigrationRepository(dbJson)
-
-    val rabbitMqConfig = RabbitMqConfig(
-        host = environment.config.property("rabbitmq.host").getString(),
-        port = environment.config.property("rabbitmq.port").getString().toInt(),
-        vhost = environment.config.property("rabbitmq.vhost").getString(),
-        user = environment.config.property("rabbitmq.user").getString(),
-        password = environment.config.property("rabbitmq.password").getString(),
-        exchange = environment.config.property("rabbitmq.exchange").getString(),
-        routingKey = environment.config.property("rabbitmq.routing-key").getString(),
+    // 1. Seed settings from application.conf / env, then overlay settings
+    //    previously saved from the UI (local JSON file). Application startup
+    //    never depends on any external service being reachable.
+    val seedSettings = AppSettings(
+        database = DatabaseSettings(
+            url      = environment.config.property("database.url").getString(),
+            user     = environment.config.property("database.user").getString(),
+            password = environment.config.property("database.password").getString(),
+            poolSize = environment.config.propertyOrNull("database.pool-size")?.getString()?.toInt() ?: 10,
+        ),
+        rabbitmq = RabbitMqConfig(
+            host        = environment.config.property("rabbitmq.host").getString(),
+            port        = environment.config.property("rabbitmq.port").getString().toInt(),
+            vhost       = environment.config.property("rabbitmq.vhost").getString(),
+            user        = environment.config.property("rabbitmq.user").getString(),
+            password    = environment.config.property("rabbitmq.password").getString(),
+            exchange    = environment.config.property("rabbitmq.exchange").getString(),
+            routingKey  = environment.config.property("rabbitmq.routing-key").getString(),
+        ),
+        email = EmailConfig(
+            enabled  = environment.config.propertyOrNull("email.enabled")?.getString()?.toBoolean() ?: false,
+            smtpHost = environment.config.propertyOrNull("email.smtp-host")?.getString() ?: "",
+            smtpPort = environment.config.propertyOrNull("email.smtp-port")?.getString()?.toInt() ?: 587,
+            smtpTls  = environment.config.propertyOrNull("email.smtp-tls")?.getString()?.toBoolean() ?: true,
+            from     = environment.config.propertyOrNull("email.from")?.getString() ?: "",
+            password = environment.config.propertyOrNull("email.password")?.getString() ?: "",
+            to       = environment.config.propertyOrNull("email.to")?.getString() ?: "",
+        ),
+        scheduler = SyncSchedulerConfig(
+            enabled                         = environment.config.propertyOrNull("sync-scheduler.enabled")?.getString()?.toBoolean() ?: false,
+            intervalMinutes                 = environment.config.propertyOrNull("sync-scheduler.interval-minutes")?.getString()?.toLong() ?: 15L,
+            scopeTypeId                     = environment.config.propertyOrNull("sync-scheduler.scope-type-id")?.getString()?.toInt() ?: 0,
+            scopeObjectId                   = environment.config.propertyOrNull("sync-scheduler.scope-object-id")?.getString()?.toInt() ?: 0,
+            serviceUser                     = environment.config.propertyOrNull("sync-scheduler.service-user")?.getString() ?: "",
+            servicePassword                 = environment.config.propertyOrNull("sync-scheduler.service-password")?.getString() ?: "",
+            serviceStorageId                = environment.config.propertyOrNull("sync-scheduler.service-storage-id")?.getString() ?: "",
+            externalApiTimezoneOffsetMinutes = environment.config.propertyOrNull("sync-scheduler.external-api-timezone-offset-minutes")
+                ?.getString()?.toInt() ?: 0,
+        ),
+        polynom  = PolynomSettings(environment.config.property("polynom.base-url").getString()),
+        loodsman = LoodsmanSettings(environment.config.property("loodsman.base-url").getString()),
     )
 
-    val emailConfig = EmailConfig(
-        enabled = environment.config.propertyOrNull("email.enabled")?.getString()?.toBoolean() ?: false,
-        smtpHost = environment.config.propertyOrNull("email.smtp-host")?.getString() ?: "",
-        smtpPort = environment.config.propertyOrNull("email.smtp-port")?.getString()?.toInt() ?: 587,
-        smtpTls = environment.config.propertyOrNull("email.smtp-tls")?.getString()?.toBoolean() ?: true,
-        from = environment.config.propertyOrNull("email.from")?.getString() ?: "",
-        password = environment.config.propertyOrNull("email.password")?.getString() ?: "",
-        to = environment.config.propertyOrNull("email.to")?.getString() ?: "",
+    val settingsStore = AppSettingsStore(
+        filePath = AppSettingsStore.resolvePath(
+            environment.config.propertyOrNull("connection-settings.file")?.getString()
+                ?: System.getenv("CONNECTION_SETTINGS_FILE")
+        ),
+        seed = seedSettings,
     )
-
-    val schedulerConfig = SyncSchedulerConfig(
-        enabled = environment.config.propertyOrNull("sync-scheduler.enabled")?.getString()?.toBoolean() ?: false,
-        intervalMinutes = environment.config.propertyOrNull("sync-scheduler.interval-minutes")?.getString()?.toLong()
-            ?: 15L,
-        scopeTypeId = environment.config.propertyOrNull("sync-scheduler.scope-type-id")?.getString()?.toInt() ?: 0,
-        scopeObjectId = environment.config.propertyOrNull("sync-scheduler.scope-object-id")?.getString()?.toInt() ?: 0,
-        serviceUser = environment.config.propertyOrNull("sync-scheduler.service-user")?.getString() ?: "",
-        servicePassword = environment.config.propertyOrNull("sync-scheduler.service-password")?.getString() ?: "",
-        serviceStorageId = environment.config.propertyOrNull("sync-scheduler.service-storage-id")?.getString() ?: "",
-        externalApiTimezoneOffsetMinutes = environment.config.propertyOrNull("sync-scheduler.external-api-timezone-offset-minutes")
-            ?.getString()?.toInt() ?: 0,
-    )
-
-    val polynomBaseUrl = environment.config.property("polynom.base-url").getString()
-    val polynomUri = URI(polynomBaseUrl)
-    require(polynomUri.scheme in setOf("http", "https")) {
-        "polynom.base-url must use http or https scheme, got: $polynomBaseUrl"
-    }
-    require(!polynomUri.host.isNullOrBlank()) {
-        "polynom.base-url must contain a host, got: $polynomBaseUrl"
-    }
-    val polynomPort = when {
-        polynomUri.port > 0 -> polynomUri.port
-        polynomUri.scheme == "https" -> 443
-        else -> 80
-    }
-    val polynomBasePath = polynomUri.path.trimEnd('/') + "/"
-
-    val loodsmanBaseUrl = environment.config.property("loodsman.base-url").getString()
-    val loodsmanUri = URI(loodsmanBaseUrl)
-    require(loodsmanUri.scheme in setOf("http", "https")) {
-        "loodsman.base-url must use http or https scheme, got: $loodsmanBaseUrl"
-    }
-    require(!loodsmanUri.host.isNullOrBlank()) {
-        "loodsman.base-url must contain a host, got: $loodsmanBaseUrl"
-    }
-    val loodsmanPort = when {
-        loodsmanUri.port > 0 -> loodsmanUri.port
-        loodsmanUri.scheme == "https" -> 443
-        else -> 80
-    }
-    val loodsmanBasePath = loodsmanUri.path.trimEnd('/') + "/"
-
-    val sessionStore = InMemorySessionStore()
-    val httpClient = HttpClient(CIO) {
-        engine {
-            maxConnectionsCount = 20
-            endpoint {
-                connectTimeout = 30_000
-                socketTimeout = 60_000
-                keepAliveTime = 60_000
-            }
-            requestTimeout = 60_000
-        }
-        install(ContentNegotiation) {
-            json(Json {
-                ignoreUnknownKeys = true
-                isLenient = true
-                coerceInputValues = true
-            })
-        }
-        install(HttpTimingLogger)
-        defaultRequest {
-            contentType(ContentType.Application.Json)
-            url {
-                protocol = if (polynomUri.scheme == "https") URLProtocol.HTTPS else URLProtocol.HTTP
-                host = polynomUri.host
-                port = polynomPort
-                path(polynomBasePath)
-            }
-        }
+    try {
+        settingsStore.loadFromDisk()
+    } catch (e: Exception) {
+        log.warn("Failed to read connection settings file {}: {} — falling back to application.conf", settingsStore.filePath, e.message)
     }
 
-    val loodsmanHttpClient = HttpClient(CIO) {
-        engine {
-            maxConnectionsCount = 20
-            endpoint {
-                connectTimeout = 30_000
-                socketTimeout = 60_000
-                keepAliveTime = 60_000
-            }
-            requestTimeout = 60_000
-        }
-        install(ContentNegotiation) {
-            json(Json {
-                ignoreUnknownKeys = true
-                isLenient = true
-                coerceInputValues = true
-            })
-        }
-        install(HttpTimingLogger)
-        defaultRequest {
-            contentType(ContentType.Application.Json)
-            url {
-                protocol = if (loodsmanUri.scheme == "https") URLProtocol.HTTPS else URLProtocol.HTTP
-                host = loodsmanUri.host
-                port = loodsmanPort
-                path(loodsmanBasePath)
-            }
-        }
-    }
+    // 2. Managers own the connections; both start disconnected and are
+    //    connected by background reconnect loops (never block startup).
+    val databaseManager = DatabaseManager()
+    val rabbitManager = RabbitManager()
 
+    // 3. Application wiring.
     val config = AppConfig.create(
-        sessionStore = sessionStore,
-        httpClient = httpClient,
-        baseUrl = polynomBaseUrl,
-        loodsmanHttpClient = loodsmanHttpClient,
-        rabbitMqConfig = rabbitMqConfig,
-        migrationRepository = migrationRepository,
-        emailConfig = emailConfig,
-        schedulerConfig = schedulerConfig,
-        environment = environment
+        sessionStore = InMemorySessionStore(),
+        appSettingsStore = settingsStore,
+        databaseManager = databaseManager,
+        rabbitManager = rabbitManager,
+        environment = environment,
     )
 
 //    config.syncScheduler.start()
@@ -229,6 +150,13 @@ fun Application.module() {
     }
 
     install(StatusPages) {
+        exception<ServiceUnavailableException> { call, cause ->
+            call.respondText(
+                text = "503: ${cause.message}",
+                status = HttpStatusCode.ServiceUnavailable,
+            )
+        }
+
         exception<RootNodeException> { call, cause ->
             call.respondText(text = "500: $cause", status = HttpStatusCode.InternalServerError)
         }

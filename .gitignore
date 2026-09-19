@@ -60,3 +60,7 @@ frontend/integration-studio/.yarn/*
 !frontend/integration-studio/.yarn/versions
 ### Obsidian ###
 docs/wiki/.obsidian/
+
+### Runtime connection settings (contains passwords) ###
+**/data/connection-settings.json
+
