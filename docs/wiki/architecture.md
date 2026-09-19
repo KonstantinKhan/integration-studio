@@ -12,8 +12,8 @@ Kotlin BFF (Ktor, :8080)  ── сессии в памяти, маршруты,
    │
    ├──▶ Polynom API (:5100/api/v1)   — HTTP, токены, refresh
    ├──▶ Loodsman API (:8076/api/v4)  — HTTP, session-заголовки (без refresh)
-   ├──▶ PostgreSQL (:5432)            — Exposed, миграции
-   ├──▶ RabbitMQ (:5672)              — события миграции
+    ├──▶ PostgreSQL (:5432)            — Exposed + Hikari, схема Flyway, коннект в фоне (DatabaseManager)
+    ├──▶ RabbitMQ (:5672)              — события миграции; коннект в фоне (RabbitManager), auto-recovery
    └──▶ SMTP                          — уведомления (выключено по умолчанию)
 ```
 

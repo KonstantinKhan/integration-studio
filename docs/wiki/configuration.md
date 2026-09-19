@@ -1,6 +1,11 @@
 # Конфигурация и доступ к Polynom API
 
-> См. также: [Архитектура](architecture.md) · [Auth flow](auth-flow.md)
+> См. также: [Архитектура](architecture.md) · [Auth flow](auth-flow.md) · [Подключения](connections-monitoring.md)
+
+## Два слоя конфигурации
+
+1. **`application.conf`** — дефолты + env-override (`key = value` затем `key = ${?ENV}`; env побеждает). Адреса всех внешних сервисов — только здесь.
+2. **`data/connection-settings.json`** (`AppSettingsStore`) — настройки, изменённые из UI; читаются при старте поверх application.conf, пишутся атомарно (tmp+rename). Путь: `connection-settings.file` / env `CONNECTION_SETTINGS_FILE`. Файл в .gitignore (пароли). Детали и runtime-применение — [Подключения](connections-monitoring.md)
 
 ## Единственная точка правды
 
@@ -53,3 +58,4 @@ LoginApi.storageDefinitions(): List<IStorageDefinition>   (polynom-dto-kmp)
 
 - `call.sessions.clear<T>()` — reified, вызывать `clear<UserSession>()`, не `clear(UserSession)`
 - WSL-сборка требует `JAVA_HOME=/usr/lib/jvm/java-21-openjdk-amd64` — [Окружение](dev-environment.md)
+- Пароль страницы настроек: `app.admin-password` (дефолт `"admin"`, env `APP_ADMIN_PASSWORD`) — в прод перекрывать env

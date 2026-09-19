@@ -9,7 +9,7 @@
 | [Архитектура](architecture.md) | Модули gradle, потоки данных, роли слоёв |
 | [Конфигурация и доступ к Polynom](configuration.md) | `application.conf`, `polynom.base-url`, токены, TokenManager, AuthConfig |
 | [Пайплайн подключения и сессии](auth-flow.md) | Маршруты, степпер auth, guard маршрутов, logout |
-| [Мониторинг подключений](connections-monitoring.md) | `GET /connections`, TCP-проверки, контракты |
+| [Мониторинг и управление подключениями](connections-monitoring.md) | `GET /connections`, менеджеры соединений, reconnect-лупы, настройки из UI, Flyway |
 | [Фронтенд](frontend.md) | Структура app router, api-client, хуки, стор, стили |
 | [Окружение и сборка](dev-environment.md) | WSL + Windows, JDK, команды сборки, типовые флейки |
 | [Процесс работы и инсайты](workflows-and-insights.md) | Оркестрация агентов, паттерн «фича→ревью→фикс», решения |
@@ -22,7 +22,7 @@
 | Путь | Что | Доступ |
 |---|---|---|
 | `/` | Стартовая: статус-чипы + карточки разделов | публичная |
-| `/connections` | Полный статус подключений | публичная |
+| `/connections` | Статусы подключений + настройки подключений (админ-пароль) | публичная / настройки по сессии |
 | `/polynom/auth` | Подключение к Polynom: хранилище → авторизация | публичная |
 | `/dashboard` | «Работа с Polynom»: навигация/миграция/синхронизация + Выйти | сессия |
 | `/polynom`, `/polynom/changes`, `/polynom/reference/**` | Рабочие разделы Polynom | сессия |
@@ -37,12 +37,17 @@
 | `POST /authorize` | Вход (login/password/storageId) | публичный |
 | `GET /check-session` | Проверка сессии | по куке |
 | `POST /logout` | Выход (идемпотентный) | по куке |
-| `GET /connections` | Статусы подключений (TCP) | публичный |
+| `GET /connections` | Статусы подключений (менеджеры + TCP) | публичный |
+| `POST /connections/auth` | Локальный вход в настройки (админ-пароль) | публичный |
+| `GET/PUT /connections/settings` | Настройки подключений (применяются на лету) | сессия |
 | `/*` (business) | concept, references, search, tree, streams… | сессия |
 | `/loodsman/*` | databases, authorize, check-session, logout, tree/root, object-info | см. [Loodsman](loodsman.md) |
 
 ## Быстрые факты
 
+- Недоступные Postgres/RabbitMQ **не блокируют старт**: подключение в фоне, зависимые эндпоинты отдают 503 ([Подключения](connections-monitoring.md))
+- Схема БД — Flyway (`V1__init.sql`, baseline для старых БД); `SchemaUtils` deprecated ([Подключения](connections-monitoring.md))
+- Настройки подключений правятся из UI (`/connections` → Настройки), хранятся в `data/connection-settings.json` ([Конфигурация](configuration.md))
 - Адреса всех внешних сервисов — только в `application.conf` бэка ([Конфигурация](configuration.md))
 - Доступность сервисов проверяется с хоста Kotlin BFF, не с Next-сервера ([Инсайты](workflows-and-insights.md))
 - Каждому сервису — свой маршрут авторизации (`/polynom/auth`, далее по образцу) ([Auth flow](auth-flow.md))
