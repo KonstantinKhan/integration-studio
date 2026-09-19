@@ -12,6 +12,7 @@ const STATUS_DOT: Record<ConnectionStatus['status'], string> = {
   connected: 'bg-green-500',
   unreachable: 'bg-red-500',
   disabled: 'bg-stone-400',
+  connecting: 'bg-blue-500 animate-pulse',
 }
 
 const FUTURE_SERVICES = [

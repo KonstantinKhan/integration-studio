@@ -1,8 +1,9 @@
 'use client'
 
 import { useCallback, useEffect, useRef, useState } from 'react'
-import { RefreshCw, Plug, AlertTriangle } from 'lucide-react'
+import { RefreshCw, Plug, AlertTriangle, Settings } from 'lucide-react'
 import { apiClient, ApiError } from '@/api/api-client'
+import { ConnectionSettingsPanel } from '@/components/ConnectionSettingsPanel'
 import type { ConnectionStatus } from '@/types/connections'
 
 const STATUS_META: Record<
@@ -24,12 +25,18 @@ const STATUS_META: Record<
     badge: 'bg-stone-200 text-stone-600',
     dot: 'bg-stone-400',
   },
+  connecting: {
+    label: 'Подключение...',
+    badge: 'bg-blue-100 text-blue-800',
+    dot: 'bg-blue-500 animate-pulse',
+  },
 }
 
 const ConnectionsPage = () => {
   const [data, setData] = useState<ConnectionStatus[]>([])
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
+  const [showSettings, setShowSettings] = useState(false)
 
   const controllerRef = useRef<AbortController | null>(null)
 
@@ -86,6 +93,18 @@ const ConnectionsPage = () => {
           </div>
           <button
             type="button"
+            onClick={() => setShowSettings((v) => !v)}
+            className="flex items-center gap-2 px-4 py-2 rounded-lg border-2 text-stone-800 shadow-sm transition hover:shadow-md"
+            style={{
+              backgroundColor: '#fdf6ee',
+              borderColor: '#d2b48c',
+            }}
+          >
+            <Settings size={16} />
+            Настройки
+          </button>
+          <button
+            type="button"
             onClick={() => fetchStatuses()}
             disabled={isLoading}
             className="flex items-center gap-2 px-4 py-2 rounded-lg border-2 text-stone-800 shadow-sm transition hover:shadow-md disabled:opacity-60 disabled:cursor-not-allowed"
@@ -108,6 +127,12 @@ const ConnectionsPage = () => {
             <span className="text-sm">
               Не удалось получить статусы подключений: {error}
             </span>
+          </div>
+        )}
+
+        {showSettings && (
+          <div className="mb-6">
+            <ConnectionSettingsPanel onSaved={fetchStatuses} />
           </div>
         )}
 
